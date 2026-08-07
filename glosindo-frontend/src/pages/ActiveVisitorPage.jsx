@@ -1,0 +1,159 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
+import dayjs from 'dayjs';
+import visitService from '../services/visitService';
+
+const ActiveVisitorPage = () => {
+  const [activeVisits, setActiveVisits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [checkingOutId, setCheckingOutId] = useState(null);
+
+  const fetchActive = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
+    try {
+      const res = await visitService.getActive();
+      setActiveVisits(res.data || []);
+    } catch (err) {
+      if (!isSilent) toast.error('Gagal memuat daftar tamu aktif');
+    } finally {
+      if (!isSilent) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchActive();
+
+    // Polling interval every 15 seconds
+    const interval = setInterval(() => {
+      fetchActive(true);
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, [fetchActive]);
+
+  const handleCheckout = async (visit) => {
+    if (!window.confirm(`Proses check-out untuk ${visit.visitor?.name}?`)) return;
+
+    setCheckingOutId(visit.id);
+    try {
+      await visitService.checkOut(visit.id);
+      toast.success(`Check-Out Berhasil! ${visit.visitor?.name} telah keluar.`, { icon: '👋' });
+      fetchActive();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal melakukan check-out');
+    } finally {
+      setCheckingOutId(null);
+    }
+  };
+
+  return (
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Tamu Aktif Saat Ini</h1>
+          </div>
+          <p className="text-sm text-gray-500 mt-1">Daftar pengunjung yang sedang berada di area gedung (Status: IN). Auto-update tiap 15s.</p>
+        </div>
+
+        <button
+          onClick={() => fetchActive()}
+          className="px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl text-xs flex items-center gap-2 shadow-2xs transition-all"
+        >
+          <svg className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Refresh Data
+        </button>
+      </div>
+
+      {/* Table Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {loading ? (
+          <div className="p-12 text-center">
+            <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-gray-500 text-sm">Memuat tamu aktif...</p>
+          </div>
+        ) : activeVisits.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-3">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-gray-800">Tidak Ada Tamu Aktif</h3>
+            <p className="text-xs text-gray-500 mt-1">Saat ini seluruh pengunjung telah melakukan check-out.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="border-b border-gray-100 bg-gray-50/80 text-gray-500 font-semibold text-xs uppercase tracking-wider">
+                  <th className="px-5 py-3.5">Nama Tamu</th>
+                  <th className="px-5 py-3.5">Bertemu Dengan</th>
+                  <th className="px-5 py-3.5">Maksud Keperluan</th>
+                  <th className="px-5 py-3.5">Jam Masuk (IN)</th>
+                  <th className="px-5 py-3.5 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {activeVisits.map((visit) => (
+                  <tr key={visit.id} className="hover:bg-blue-50/20 transition-colors">
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-sm flex-shrink-0">
+                          {visit.visitor?.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900">{visit.visitor?.name}</p>
+                          <p className="text-xs text-gray-400">{visit.visitor?.company || 'Pribadi'}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="px-5 py-4 font-semibold text-gray-800">
+                      {visit.meet_to}
+                    </td>
+
+                    <td className="px-5 py-4 text-gray-600 max-w-xs">
+                      <p className="truncate text-xs">{visit.purpose}</p>
+                    </td>
+
+                    <td className="px-5 py-4 text-xs font-semibold text-blue-700">
+                      <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100">
+                        {dayjs(visit.check_in).format('HH:mm [WIB] — D MMM YYYY')}
+                      </span>
+                    </td>
+
+                    <td className="px-5 py-4 text-right">
+                      <button
+                        onClick={() => handleCheckout(visit)}
+                        disabled={checkingOutId === visit.id}
+                        className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5 ml-auto"
+                      >
+                        {checkingOutId === visit.id ? (
+                          'Proses...'
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            Check-Out (OUT)
+                          </>
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default ActiveVisitorPage;

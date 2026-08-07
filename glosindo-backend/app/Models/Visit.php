@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Visit extends Model
+{
+    use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'visitor_id',
+        'purpose',
+        'meet_to',
+        'check_in',
+        'check_out',
+        'status',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'check_in' => 'datetime',
+        'check_out' => 'datetime',
+    ];
+
+    /**
+     * Get the visitor that owns the visit.
+     */
+    public function visitor()
+    {
+        return $this->belongsTo(Visitor::class);
+    }
+
+    /**
+     * Scope a query to only include active visits (status IN).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'IN');
+    }
+
+    /**
+     * Scope a query to only include completed visits (status OUT).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'OUT');
+    }
+}
