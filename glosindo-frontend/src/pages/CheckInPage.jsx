@@ -53,6 +53,7 @@ const CheckInPage = () => {
   const handleRegisterSuccess = (newVisitor) => {
     setSelectedVisitor(newVisitor);
     setShowRegisterForm(false);
+    setFaceDescriptor(null); // Reset descriptor setelah registrasi berhasil
     setEmbeddingsRefreshToken((prev) => prev + 1);
     toast.success('Pendaftaran tamu berhasil! Lanjutkan mengisi keperluan kunjungan.');
   };

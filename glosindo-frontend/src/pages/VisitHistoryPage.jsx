@@ -52,45 +52,47 @@ const VisitHistoryPage = () => {
       </div>
 
       {/* Filter Card */}
-      <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-        <div>
-          <label className="block text-xs font-bold text-gray-700 mb-1">Cari Nama / Bertemu</label>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Ketik kata kunci..."
-            className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+      <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1">Cari Nama / Bertemu</label>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              placeholder="Ketik kata kunci..."
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-        <div>
-          <label className="block text-xs font-bold text-gray-700 mb-1">Dari Tanggal</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
-            className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1">Dari Tanggal</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-        <div>
-          <label className="block text-xs font-bold text-gray-700 mb-1">Sampai Tanggal</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
-            className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-1">Sampai Tanggal</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+              className="w-full px-3.5 py-2 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-        <div>
-          <button
-            onClick={handleResetFilters}
-            className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition-colors"
-          >
-            Reset Filter
-          </button>
+          <div className="flex items-end">
+            <button
+              onClick={handleResetFilters}
+              className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl text-xs transition-colors"
+            >
+              Reset Filter
+            </button>
+          </div>
         </div>
       </div>
 
@@ -113,15 +115,16 @@ const VisitHistoryPage = () => {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="border-b border-gray-100 bg-gray-50/80 text-gray-500 font-semibold text-xs uppercase tracking-wider">
                     <th className="px-5 py-3.5">Tamu</th>
                     <th className="px-5 py-3.5">Bertemu</th>
-                    <th className="px-5 py-3.5">Keperluan</th>
-                    <th className="px-5 py-3.5">Waktu Check-In</th>
-                    <th className="px-5 py-3.5">Waktu Check-Out</th>
+                    <th className="px-5 py-3.5 hidden lg:table-cell">Keperluan</th>
+                    <th className="px-5 py-3.5">Check-In</th>
+                    <th className="px-5 py-3.5 hidden lg:table-cell">Check-Out</th>
                     <th className="px-5 py-3.5 text-center">Status</th>
                   </tr>
                 </thead>
@@ -133,12 +136,12 @@ const VisitHistoryPage = () => {
                         <p className="text-xs text-gray-400">{visit.visitor?.company || 'Pribadi'}</p>
                       </td>
                       <td className="px-5 py-3.5 font-medium text-gray-800">{visit.meet_to}</td>
-                      <td className="px-5 py-3.5 text-xs text-gray-600 max-w-xs truncate">{visit.purpose}</td>
-                      <td className="px-5 py-3.5 text-xs text-gray-700">
-                        {dayjs(visit.check_in).format('DD/MM/YYYY HH:mm')}
+                      <td className="px-5 py-3.5 text-xs text-gray-600 max-w-xs truncate hidden lg:table-cell">{visit.purpose}</td>
+                      <td className="px-5 py-3.5 text-xs text-gray-700 whitespace-nowrap">
+                        {dayjs(visit.check_in).format('DD/MM/YY HH:mm')}
                       </td>
-                      <td className="px-5 py-3.5 text-xs text-gray-700">
-                        {visit.check_out ? dayjs(visit.check_out).format('DD/MM/YYYY HH:mm') : '—'}
+                      <td className="px-5 py-3.5 text-xs text-gray-700 whitespace-nowrap hidden lg:table-cell">
+                        {visit.check_out ? dayjs(visit.check_out).format('DD/MM/YY HH:mm') : '—'}
                       </td>
                       <td className="px-5 py-3.5 text-center">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
@@ -155,14 +158,56 @@ const VisitHistoryPage = () => {
               </table>
             </div>
 
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {visits.map((visit) => (
+                <div key={visit.id} className="p-4 hover:bg-gray-50/60 transition-colors">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-gray-900 truncate">{visit.visitor?.name}</p>
+                      <p className="text-xs text-gray-400">{visit.visitor?.company || 'Pribadi'}</p>
+                    </div>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${
+                      visit.status === 'IN'
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                    }`}>
+                      {visit.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-20">Bertemu:</span>
+                      <span className="font-medium text-gray-800">{visit.meet_to}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-20">Keperluan:</span>
+                      <span className="text-gray-700 line-clamp-2">{visit.purpose}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-20">Check-In:</span>
+                      <span className="font-semibold text-gray-800">{dayjs(visit.check_in).format('DD/MM/YYYY HH:mm')}</span>
+                    </div>
+                    {visit.check_out && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-gray-500 flex-shrink-0 w-20">Check-Out:</span>
+                        <span className="font-semibold text-gray-800">{dayjs(visit.check_out).format('DD/MM/YYYY HH:mm')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Pagination */}
             {meta && meta.last_page > 1 && (
-              <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100 bg-gray-50/40">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 border-t border-gray-100 bg-gray-50/40">
                 <p className="text-xs text-gray-500">
-                  Menampilkan {meta.from}–{meta.to} dari total {meta.total} data
+                  {meta.from}–{meta.to} dari {meta.total} data
                 </p>
-                <div className="flex gap-1">
-                  {Array.from({ length: meta.last_page }, (_, i) => i + 1).map((p) => (
+                <div className="flex gap-1 flex-wrap justify-center">
+                  {Array.from({ length: Math.min(meta.last_page, 7) }, (_, i) => i + 1).map((p) => (
                     <button
                       key={p}
                       onClick={() => setPage(p)}

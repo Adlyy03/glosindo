@@ -30,6 +30,8 @@ function App() {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -59,7 +61,7 @@ function App() {
             path="/*"
             element={
               <div className="min-h-screen bg-gray-50 flex flex-col">
-                <Sidebar isOpen={sidebarOpen} />
+                <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
                 <div className={`transition-all duration-300 flex-1 flex flex-col ${sidebarOpen ? 'lg:ml-64' : 'ml-0'}`}>
                   <Navbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
                   <main className="flex-1">

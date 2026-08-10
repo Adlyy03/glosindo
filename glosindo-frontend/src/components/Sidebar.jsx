@@ -81,31 +81,40 @@ const navItems = [
   },
 ];
 
-const Sidebar = ({ isOpen }) => {
+const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useAuthStore();
   const role = user?.role;
 
   const visible = navItems.filter((item) => item.roles.includes(role));
 
   return (
-    <aside
-      className={`
-        fixed top-0 left-0 h-full z-40 bg-white border-r border-gray-200 shadow-lg
-        transition-transform duration-300 ease-in-out w-64
-        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}
-    >
+    <>
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/30 z-30 lg:hidden"
+          onClick={onClose} 
+        />
+      )}
+      
+      <aside
+        className={`
+          fixed top-0 left-0 h-full z-40 bg-white border-r border-gray-200 shadow-lg
+          transition-transform duration-300 ease-in-out w-64
+          ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
       {/* Brand header */}
       <div className="h-16 flex items-center px-5 border-b border-gray-100 bg-blue-700">
         <span className="text-white font-bold text-lg tracking-wide">GLOSINDO</span>
       </div>
 
-      {/* Nav items */}
       <nav className="py-4 px-3">
         {visible.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}
+            onClick={() => window.innerWidth < 1024 && onClose && onClose()}
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium transition-colors
               ${isActive
@@ -132,6 +141,7 @@ const Sidebar = ({ isOpen }) => {
         </div>
       </div>
     </aside>
+    </>
   );
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import visitorService from '../services/visitorService';
 import faceService from '../services/faceService';
@@ -17,6 +17,11 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
   const [faceVector, setFaceVector] = useState(faceVectorPreset || null);
   const [showWebcam, setShowWebcam] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Update faceVector saat faceVectorPreset berubah
+  useEffect(() => {
+    setFaceVector(faceVectorPreset || null);
+  }, [faceVectorPreset]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];

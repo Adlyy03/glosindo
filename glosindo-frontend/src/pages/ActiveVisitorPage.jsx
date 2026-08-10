@@ -87,69 +87,125 @@ const ActiveVisitorPage = () => {
             <p className="text-xs text-gray-500 mt-1">Saat ini seluruh pengunjung telah melakukan check-out.</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/80 text-gray-500 font-semibold text-xs uppercase tracking-wider">
-                  <th className="px-5 py-3.5">Nama Tamu</th>
-                  <th className="px-5 py-3.5">Bertemu Dengan</th>
-                  <th className="px-5 py-3.5">Maksud Keperluan</th>
-                  <th className="px-5 py-3.5">Jam Masuk (IN)</th>
-                  <th className="px-5 py-3.5 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {activeVisits.map((visit) => (
-                  <tr key={visit.id} className="hover:bg-blue-50/20 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-sm flex-shrink-0">
-                          {visit.visitor?.name?.charAt(0)?.toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900">{visit.visitor?.name}</p>
-                          <p className="text-xs text-gray-400">{visit.visitor?.company || 'Pribadi'}</p>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="px-5 py-4 font-semibold text-gray-800">
-                      {visit.meet_to}
-                    </td>
-
-                    <td className="px-5 py-4 text-gray-600 max-w-xs">
-                      <p className="truncate text-xs">{visit.purpose}</p>
-                    </td>
-
-                    <td className="px-5 py-4 text-xs font-semibold text-blue-700">
-                      <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100">
-                        {dayjs(visit.check_in).format('HH:mm [WIB] — D MMM YYYY')}
-                      </span>
-                    </td>
-
-                    <td className="px-5 py-4 text-right">
-                      <button
-                        onClick={() => handleCheckout(visit)}
-                        disabled={checkingOutId === visit.id}
-                        className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold text-xs shadow-xs transition-all flex items-center gap-1.5 ml-auto"
-                      >
-                        {checkingOutId === visit.id ? (
-                          'Proses...'
-                        ) : (
-                          <>
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                            </svg>
-                            Check-Out (OUT)
-                          </>
-                        )}
-                      </button>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50/80 text-gray-500 font-semibold text-xs uppercase tracking-wider">
+                    <th className="px-5 py-3.5">Nama Tamu</th>
+                    <th className="px-5 py-3.5">Bertemu Dengan</th>
+                    <th className="px-5 py-3.5 hidden lg:table-cell">Maksud Keperluan</th>
+                    <th className="px-5 py-3.5">Jam Masuk (IN)</th>
+                    <th className="px-5 py-3.5 text-right">Aksi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {activeVisits.map((visit) => (
+                    <tr key={visit.id} className="hover:bg-blue-50/20 transition-colors">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-sm flex-shrink-0">
+                            {visit.visitor?.name?.charAt(0)?.toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">{visit.visitor?.name}</p>
+                            <p className="text-xs text-gray-400">{visit.visitor?.company || 'Pribadi'}</p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="px-5 py-4 font-semibold text-gray-800">
+                        {visit.meet_to}
+                      </td>
+
+                      <td className="px-5 py-4 text-gray-600 max-w-xs hidden lg:table-cell">
+                        <p className="truncate text-xs">{visit.purpose}</p>
+                      </td>
+
+                      <td className="px-5 py-4 text-xs font-semibold text-blue-700">
+                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-100 whitespace-nowrap">
+                          {dayjs(visit.check_in).format('HH:mm — D MMM')}
+                        </span>
+                      </td>
+
+                      <td className="px-5 py-4 text-right">
+                        <button
+                          onClick={() => handleCheckout(visit)}
+                          disabled={checkingOutId === visit.id}
+                          className="px-3.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold text-xs shadow-xs transition-all inline-flex items-center gap-1.5"
+                        >
+                          {checkingOutId === visit.id ? (
+                            'Proses...'
+                          ) : (
+                            <>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                              </svg>
+                              <span className="hidden lg:inline">Check-Out</span>
+                              <span className="lg:hidden">OUT</span>
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {activeVisits.map((visit) => (
+                <div key={visit.id} className="p-4 hover:bg-blue-50/20 transition-colors">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-sm flex-shrink-0">
+                        {visit.visitor?.name?.charAt(0)?.toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-gray-900 truncate">{visit.visitor?.name}</p>
+                        <p className="text-xs text-gray-400">{visit.visitor?.company || 'Pribadi'}</p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold flex-shrink-0">IN</span>
+                  </div>
+                  
+                  <div className="space-y-2 text-xs mb-3">
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-20">Bertemu:</span>
+                      <span className="font-semibold text-gray-900">{visit.meet_to}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-20">Keperluan:</span>
+                      <span className="text-gray-700 line-clamp-2">{visit.purpose}</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <span className="text-gray-500 flex-shrink-0 w-20">Jam Masuk:</span>
+                      <span className="font-semibold text-blue-700">{dayjs(visit.check_in).format('HH:mm — D MMM YYYY')}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleCheckout(visit)}
+                    disabled={checkingOutId === visit.id}
+                    className="w-full px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold text-sm shadow-xs transition-all flex items-center justify-center gap-2"
+                  >
+                    {checkingOutId === visit.id ? (
+                      'Proses...'
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Check-Out (OUT)
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
