@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import SuccessScreen from '../components/SplashOverlay';
 import VisitorFormPage from './VisitorFormPage';
@@ -8,6 +8,7 @@ import visitorService from '../services/visitorService';
 
 const CheckInPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [splashOpen, setSplashOpen] = useState(false);
@@ -166,7 +167,10 @@ const CheckInPage = () => {
                   <div className="flex gap-3 pt-2">
                     <button
                       type="button"
-                      onClick={() => setSelectedVisitor(null)}
+                      onClick={() => {
+                        setSelectedVisitor(null);
+                        navigate('/check-in');
+                      }}
                       className="px-4 py-2.5 rounded-xl border border-gray-300 text-gray-600 text-sm font-semibold hover:bg-gray-50"
                     >
                       Batal

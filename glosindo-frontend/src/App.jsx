@@ -9,6 +9,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CheckInCameraPage from './pages/CheckInCameraPage';
 import CheckInPage from './pages/CheckInPage';
+import QuickCheckInPage from './pages/QuickCheckInPage';
 import ActiveVisitorPage from './pages/ActiveVisitorPage';
 import VisitHistoryPage from './pages/VisitHistoryPage';
 import VisitorListPage from './pages/VisitorListPage';
@@ -68,6 +69,7 @@ function App() {
                   <main className="flex-1">
                     <Routes>
                       <Route path="/dashboard" element={<DashboardPage />} />
+                      <Route path="/quick-check-in" element={<QuickCheckInPage />} />
                       <Route path="/check-in" element={<CheckInCameraPage />} />
                       <Route path="/check-in/manual" element={<CheckInPage />} />
                       <Route path="/active-visitors" element={<ActiveVisitorPage />} />
