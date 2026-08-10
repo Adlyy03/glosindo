@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import FaceScanner from '../../components/FaceScanner';
 import visitorService from '../../services/visitorService';
 import visitService from '../../services/visitService';
 
@@ -9,9 +10,11 @@ const ReceptionistCheckInPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedVisitorId, setSelectedVisitorId] = useState('');
+  const [selectedVisitorName, setSelectedVisitorName] = useState('');
   const [purpose, setPurpose] = useState('');
   const [meetTo, setMeetTo] = useState('');
   const [message, setMessage] = useState('');
+  const [scanMessage, setScanMessage] = useState('');
 
   useEffect(() => {
     const load = async () => {
@@ -47,24 +50,44 @@ const ReceptionistCheckInPage = () => {
 
       <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-gray-900">Status Kamera</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Scan Wajah untuk Check-In</h2>
           <div className="mt-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50 p-6 text-center text-sm text-emerald-700">
-            Kamera siap. Silakan mulai scan wajah untuk memproses tamu.
+            <FaceScanner
+              onMatchFound={(visitor) => {
+                setSelectedVisitorId(visitor.visitor_id);
+                setSelectedVisitorName(visitor.name);
+                setScanMessage(`Wajah cocok dengan ${visitor.name}`);
+                setMessage('');
+              }}
+              onNoMatch={() => {
+                setScanMessage('Wajah tidak terdaftar. Pilih tamu manual atau registrasi baru.');
+              }}
+            />
+          </div>
+
+          <div className="mt-4 text-sm text-gray-600">
+            {scanMessage || 'Arahkan wajah tamu ke kamera untuk mengidentifikasi dan memilih tamu secara otomatis.'}
           </div>
 
           <form onSubmit={handleCheckIn} className="mt-6 space-y-3">
-            <select value={selectedVisitorId} onChange={(e) => setSelectedVisitorId(e.target.value)} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm" required>
-              <option value="">Pilih tamu</option>
-              {visitors.map((visitor) => (
-                <option key={visitor.id} value={visitor.id}>{visitor.name}</option>
-              ))}
-            </select>
+            <div>
+              <select value={selectedVisitorId} onChange={(e) => { setSelectedVisitorId(e.target.value); setSelectedVisitorName(''); }} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm" required>
+                <option value="">Pilih tamu</option>
+                {visitors.map((visitor) => (
+                  <option key={visitor.id} value={visitor.id}>{visitor.name}</option>
+                ))}
+              </select>
+              {selectedVisitorName && (
+                <p className="mt-2 text-sm text-green-700">Tamu terpilih via scan: {selectedVisitorName}</p>
+              )}
+            </div>
             <input value={purpose} onChange={(e) => setPurpose(e.target.value)} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm" placeholder="Tujuan kunjungan" required />
             <input value={meetTo} onChange={(e) => setMeetTo(e.target.value)} className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm" placeholder="Yang ditemui" required />
             <button type="submit" className="w-full rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white">Proses Check-In</button>
           </form>
 
           {message && <p className="mt-3 text-sm text-gray-700">{message}</p>}
+          {scanMessage && <p className="mt-3 text-sm text-gray-700">{scanMessage}</p>}
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
         </div>
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">

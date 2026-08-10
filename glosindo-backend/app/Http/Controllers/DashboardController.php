@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Visit;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -18,10 +19,10 @@ class DashboardController extends Controller
     {
         $stats = [
             'total_visitor' => Visitor::count(),
-            'visitor_today' => Visit::whereDate('check_in', today())->distinct('visitor_id')->count('visitor_id'),
+            'visitor_today' => Visit::whereDate('check_in', Carbon::today())->distinct('visitor_id')->count('visitor_id'),
             'active_visitor' => Visit::where('status', 'IN')->count(),
-            'total_visit_this_month' => Visit::whereMonth('check_in', now()->month)
-                ->whereYear('check_in', now()->year)
+            'total_visit_this_month' => Visit::whereMonth('check_in', Carbon::now()->month)
+                ->whereYear('check_in', Carbon::now()->year)
                 ->count(),
         ];
 
@@ -42,7 +43,7 @@ class DashboardController extends Controller
                 DB::raw('DATE(check_in) as date'),
                 DB::raw('COUNT(*) as count')
             )
-            ->where('check_in', '>=', now()->subDays(7))
+            ->where('check_in', '>=', Carbon::now()->subDays(7))
             ->groupBy('date')
             ->orderBy('date', 'asc')
             ->get();
@@ -65,7 +66,7 @@ class DashboardController extends Controller
                 DB::raw('MONTH(check_in) as month'),
                 DB::raw('COUNT(*) as count')
             )
-            ->where('check_in', '>=', now()->subMonths(6))
+            ->where('check_in', '>=', Carbon::now()->subMonths(6))
             ->groupBy('year', 'month')
             ->orderBy('year', 'asc')
             ->orderBy('month', 'asc')

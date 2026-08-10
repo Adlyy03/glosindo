@@ -1,12 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
+import FaceScanner from '../components/FaceScanner';
+import SuccessScreen from '../components/SplashOverlay';
 import visitService from '../services/visitService';
 
 const ActiveVisitorPage = () => {
   const [activeVisits, setActiveVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkingOutId, setCheckingOutId] = useState(null);
+  const [verificationVisit, setVerificationVisit] = useState(null);
+  const [verificationMessage, setVerificationMessage] = useState('');
+  const [verificationError, setVerificationError] = useState('');
+  const [splashOpen, setSplashOpen] = useState(false);
+  const [splashTitle, setSplashTitle] = useState('');
+  const [splashSubtitle, setSplashSubtitle] = useState('');
 
   const fetchActive = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -31,19 +39,45 @@ const ActiveVisitorPage = () => {
     return () => clearInterval(interval);
   }, [fetchActive]);
 
-  const handleCheckout = async (visit) => {
-    if (!window.confirm(`Proses check-out untuk ${visit.visitor?.name}?`)) return;
+  const handleScanMatch = async (visitor) => {
+    if (!verificationVisit) {
+      setVerificationMessage(`Tamu ${visitor.name} teridentifikasi, tetapi tidak ada sesi checkout aktif.`);
+      return;
+    }
 
-    setCheckingOutId(visit.id);
+    const expectedVisitorId = verificationVisit.visitor?.id || verificationVisit.visitor_id;
+    if (visitor.visitor_id !== expectedVisitorId) {
+      setVerificationError('Wajah tidak cocok dengan tamu yang dipilih untuk checkout. Coba lagi.');
+      return;
+    }
+
+    setCheckingOutId(verificationVisit.id);
     try {
-      await visitService.checkOut(visit.id);
-      toast.success(`Check-Out Berhasil! ${visit.visitor?.name} telah keluar.`, { icon: '👋' });
+      await visitService.checkOut(verificationVisit.id);
+      toast.success(`Check-Out Berhasil! ${verificationVisit.visitor?.name} telah keluar.`, { icon: '👋' });
+      setSplashTitle('Terimakasih telah datang ke Glosindo');
+      setSplashSubtitle(`Sampai jumpa kembali, ${verificationVisit.visitor?.name}.`);
+      setSplashOpen(true);
+      setVerificationMessage(`Checkout ${verificationVisit.visitor?.name} selesai.`);
+      setVerificationVisit(null);
+      setVerificationError('');
       fetchActive();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Gagal melakukan check-out');
     } finally {
       setCheckingOutId(null);
     }
+  };
+
+  const handleScanNoMatch = () => {
+    setVerificationError('Wajah tidak terdaftar. Pastikan wajah jelas saat scan.');
+  };
+
+  const handleCheckout = (visit) => {
+    setVerificationVisit(visit);
+    setVerificationMessage(`Scan wajah ${visit.visitor?.name || 'tamu'} untuk verifikasi checkout.`);
+    setVerificationError('');
+    setError('');
   };
 
   return (
@@ -71,6 +105,31 @@ const ActiveVisitorPage = () => {
 
       {/* Table Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900">Verifikasi Check-Out</h2>
+          {verificationVisit ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-blue-200 bg-blue-50 p-4">
+              <FaceScanner onMatchFound={handleScanMatch} onNoMatch={handleScanNoMatch} />
+              <p className="mt-3 text-sm text-gray-500">Arahkan wajah {verificationVisit.visitor?.name || 'tamu'} untuk verifikasi checkout.</p>
+              {verificationError && <p className="mt-2 text-sm text-red-600">{verificationError}</p>}
+              <button
+                onClick={() => setVerificationVisit(null)}
+                className="mt-3 rounded-xl border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Batalkan Verifikasi
+              </button>
+            </div>
+          ) : (
+            <p className="mt-4 text-sm text-gray-500">Klik tombol checkout pada tamu aktif untuk memulai verifikasi wajah.</p>
+          )}
+          {verificationMessage && <p className="mt-3 text-sm text-gray-700">{verificationMessage}</p>}
+          <SuccessScreen
+            open={splashOpen}
+            title={splashTitle}
+            subtitle={splashSubtitle}
+            onClose={() => setSplashOpen(false)}
+          />
+        </div>
         {loading ? (
           <div className="p-12 text-center">
             <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-3" />

@@ -3,6 +3,7 @@ import toast from 'react-hot-toast';
 import visitorService from '../services/visitorService';
 import faceService from '../services/faceService';
 import WebcamCapture from '../components/WebcamCapture';
+import SuccessScreen from '../components/SplashOverlay';
 
 const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel }) => {
   const isEditing = Boolean(visitorToEdit?.id);
@@ -17,6 +18,9 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
   const [faceVector, setFaceVector] = useState(faceVectorPreset || null);
   const [showWebcam, setShowWebcam] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [splashOpen, setSplashOpen] = useState(false);
+  const [splashTitle, setSplashTitle] = useState('');
+  const [splashSubtitle, setSplashSubtitle] = useState('');
 
   // Update faceVector saat faceVectorPreset berubah
   useEffect(() => {
@@ -63,6 +67,9 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
         const res = await visitorService.create(formData);
         savedVisitor = res.data;
         toast.success(`Tamu baru ${name} berhasil terdaftar`);
+        setSplashTitle('Selamat datang di Glosindo');
+        setSplashSubtitle(`Halo ${name}, wajah Anda sudah terdaftar.`);
+        setSplashOpen(true);
       }
 
       // Save face embedding vector if captured
@@ -111,6 +118,12 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
+        <SuccessScreen
+          open={splashOpen}
+          title={splashTitle}
+          subtitle={splashSubtitle}
+          onClose={() => setSplashOpen(false)}
+        />
         {/* Name */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Visit;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class VisitController extends Controller
@@ -190,7 +191,7 @@ class VisitController extends Controller
         }
 
         $visit->update([
-            'check_out' => now(),
+            'check_out' => Carbon::now(),
             'status' => 'OUT',
         ]);
 

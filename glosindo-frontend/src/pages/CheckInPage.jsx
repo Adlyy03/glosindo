@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import FaceScanner from '../components/FaceScanner';
+import SuccessScreen from '../components/SplashOverlay';
 import VisitorFormPage from './VisitorFormPage';
 import visitService from '../services/visitService';
 import visitorService from '../services/visitorService';
@@ -11,6 +12,9 @@ const CheckInPage = () => {
   const [faceDescriptor, setFaceDescriptor] = useState(null);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [embeddingsRefreshToken, setEmbeddingsRefreshToken] = useState(0);
+  const [splashOpen, setSplashOpen] = useState(false);
+  const [splashTitle, setSplashTitle] = useState('');
+  const [splashSubtitle, setSplashSubtitle] = useState('');
 
   // Visit details form
   const [purpose, setPurpose] = useState('');
@@ -23,8 +27,14 @@ const CheckInPage = () => {
   const [searching, setSearching] = useState(false);
 
   const handleMatchFound = (visitor) => {
-    setSelectedVisitor(visitor);
+    setSelectedVisitor({
+      ...visitor,
+      id: visitor.visitor_id,
+    });
     setShowRegisterForm(false);
+    setSplashTitle('Selamat datang kembali di Glosindo');
+    setSplashSubtitle(`Halo ${visitor.name}, terima kasih sudah kembali.`);
+    setSplashOpen(true);
     toast.success(`Wajah cocok dengan ${visitor.name}`);
   };
 
@@ -206,17 +216,24 @@ const CheckInPage = () => {
               onCancel={() => setShowRegisterForm(false)}
             />
           ) : selectedVisitor ? (
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
-              <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-lg flex-shrink-0">
-                  {selectedVisitor.name?.charAt(0)?.toUpperCase()}
+            <>
+              <SuccessScreen
+                open={splashOpen}
+                title={splashTitle}
+                subtitle={splashSubtitle}
+                onClose={() => setSplashOpen(false)}
+              />
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+                <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-lg flex-shrink-0">
+                    {selectedVisitor.name?.charAt(0)?.toUpperCase()}
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Tamu Terpilih</span>
+                    <h3 className="text-lg font-bold text-gray-900">{selectedVisitor.name}</h3>
+                    <p className="text-xs text-gray-500">{selectedVisitor.company || 'Instansi tidak diisi'} • {selectedVisitor.phone || 'Tanpa no. telepon'}</p>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Tamu Terpilih</span>
-                  <h3 className="text-lg font-bold text-gray-900">{selectedVisitor.name}</h3>
-                  <p className="text-xs text-gray-500">{selectedVisitor.company || 'Instansi tidak diisi'} • {selectedVisitor.phone || 'Tanpa no. telepon'}</p>
-                </div>
-              </div>
 
               <form onSubmit={handleCheckInSubmit} className="space-y-4">
                 <div>
@@ -273,7 +290,8 @@ const CheckInPage = () => {
                   </button>
                 </div>
               </form>
-            </div>
+              </div>
+            </>
           ) : (
             <div className="bg-white rounded-2xl p-10 text-center border border-gray-100 shadow-sm flex flex-col items-center justify-center min-h-[300px]">
               <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
