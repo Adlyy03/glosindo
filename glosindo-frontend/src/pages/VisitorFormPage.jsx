@@ -19,8 +19,7 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
   const [showWebcam, setShowWebcam] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [splashOpen, setSplashOpen] = useState(false);
-  const [splashTitle, setSplashTitle] = useState('');
-  const [splashSubtitle, setSplashSubtitle] = useState('');
+  const [splashVisitorName, setSplashVisitorName] = useState('');
 
   // Update faceVector saat faceVectorPreset berubah
   useEffect(() => {
@@ -67,8 +66,7 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
         const res = await visitorService.create(formData);
         savedVisitor = res.data;
         toast.success(`Tamu baru ${name} berhasil terdaftar`);
-        setSplashTitle('Selamat datang di Glosindo');
-        setSplashSubtitle(`Halo ${name}, wajah Anda sudah terdaftar.`);
+        setSplashVisitorName(name);
         setSplashOpen(true);
       }
 
@@ -120,8 +118,9 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       <form onSubmit={handleSubmit} className="space-y-5">
         <SuccessScreen
           open={splashOpen}
-          title={splashTitle}
-          subtitle={splashSubtitle}
+          type="newvisitor"
+          visitorName={splashVisitorName}
+          meta={{}}
           onClose={() => setSplashOpen(false)}
         />
         {/* Name */}

@@ -13,8 +13,8 @@ const ActiveVisitorPage = () => {
   const [verificationMessage, setVerificationMessage] = useState('');
   const [verificationError, setVerificationError] = useState('');
   const [splashOpen, setSplashOpen] = useState(false);
-  const [splashTitle, setSplashTitle] = useState('');
-  const [splashSubtitle, setSplashSubtitle] = useState('');
+  const [splashVisitorName, setSplashVisitorName] = useState('');
+  const [splashMeta, setSplashMeta] = useState({});
 
   const fetchActive = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -55,8 +55,8 @@ const ActiveVisitorPage = () => {
     try {
       await visitService.checkOut(verificationVisit.id);
       toast.success(`Check-Out Berhasil! ${verificationVisit.visitor?.name} telah keluar.`, { icon: '👋' });
-      setSplashTitle('Terimakasih telah datang ke Glosindo');
-      setSplashSubtitle(`Sampai jumpa kembali, ${verificationVisit.visitor?.name}.`);
+      setSplashVisitorName(verificationVisit.visitor?.name || 'Tamu');
+      setSplashMeta({ checkOutTime: new Date() });
       setSplashOpen(true);
       setVerificationMessage(`Checkout ${verificationVisit.visitor?.name} selesai.`);
       setVerificationVisit(null);
@@ -125,8 +125,9 @@ const ActiveVisitorPage = () => {
           {verificationMessage && <p className="mt-3 text-sm text-gray-700">{verificationMessage}</p>}
           <SuccessScreen
             open={splashOpen}
-            title={splashTitle}
-            subtitle={splashSubtitle}
+            type="checkout"
+            visitorName={splashVisitorName}
+            meta={splashMeta}
             onClose={() => setSplashOpen(false)}
           />
         </div>
