@@ -33,6 +33,48 @@ class FaceEmbeddingController extends Controller
     }
 
     /**
+     * Check if face already registered (duplicate detection).
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function checkDuplicate(Request $request)
+    {
+        $this->validate($request, [
+            'face_vector' => 'required|array',
+            'face_vector.*' => 'required|numeric',
+        ]);
+
+        if (count($request->face_vector) !== 128) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Face vector must contain exactly 128 dimensions',
+            ], 422);
+        }
+
+        $embeddings = FaceEmbedding::with('visitor:id,name,company,photo')->get();
+        $threshold = 0.6; // Euclidean distance threshold
+
+        foreach ($embeddings as $embedding) {
+            $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
+            
+            if ($distance < $threshold) {
+                return response()->json([
+                    'success' => true,
+                    'duplicate' => true,
+                    'visitor' => $embedding->visitor,
+                    'distance' => $distance,
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'duplicate' => false,
+        ]);
+    }
+
+    /**
      * Store or update face embedding for a visitor.
      *
      * @param  \Illuminate\Http\Request  $request
@@ -63,6 +105,25 @@ class FaceEmbeddingController extends Controller
             ], 422);
         }
 
+        // Check duplicate face before storing (except own embedding)
+        $embeddings = FaceEmbedding::where('visitor_id', '!=', $visitorId)->get();
+        $threshold = 0.6;
+
+        foreach ($embeddings as $embedding) {
+            $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
+            
+            if ($distance < $threshold) {
+                $existingVisitor = Visitor::find($embedding->visitor_id);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Face already registered',
+                    'duplicate' => true,
+                    'existing_visitor' => $existingVisitor,
+                    'distance' => $distance,
+                ], 422);
+            }
+        }
+
         // Update or create face embedding
         $embedding = FaceEmbedding::updateOrCreate(
             ['visitor_id' => $visitorId],
@@ -74,6 +135,22 @@ class FaceEmbeddingController extends Controller
             'message' => 'Face embedding saved successfully',
             'data' => $embedding,
         ], 201);
+    }
+
+    /**
+     * Calculate Euclidean distance between two face vectors.
+     *
+     * @param  array  $vector1
+     * @param  array  $vector2
+     * @return float
+     */
+    private function calculateEuclideanDistance($vector1, $vector2)
+    {
+        $sum = 0;
+        for ($i = 0; $i < count($vector1); $i++) {
+            $sum += pow($vector1[$i] - $vector2[$i], 2);
+        }
+        return sqrt($sum);
     }
 
     /**

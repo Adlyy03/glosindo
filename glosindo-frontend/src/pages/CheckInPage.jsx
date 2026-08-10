@@ -87,17 +87,24 @@ const CheckInPage = () => {
         meet_to: meetTo,
       });
 
+      // Show success screen
+      setSplashTitle('Berhasil Check-In!');
+      setSplashSubtitle(`Halo ${selectedVisitor.name}, terima kasih sudah mengisi buku tamu kami.`);
+      setSplashOpen(true);
+
       toast.success(`Check-In Berhasil! ${selectedVisitor.name} status IN.`, {
         duration: 4000,
         icon: '🎉',
       });
 
-      // Reset state for next visitor
-      setSelectedVisitor(null);
-      setPurpose('');
-      setMeetTo('');
-      setFaceDescriptor(null);
-      setShowRegisterForm(false);
+      // Reset state for next visitor after splash closes
+      setTimeout(() => {
+        setSelectedVisitor(null);
+        setPurpose('');
+        setMeetTo('');
+        setFaceDescriptor(null);
+        setShowRegisterForm(false);
+      }, 5000);
     } catch (err) {
       console.error('Check-in error:', err);
       const msg = err.response?.data?.message || 'Gagal melakukan check-in';

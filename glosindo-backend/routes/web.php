@@ -38,6 +38,7 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
 
     // Face Embeddings
     $router->get('face-embeddings', 'FaceEmbeddingController@index');
+    $router->post('face-embeddings/check-duplicate', 'FaceEmbeddingController@checkDuplicate');
     $router->post('visitors/{visitorId}/face-embedding', 'FaceEmbeddingController@store');
     $router->delete('visitors/{visitorId}/face-embedding', 'FaceEmbeddingController@destroy');
 

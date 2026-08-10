@@ -51,7 +51,36 @@ class VisitorController extends Controller
             'email' => 'nullable|email|max:255',
             'company' => 'nullable|string|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // 2MB max
+            'face_vector' => 'nullable|array',
+            'face_vector.*' => 'nullable|numeric',
         ]);
+
+        // Check duplicate face if face_vector provided
+        if ($request->has('face_vector') && is_array($request->face_vector)) {
+            if (count($request->face_vector) !== 128) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Face vector must contain exactly 128 dimensions',
+                ], 422);
+            }
+
+            $embeddings = \App\Models\FaceEmbedding::with('visitor:id,name,company,photo')->get();
+            $threshold = 0.6;
+
+            foreach ($embeddings as $embedding) {
+                $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
+                
+                if ($distance < $threshold) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Face already registered. Visitor already exists.',
+                        'duplicate' => true,
+                        'existing_visitor' => $embedding->visitor,
+                        'distance' => $distance,
+                    ], 422);
+                }
+            }
+        }
 
         $data = $request->only(['name', 'phone', 'email', 'company']);
 
@@ -65,11 +94,35 @@ class VisitorController extends Controller
 
         $visitor = Visitor::create($data);
 
+        // Save face embedding if provided
+        if ($request->has('face_vector') && is_array($request->face_vector)) {
+            \App\Models\FaceEmbedding::create([
+                'visitor_id' => $visitor->id,
+                'face_vector' => $request->face_vector,
+            ]);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Visitor created successfully',
             'data' => $visitor->load('faceEmbedding'),
         ], 201);
+    }
+
+    /**
+     * Calculate Euclidean distance between two face vectors.
+     *
+     * @param  array  $vector1
+     * @param  array  $vector2
+     * @return float
+     */
+    private function calculateEuclideanDistance($vector1, $vector2)
+    {
+        $sum = 0;
+        for ($i = 0; $i < count($vector1); $i++) {
+            $sum += pow($vector1[$i] - $vector2[$i], 2);
+        }
+        return sqrt($sum);
     }
 
     /**
