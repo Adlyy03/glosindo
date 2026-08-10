@@ -27,7 +27,9 @@ const visitorService = {
    * @returns {Promise}
    */
   create: async (data) => {
-    const response = await api.post('/visitors', data);
+    const response = await api.post('/visitors', data, {
+      headers: data instanceof FormData ? { 'Content-Type': undefined } : {},
+    });
     return response.data;
   },
 
@@ -40,7 +42,9 @@ const visitorService = {
   update: async (id, data) => {
     if (data instanceof FormData) {
       data.append('_method', 'PUT');
-      const response = await api.post(`/visitors/${id}`, data);
+      const response = await api.post(`/visitors/${id}`, data, {
+        headers: { 'Content-Type': undefined },
+      });
       return response.data;
     } else {
       const response = await api.put(`/visitors/${id}`, data);

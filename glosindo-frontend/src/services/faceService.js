@@ -22,6 +22,13 @@ const faceService = {
   },
 
   /**
+   * Compatibility alias used by the registration form.
+   */
+  saveEmbedding: async (visitorId, faceVector) => {
+    return faceService.save(visitorId, faceVector);
+  },
+
+  /**
    * Delete face embedding for a visitor
    * @param {number} visitorId
    */

@@ -11,6 +11,12 @@ import CheckInPage from './pages/CheckInPage';
 import ActiveVisitorPage from './pages/ActiveVisitorPage';
 import VisitHistoryPage from './pages/VisitHistoryPage';
 import VisitorListPage from './pages/VisitorListPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
+import ReceptionistCheckInPage from './pages/receptionist/ReceptionistCheckInPage';
+import ReceptionistActivePage from './pages/receptionist/ReceptionistActivePage';
+import ReceptionistHistoryPage from './pages/receptionist/ReceptionistHistoryPage';
+import ReceptionistVisitorPage from './pages/receptionist/ReceptionistVisitorPage';
 
 function App() {
   const { isAuthenticated, restoreSession } = useAuthStore();
@@ -63,6 +69,16 @@ function App() {
                       <Route path="/active-visitors" element={<ActiveVisitorPage />} />
                       <Route path="/visit-history" element={<VisitHistoryPage />} />
                       <Route path="/visitors" element={<VisitorListPage />} />
+                      <Route element={<ProtectedRoute allowedRoles={['receptionist']} />}>
+                        <Route path="/receptionist/check-in" element={<ReceptionistCheckInPage />} />
+                        <Route path="/receptionist/active" element={<ReceptionistActivePage />} />
+                        <Route path="/receptionist/history" element={<ReceptionistHistoryPage />} />
+                        <Route path="/receptionist/visitors" element={<ReceptionistVisitorPage />} />
+                      </Route>
+                      <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                        <Route path="/users" element={<AdminUsersPage />} />
+                        <Route path="/settings" element={<AdminSettingsPage />} />
+                      </Route>
                       <Route path="/" element={<Navigate to="/dashboard" replace />} />
                       <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>

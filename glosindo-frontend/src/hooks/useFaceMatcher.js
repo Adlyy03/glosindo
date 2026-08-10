@@ -38,7 +38,7 @@ const useFaceMatcher = () => {
     if (!liveDescriptor || embeddings.length === 0) return null;
 
     const threshold = parseFloat(
-      import.meta.env.VITE_FACE_MATCH_THRESHOLD || '0.5'
+      import.meta.env.VITE_FACE_MATCH_THRESHOLD || '0.7'
     );
 
     return findBestMatch(Array.from(liveDescriptor), embeddings, threshold);

@@ -10,6 +10,7 @@ const CheckInPage = () => {
   const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [faceDescriptor, setFaceDescriptor] = useState(null);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [embeddingsRefreshToken, setEmbeddingsRefreshToken] = useState(0);
 
   // Visit details form
   const [purpose, setPurpose] = useState('');
@@ -52,6 +53,7 @@ const CheckInPage = () => {
   const handleRegisterSuccess = (newVisitor) => {
     setSelectedVisitor(newVisitor);
     setShowRegisterForm(false);
+    setEmbeddingsRefreshToken((prev) => prev + 1);
     toast.success('Pendaftaran tamu berhasil! Lanjutkan mengisi keperluan kunjungan.');
   };
 
@@ -133,7 +135,11 @@ const CheckInPage = () => {
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 Live Camera Identification
               </h2>
-              <FaceScanner onMatchFound={handleMatchFound} onNoMatch={handleNoMatch} />
+              <FaceScanner
+                onMatchFound={handleMatchFound}
+                onNoMatch={handleNoMatch}
+                reloadSignal={embeddingsRefreshToken}
+              />
             </div>
           ) : (
             <div>

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import WebcamCapture from './WebcamCapture';
 import useFaceModels from '../hooks/useFaceModels';
 import useFaceMatcher from '../hooks/useFaceMatcher';
@@ -10,11 +10,17 @@ import { descriptorToArray } from '../utils/faceUtils';
  *   onMatchFound(visitor)   — called when face matches existing visitor
  *   onNoMatch(descriptor)   — called when no match (new visitor), passes descriptor
  */
-const FaceScanner = ({ onMatchFound, onNoMatch }) => {
+const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal }) => {
   const webcamRef = useRef(null);
   const { modelsLoaded, loading: modelsLoading, error: modelsError } = useFaceModels();
-  const { loading: embeddingsLoading, matchFace } = useFaceMatcher();
+  const { loading: embeddingsLoading, matchFace, reload } = useFaceMatcher();
   const [result, setResult] = useState(null); // { type: 'match'|'no_match', data }
+
+  useEffect(() => {
+    if (typeof reloadSignal === 'number' && reloadSignal > 0) {
+      reload();
+    }
+  }, [reloadSignal]);
 
   const handleScan = async () => {
     setResult(null);
