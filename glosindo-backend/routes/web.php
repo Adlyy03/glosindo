@@ -58,6 +58,30 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->get('dashboard/top-visitors', 'DashboardController@topVisitors');
 });
 
+// Swagger UI route
+$router->get('swagger', function () {
+    $path = public_path('swagger/index.html');
+    
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    
+    return response(file_get_contents($path), 200)->header('Content-Type', 'text/html');
+});
+
+// Serve OpenAPI YAML
+$router->get('docs/openapi.yaml', function () {
+    $path = base_path('docs/openapi.yaml');
+    
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    
+    return response(file_get_contents($path), 200)
+        ->header('Content-Type', 'text/yaml')
+        ->header('Access-Control-Allow-Origin', '*');
+});
+
 // Serve uploaded files
 $router->get('storage/{folder}/{filename}', function ($folder, $filename) {
     $path = storage_path('app/public/' . $folder . '/' . $filename);

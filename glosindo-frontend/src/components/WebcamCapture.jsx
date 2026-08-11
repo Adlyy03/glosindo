@@ -2,7 +2,7 @@ import { useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import Webcam from 'react-webcam';
 import * as faceapi from 'face-api.js';
 
-const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = true }, ref) => {
+const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = true, silentMode = false }, ref) => {
   const webcamRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState(null);
@@ -18,7 +18,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
    * Detect face on current video frame and return descriptor
    */
   const captureDescriptor = async () => {
-    setError(null);
+    if (!silentMode) setError(null);
     setScanning(true);
 
     try {
@@ -31,7 +31,9 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
         .withFaceDescriptor();
 
       if (!detection) {
-        setError('Wajah tidak terdeteksi. Pastikan wajah berada di tengah dan pencahayaan cukup.');
+        if (!silentMode) {
+          setError('Wajah tidak terdeteksi. Pastikan wajah berada di tengah dan pencahayaan cukup.');
+        }
         return null;
       }
 
@@ -44,7 +46,9 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
       return descriptor;
     } catch (err) {
       console.error('Face detection error:', err);
-      setError('Gagal mendeteksi wajah: ' + err.message);
+      if (!silentMode) {
+        setError('Gagal mendeteksi wajah: ' + err.message);
+      }
       return null;
     } finally {
       setScanning(false);
@@ -82,6 +86,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
             screenshotFormat="image/jpeg"
             videoConstraints={{ facingMode: 'user', width: 640, height: 480 }}
             onUserMediaError={handleUserMediaError}
+            mirrored={false}
             className="w-full h-full object-cover"
           />
 

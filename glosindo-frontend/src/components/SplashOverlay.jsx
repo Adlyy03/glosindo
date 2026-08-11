@@ -62,10 +62,10 @@ const SuccessScreen = ({ open, type = 'checkin', visitorName, meta = {}, onClose
   const config = TYPE_CONFIG[type] || TYPE_CONFIG.checkin;
 
   useEffect(() => {
-    if (!open) {
-      setCountdown(5);
-      return;
-    }
+    if (!open) return;
+
+    // Reset countdown pas baru open
+    setCountdown(5);
 
     const timer = setTimeout(() => {
       onClose?.();

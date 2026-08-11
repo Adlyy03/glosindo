@@ -1,0 +1,1287 @@
+openapi: 3.0.3
+info:
+  title: GLOSINDO Digital Guestbook API
+  description: API documentation for GLOSINDO Digital Guestbook system with JWT authentication and face recognition
+  version: 1.0.0
+  contact:
+    name: GLOSINDO API Support
+
+servers:
+  - url: http://api-guestbook.test/api
+    description: Local development server
+  - url: http://localhost:8000/api
+    description: Local server
+
+tags:
+  - name: Authentication
+    description: JWT authentication endpoints
+  - name: Visitors
+    description: Visitor management endpoints
+  - name: Face Embeddings
+    description: Face recognition and embedding endpoints
+  - name: Visits
+    description: Visit check-in/check-out management
+  - name: Dashboard
+    description: Dashboard statistics and reports
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from login endpoint
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Admin User"
+        email:
+          type: string
+          format: email
+          example: "admin@glosindo.com"
+        role:
+          type: string
+          enum: [admin, receptionist]
+          example: "admin"
+
+    Visitor:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "John Doe"
+        phone:
+          type: string
+          nullable: true
+          example: "081234567890"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "john@example.com"
+        company:
+          type: string
+          nullable: true
+          example: "PT Example"
+        photo:
+          type: string
+          nullable: true
+          example: "visitors/1234567890_photo.jpg"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        face_embedding:
+          $ref: '#/components/schemas/FaceEmbedding'
+        latest_visit:
+          $ref: '#/components/schemas/Visit'
+
+    FaceEmbedding:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        visitor_id:
+          type: integer
+          example: 1
+        face_vector:
+          type: array
+          items:
+            type: number
+            format: float
+          minItems: 128
+          maxItems: 128
+          description: 128-dimensional face descriptor array
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Visit:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        visitor_id:
+          type: integer
+          example: 1
+        purpose:
+          type: string
+          example: "Business meeting"
+        meet_to:
+          type: string
+          example: "Mr. Smith"
+        check_in:
+          type: string
+          format: date-time
+        check_out:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [IN, OUT]
+          example: "IN"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        visitor:
+          $ref: '#/components/schemas/Visitor'
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+
+paths:
+  /login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and obtain JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "admin@glosindo.com"
+                password:
+                  type: string
+                  format: password
+                  example: "password123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  token:
+                    type: string
+                    example: "eyJ0eXAiOiJKV1QiLCJhbGc..."
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Could not create token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me:
+    get:
+      tags:
+        - Authentication
+      summary: Get authenticated user
+      description: Get current authenticated user information
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User information retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Token is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      description: Invalidate JWT token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Successfully logged out"
+        '500':
+          description: Failed to logout
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh JWT token
+      description: Get a new JWT token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  token:
+                    type: string
+                    example: "eyJ0eXAiOiJKV1QiLCJhbGc..."
+        '500':
+          description: Could not refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /visitors:
+    get:
+      tags:
+        - Visitors
+      summary: Get all visitors
+      description: Get paginated list of visitors with optional search
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search by name, email, phone, or company
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Visitors retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Visitor'
+                      per_page:
+                        type: integer
+                      total:
+                        type: integer
+
+    post:
+      tags:
+        - Visitors
+      summary: Create new visitor
+      description: Register a new visitor with optional photo and face vector
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  example: "John Doe"
+                phone:
+                  type: string
+                  maxLength: 20
+                  example: "081234567890"
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                  example: "john@example.com"
+                company:
+                  type: string
+                  maxLength: 255
+                  example: "PT Example"
+                photo:
+                  type: string
+                  format: binary
+                  description: Image file (jpeg, png, jpg, max 2MB)
+                face_vector:
+                  type: array
+                  items:
+                    type: number
+                    format: float
+                  minItems: 128
+                  maxItems: 128
+                  description: 128-dimensional face descriptor array
+      responses:
+        '201':
+          description: Visitor created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Visitor created successfully"
+                  data:
+                    $ref: '#/components/schemas/Visitor'
+        '422':
+          description: Validation error or duplicate face detected
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Face already registered. Visitor already exists."
+                  duplicate:
+                    type: boolean
+                    example: true
+                  existing_visitor:
+                    $ref: '#/components/schemas/Visitor'
+                  distance:
+                    type: number
+                    format: float
+                    example: 0.45
+
+  /visitors/{id}:
+    get:
+      tags:
+        - Visitors
+      summary: Get visitor by ID
+      description: Get detailed visitor information including visits history
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Visitor ID
+      responses:
+        '200':
+          description: Visitor retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Visitor'
+        '404':
+          description: Visitor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Visitors
+      summary: Update visitor
+      description: Update visitor information
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Visitor ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  example: "John Doe Updated"
+                phone:
+                  type: string
+                  maxLength: 20
+                  example: "081234567890"
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                  example: "john.updated@example.com"
+                company:
+                  type: string
+                  maxLength: 255
+                  example: "PT Example Updated"
+                photo:
+                  type: string
+                  format: binary
+                  description: Image file (jpeg, png, jpg, max 2MB)
+      responses:
+        '200':
+          description: Visitor updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Visitor updated successfully"
+                  data:
+                    $ref: '#/components/schemas/Visitor'
+        '404':
+          description: Visitor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Visitors
+      summary: Update visitor (POST alternative)
+      description: Update visitor using POST method (form-data alternative)
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Visitor ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                phone:
+                  type: string
+                  maxLength: 20
+                email:
+                  type: string
+                  format: email
+                  maxLength: 255
+                company:
+                  type: string
+                  maxLength: 255
+                photo:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Visitor updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Visitor updated successfully"
+                  data:
+                    $ref: '#/components/schemas/Visitor'
+
+    delete:
+      tags:
+        - Visitors
+      summary: Delete visitor (Admin only)
+      description: Permanently delete a visitor record
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Visitor ID
+      responses:
+        '200':
+          description: Visitor deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Visitor deleted successfully"
+        '403':
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Visitor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /face-embeddings:
+    get:
+      tags:
+        - Face Embeddings
+      summary: Get all face embeddings
+      description: Get all face embeddings with visitor info for client-side matching
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Face embeddings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        visitor_id:
+                          type: integer
+                        name:
+                          type: string
+                        company:
+                          type: string
+                        face_vector:
+                          type: array
+                          items:
+                            type: number
+
+  /face-embeddings/check-duplicate:
+    post:
+      tags:
+        - Face Embeddings
+      summary: Check duplicate face
+      description: Check if a face is already registered
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - face_vector
+              properties:
+                face_vector:
+                  type: array
+                  items:
+                    type: number
+                    format: float
+                  minItems: 128
+                  maxItems: 128
+                  description: 128-dimensional face descriptor array
+      responses:
+        '200':
+          description: Check completed
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      duplicate:
+                        type: boolean
+                        example: false
+                  - type: object
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      duplicate:
+                        type: boolean
+                        example: true
+                      visitor:
+                        $ref: '#/components/schemas/Visitor'
+                      distance:
+                        type: number
+                        format: float
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /visitors/{visitorId}/face-embedding:
+    post:
+      tags:
+        - Face Embeddings
+      summary: Store face embedding
+      description: Store or update face embedding for a visitor
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: visitorId
+          required: true
+          schema:
+            type: integer
+          description: Visitor ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - face_vector
+              properties:
+                face_vector:
+                  type: array
+                  items:
+                    type: number
+                    format: float
+                  minItems: 128
+                  maxItems: 128
+                  description: 128-dimensional face descriptor array
+      responses:
+        '201':
+          description: Face embedding saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Face embedding saved successfully"
+                  data:
+                    $ref: '#/components/schemas/FaceEmbedding'
+        '404':
+          description: Visitor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Duplicate face or validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Face already registered"
+                  duplicate:
+                    type: boolean
+                    example: true
+                  existing_visitor:
+                    $ref: '#/components/schemas/Visitor'
+                  distance:
+                    type: number
+
+    delete:
+      tags:
+        - Face Embeddings
+      summary: Delete face embedding
+      description: Delete face embedding for a visitor
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: visitorId
+          required: true
+          schema:
+            type: integer
+          description: Visitor ID
+      responses:
+        '200':
+          description: Face embedding deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Face embedding deleted successfully"
+        '404':
+          description: Face embedding not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /visits:
+    get:
+      tags:
+        - Visits
+      summary: Get all visits
+      description: Get paginated list of visits with optional filters
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+          description: Filter by start date (YYYY-MM-DD)
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+          description: Filter by end date (YYYY-MM-DD)
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [IN, OUT]
+          description: Filter by status
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search by visitor name
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Visits retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Visit'
+                      per_page:
+                        type: integer
+                      total:
+                        type: integer
+
+    post:
+      tags:
+        - Visits
+      summary: Create new visit (Check-in)
+      description: Register a new visit check-in
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - visitor_id
+                - purpose
+                - meet_to
+              properties:
+                visitor_id:
+                  type: integer
+                  example: 1
+                purpose:
+                  type: string
+                  maxLength: 255
+                  example: "Business meeting"
+                meet_to:
+                  type: string
+                  maxLength: 255
+                  example: "Mr. Smith"
+      responses:
+        '201':
+          description: Check-in successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Check-in successful"
+                  data:
+                    $ref: '#/components/schemas/Visit'
+        '422':
+          description: Visitor already has active check-in
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /visits/active:
+    get:
+      tags:
+        - Visits
+      summary: Get active visitors
+      description: Get all visitors currently checked in (status IN)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active visits retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Visit'
+
+  /visits/history:
+    get:
+      tags:
+        - Visits
+      summary: Get visit history
+      description: Get paginated visit history with optional filters
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+          description: Filter by start date (YYYY-MM-DD)
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+          description: Filter by end date (YYYY-MM-DD)
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search by visitor name
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+      responses:
+        '200':
+          description: Visit history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Visit'
+                      per_page:
+                        type: integer
+                      total:
+                        type: integer
+
+  /visits/{id}:
+    get:
+      tags:
+        - Visits
+      summary: Get visit by ID
+      description: Get detailed visit information
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Visit ID
+      responses:
+        '200':
+          description: Visit retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Visit'
+        '404':
+          description: Visit not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Visits
+      summary: Delete visit (Admin only)
+      description: Permanently delete a visit record
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Visit ID
+      responses:
+        '200':
+          description: Visit deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Visit deleted successfully"
+        '403':
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Visit not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /visits/{id}/checkout:
+    put:
+      tags:
+        - Visits
+      summary: Check-out visitor
+      description: Update visit status to OUT and set check-out time
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Visit ID
+      responses:
+        '200':
+          description: Check-out successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Check-out successful"
+                  data:
+                    $ref: '#/components/schemas/Visit'
+        '404':
+          description: Visit not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Visit already checked out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /dashboard/stats:
+    get:
+      tags:
+        - Dashboard
+      summary: Get dashboard statistics
+      description: Get overall statistics for dashboard
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      total_visitor:
+                        type: integer
+                        example: 150
+                      visitor_today:
+                        type: integer
+                        example: 12
+                      active_visitor:
+                        type: integer
+                        example: 5
+                      total_visit_this_month:
+                        type: integer
+                        example: 87
+
+  /dashboard/visit-trends:
+    get:
+      tags:
+        - Dashboard
+      summary: Get visit trends
+      description: Get visit trends for last 7 days
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Visit trends retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                          example: "2026-08-11"
+                        count:
+                          type: integer
+                          example: 15
+
+  /dashboard/monthly-trends:
+    get:
+      tags:
+        - Dashboard
+      summary: Get monthly visit trends
+      description: Get monthly visit trends for last 6 months
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Monthly trends retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        year:
+                          type: integer
+                          example: 2026
+                        month:
+                          type: integer
+                          example: 8
+                        count:
+                          type: integer
+                          example: 87
+
+  /dashboard/top-visitors:
+    get:
+      tags:
+        - Dashboard
+      summary: Get top visitors
+      description: Get visitors with most visits
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Number of top visitors to return
+      responses:
+        '200':
+          description: Top visitors retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Visitor'
+                        - type: object
+                          properties:
+                            visits_count:
+                              type: integer
+                              example: 25

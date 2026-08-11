@@ -9,8 +9,9 @@ import { descriptorToArray } from '../utils/faceUtils';
  * Props:
  *   onMatchFound(visitor)   — called when face matches existing visitor
  *   onNoMatch(descriptor)   — called when no match (new visitor), passes descriptor
+ *   silentMode              — if true, no error alerts shown (for auto-scan mode)
  */
-const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal }) => {
+const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false }) => {
   const webcamRef = useRef(null);
   const { modelsLoaded, loading: modelsLoading, error: modelsError } = useFaceModels();
   const { loading: embeddingsLoading, matchFace, reload } = useFaceMatcher();
@@ -89,6 +90,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal }) => {
         ref={webcamRef}
         disabled={!modelsLoaded || embeddingsLoading}
         showButton={false}
+        silentMode={silentMode}
       />
 
       {/* Auto-scan indicator */}
