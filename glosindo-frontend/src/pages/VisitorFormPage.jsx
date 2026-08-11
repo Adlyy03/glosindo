@@ -56,6 +56,11 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       if (email) formData.append('email', email.trim());
       if (company) formData.append('company', company.trim());
       if (photoFile) formData.append('photo', photoFile);
+      if (faceVector && Array.isArray(faceVector) && faceVector.length === 128) {
+        faceVector.forEach((value) => {
+          formData.append('face_vector[]', value);
+        });
+      }
 
       let savedVisitor;
       if (isEditing) {

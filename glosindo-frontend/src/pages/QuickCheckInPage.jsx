@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import FaceScanner from '../components/FaceScanner';
 import SplashOverlay from '../components/SplashOverlay';
 import visitService from '../services/visitService';
 import toast from 'react-hot-toast';
 
 const QuickCheckInPage = () => {
+  const navigate = useNavigate();
   const [processing, setProcessing] = useState(false);
   const [splashOpen, setSplashOpen] = useState(false);
   const [splashType, setSplashType] = useState('checkin');
@@ -72,9 +74,12 @@ const QuickCheckInPage = () => {
   };
 
   const handleNoMatch = () => {
-    toast.error('Wajah belum terdaftar. Gunakan menu Check-In Tamu untuk registrasi.', {
-      duration: 4000,
+    toast.error('Wajah belum terdaftar. Redirect ke halaman registrasi...', {
+      duration: 2000,
     });
+    setTimeout(() => {
+      navigate('/check-in/manual');
+    }, 2000);
   };
 
   const handleSplashClose = () => {

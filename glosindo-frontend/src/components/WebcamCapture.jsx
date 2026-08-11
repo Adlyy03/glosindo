@@ -25,19 +25,20 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
       const video = webcamRef.current?.video;
       if (!video) throw new Error('Webcam tidak tersedia');
 
-      const detection = await faceapi
-        .detectSingleFace(video)
+      const detections = await faceapi
+        .detectAllFaces(video)
         .withFaceLandmarks()
-        .withFaceDescriptor();
+        .withFaceDescriptors();
 
-      if (!detection) {
+      if (!detections || detections.length === 0) {
         if (!silentMode) {
           setError('Wajah tidak terdeteksi. Pastikan wajah berada di tengah dan pencahayaan cukup.');
         }
         return null;
       }
 
-      const descriptor = detection.descriptor; // Float32Array[128]
+      const selected = detections.length === 1 ? detections[0] : selectPrimaryFace(detections, video);
+      const descriptor = selected.descriptor; // Float32Array[128]
 
       if (onDescriptorCapture) {
         onDescriptorCapture(descriptor);
@@ -64,6 +65,26 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
     } else {
       setError('Gagal mengakses kamera: ' + err.message);
     }
+  };
+
+  const selectPrimaryFace = (detections, video) => {
+    if (!detections || detections.length === 0) return null;
+
+    const centerX = video.videoWidth / 2;
+    const centerY = video.videoHeight / 2;
+
+    return detections
+      .map((detection) => {
+        const box = detection.detection.box;
+        const faceCenterX = box.x + box.width / 2;
+        const faceCenterY = box.y + box.height / 2;
+        const distanceToCenter = Math.hypot(faceCenterX - centerX, faceCenterY - centerY);
+        const area = box.width * box.height;
+        const score = distanceToCenter / Math.sqrt(area + 1);
+
+        return { detection, score };
+      })
+      .sort((a, b) => a.score - b.score)[0]?.detection || detections[0];
   };
 
   return (

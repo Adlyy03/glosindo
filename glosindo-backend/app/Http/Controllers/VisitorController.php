@@ -45,6 +45,14 @@ class VisitorController extends Controller
      */
     public function store(Request $request)
     {
+        $faceVectorInput = $request->input('face_vector');
+        if (is_string($faceVectorInput)) {
+            $decoded = json_decode($faceVectorInput, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $request->merge(['face_vector' => $decoded]);
+            }
+        }
+
         $this->validate($request, [
             'name' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
@@ -65,7 +73,7 @@ class VisitorController extends Controller
             }
 
             $embeddings = \App\Models\FaceEmbedding::with('visitor:id,name,company,photo')->get();
-            $threshold = 0.6;
+            $threshold = 0.5; // lower threshold to reduce false-positive duplicates
 
             foreach ($embeddings as $embedding) {
                 $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
