@@ -18,7 +18,13 @@ class VisitController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Visit::with('visitor');
+        $user = auth()->user();
+        $query = Visit::with(['visitor', 'receptionist:id,name,email']);
+
+        // Receptionist only see their own visits
+        if ($user->role === 'receptionist') {
+            $query->where('receptionist_id', $user->id);
+        }
 
         // Filter by date range
         if ($request->has('start_date') && !empty($request->start_date)) {
@@ -43,59 +49,6 @@ class VisitController extends Controller
         }
 
         $visits = $query->orderBy('check_in', 'desc')->paginate(15);
-
-        return response()->json([
-            'success' => true,
-            'data' => $visits,
-        ]);
-    }
-
-    /**
-     * Get active visitors (status IN).
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function active()
-    {
-        $visits = Visit::with('visitor')
-            ->where('status', 'IN')
-            ->orderBy('check_in', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $visits,
-        ]);
-    }
-
-    /**
-     * Get visit history with pagination.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function history(Request $request)
-    {
-        $query = Visit::with('visitor');
-
-        // Filter by date range
-        if ($request->has('start_date') && !empty($request->start_date)) {
-            $query->whereDate('check_in', '>=', $request->start_date);
-        }
-
-        if ($request->has('end_date') && !empty($request->end_date)) {
-            $query->whereDate('check_in', '<=', $request->end_date);
-        }
-
-        // Search by visitor name
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->search;
-            $query->whereHas('visitor', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
-            });
-        }
-
-        $visits = $query->orderBy('check_in', 'desc')->paginate(20);
 
         return response()->json([
             'success' => true,
@@ -131,15 +84,19 @@ class VisitController extends Controller
 
         $visit = Visit::create([
             'visitor_id' => $request->visitor_id,
+            'receptionist_id' => auth()->id(),
             'purpose' => $request->purpose,
             'meet_to' => $request->meet_to,
             'status' => 'IN',
         ]);
 
+        // Audit log
+        $visit->audit('checked_in', null, $visit->toArray(), "Visitor checked in");
+
         return response()->json([
             'success' => true,
             'message' => 'Check-in successful',
-            'data' => $visit->load('visitor'),
+            'data' => $visit->load(['visitor', 'receptionist:id,name,email']),
         ], 201);
     }
 
@@ -151,12 +108,20 @@ class VisitController extends Controller
      */
     public function show($id)
     {
-        $visit = Visit::with('visitor')->find($id);
+        $user = auth()->user();
+        $query = Visit::with(['visitor', 'receptionist:id,name,email']);
+
+        // Receptionist only see their own visits
+        if ($user->role === 'receptionist') {
+            $query->where('receptionist_id', $user->id);
+        }
+
+        $visit = $query->find($id);
 
         if (!$visit) {
             return response()->json([
                 'success' => false,
-                'message' => 'Visit not found',
+                'message' => 'Visit not found or you do not have permission',
             ], 404);
         }
 
@@ -174,12 +139,20 @@ class VisitController extends Controller
      */
     public function checkout($id)
     {
-        $visit = Visit::find($id);
+        $user = auth()->user();
+        $query = Visit::query();
+
+        // Receptionist only checkout their own visits
+        if ($user->role === 'receptionist') {
+            $query->where('receptionist_id', $user->id);
+        }
+
+        $visit = $query->find($id);
 
         if (!$visit) {
             return response()->json([
                 'success' => false,
-                'message' => 'Visit not found',
+                'message' => 'Visit not found or you do not have permission',
             ], 404);
         }
 
@@ -190,20 +163,25 @@ class VisitController extends Controller
             ], 422);
         }
 
+        $oldValues = $visit->toArray();
+
         $visit->update([
             'check_out' => Carbon::now(),
             'status' => 'OUT',
         ]);
 
+        // Audit log
+        $visit->audit('checked_out', $oldValues, $visit->fresh()->toArray(), "Visitor checked out");
+
         return response()->json([
             'success' => true,
             'message' => 'Check-out successful',
-            'data' => $visit->load('visitor'),
+            'data' => $visit->load(['visitor', 'receptionist:id,name,email']),
         ]);
     }
 
     /**
-     * Delete a visit record.
+     * Delete a visit record (admin only).
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
@@ -218,6 +196,9 @@ class VisitController extends Controller
                 'message' => 'Visit not found',
             ], 404);
         }
+
+        // Audit log before deletion
+        $visit->audit('deleted', $visit->toArray(), null, "Visit deleted by admin");
 
         $visit->delete();
 
