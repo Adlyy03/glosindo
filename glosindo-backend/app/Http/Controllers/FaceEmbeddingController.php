@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 class FaceEmbeddingController extends Controller
 {
     /**
-     * Get all face embeddings with visitor info (for client-side matching).
+     * Get all face embeddings with visitor info (ADMIN ONLY - sensitive biometric data).
+     * This endpoint should be restricted to admin in routes.
+     * For client-side matching, use checkDuplicate endpoint instead.
      *
      * @return \Illuminate\Http\Response
      */
@@ -154,7 +156,8 @@ class FaceEmbeddingController extends Controller
     }
 
     /**
-     * Delete face embedding for a visitor.
+     * Delete face embedding for a visitor (ADMIN ONLY).
+     * This should be restricted to admin in routes.
      *
      * @param  int  $visitorId
      * @return \Illuminate\Http\Response

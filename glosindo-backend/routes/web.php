@@ -28,6 +28,15 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->post('logout', 'AuthController@logout');
     $router->post('refresh', 'AuthController@refresh');
 
+    // User Management (Admin only)
+    $router->group(['middleware' => 'role:admin'], function () use ($router) {
+        $router->get('users', 'UserController@index');
+        $router->post('users', 'UserController@store');
+        $router->get('users/{id}', 'UserController@show');
+        $router->put('users/{id}', 'UserController@update');
+        $router->delete('users/{id}', 'UserController@destroy');
+    });
+
     // Visitors
     $router->get('visitors', 'VisitorController@index');
     $router->post('visitors', 'VisitorController@store');
@@ -37,25 +46,28 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->delete('visitors/{id}', ['middleware' => 'role:admin', 'uses' => 'VisitorController@destroy']);
 
     // Face Embeddings
-    $router->get('face-embeddings', 'FaceEmbeddingController@index');
+    $router->get('face-embeddings', ['middleware' => 'role:admin', 'uses' => 'FaceEmbeddingController@index']);
     $router->post('face-embeddings/check-duplicate', 'FaceEmbeddingController@checkDuplicate');
     $router->post('visitors/{visitorId}/face-embedding', 'FaceEmbeddingController@store');
-    $router->delete('visitors/{visitorId}/face-embedding', 'FaceEmbeddingController@destroy');
+    $router->delete('visitors/{visitorId}/face-embedding', ['middleware' => 'role:admin', 'uses' => 'FaceEmbeddingController@destroy']);
 
-    // Visits
+    // Visits (ownership handled in controller)
     $router->get('visits', 'VisitController@index');
-    $router->get('visits/active', 'VisitController@active');
-    $router->get('visits/history', 'VisitController@history');
     $router->post('visits', 'VisitController@store');
     $router->get('visits/{id}', 'VisitController@show');
     $router->put('visits/{id}/checkout', 'VisitController@checkout');
     $router->delete('visits/{id}', ['middleware' => 'role:admin', 'uses' => 'VisitController@destroy']);
 
-    // Dashboard
-    $router->get('dashboard/stats', 'DashboardController@stats');
-    $router->get('dashboard/visit-trends', 'DashboardController@visitTrends');
-    $router->get('dashboard/monthly-trends', 'DashboardController@monthlyTrends');
-    $router->get('dashboard/top-visitors', 'DashboardController@topVisitors');
+    // Dashboard - Admin
+    $router->group(['middleware' => 'role:admin'], function () use ($router) {
+        $router->get('dashboard/stats', 'DashboardController@stats');
+        $router->get('dashboard/visit-trends', 'DashboardController@visitTrends');
+        $router->get('dashboard/monthly-trends', 'DashboardController@monthlyTrends');
+        $router->get('dashboard/top-visitors', 'DashboardController@topVisitors');
+    });
+
+    // Dashboard - Receptionist
+    $router->get('dashboard/receptionist-stats', ['middleware' => 'role:receptionist', 'uses' => 'DashboardController@receptionistStats']);
 });
 
 // Swagger UI route

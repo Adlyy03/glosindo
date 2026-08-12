@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Visit extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -16,6 +18,7 @@ class Visit extends Model
      */
     protected $fillable = [
         'visitor_id',
+        'receptionist_id',
         'purpose',
         'meet_to',
         'check_in',
@@ -39,6 +42,14 @@ class Visit extends Model
     public function visitor()
     {
         return $this->belongsTo(Visitor::class);
+    }
+
+    /**
+     * Get the receptionist who created the visit.
+     */
+    public function receptionist()
+    {
+        return $this->belongsTo(User::class, 'receptionist_id');
     }
 
     /**

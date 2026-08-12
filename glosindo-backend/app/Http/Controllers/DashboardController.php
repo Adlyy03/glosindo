@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 class DashboardController extends Controller
 {
     /**
-     * Get dashboard statistics.
+     * Get dashboard statistics for admin.
      *
      * @return \Illuminate\Http\Response
      */
@@ -33,7 +33,35 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get visit trends for chart (last 7 days).
+     * Get simple dashboard statistics for receptionist.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function receptionistStats()
+    {
+        $user = auth()->user();
+        
+        $stats = [
+            'active_visitor' => Visit::where('status', 'IN')
+                ->where('receptionist_id', $user->id)
+                ->count(),
+            'visitor_today' => Visit::whereDate('check_in', Carbon::today())
+                ->where('receptionist_id', $user->id)
+                ->distinct('visitor_id')
+                ->count('visitor_id'),
+            'total_check_in_today' => Visit::whereDate('check_in', Carbon::today())
+                ->where('receptionist_id', $user->id)
+                ->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $stats,
+        ]);
+    }
+
+    /**
+     * Get visit trends for chart (last 7 days) - Admin only.
      *
      * @return \Illuminate\Http\Response
      */
@@ -55,7 +83,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get monthly visit trends (last 6 months).
+     * Get monthly visit trends (last 6 months) - Admin only.
      *
      * @return \Illuminate\Http\Response
      */
@@ -79,7 +107,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Get top visitors (most visits).
+     * Get top visitors (most visits) - Admin only.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
