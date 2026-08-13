@@ -73,7 +73,7 @@ class VisitorController extends Controller
             }
 
             $embeddings = \App\Models\FaceEmbedding::with('visitor:id,name,company,photo')->get();
-            $threshold = 0.5; // lower threshold to reduce false-positive duplicates
+            $threshold = 0.3; // stricter threshold to reduce false-positive duplicates
 
             foreach ($embeddings as $embedding) {
                 $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);

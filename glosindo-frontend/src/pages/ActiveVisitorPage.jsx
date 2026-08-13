@@ -126,7 +126,7 @@ const ActiveVisitorPage = () => {
           <SuccessScreen
             open={splashOpen}
             type="checkout"
-            visitorName={splashVisitorName}
+             visitorName={splashVisitorName}
             meta={splashMeta}
             onClose={() => setSplashOpen(false)}
           />

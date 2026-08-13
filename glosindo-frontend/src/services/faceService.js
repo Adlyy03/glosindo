@@ -10,6 +10,17 @@ const faceService = {
   },
 
   /**
+   * Check if face already registered (duplicate detection)
+   * @param {Array} faceVector - 128-dimension float array
+   */
+  checkDuplicate: async (faceVector) => {
+    const response = await api.post('/face-embeddings/check-duplicate', {
+      face_vector: faceVector,
+    });
+    return response.data;
+  },
+
+  /**
    * Save face embedding for a visitor
    * @param {number} visitorId
    * @param {Array} faceVector - 128-dimension float array

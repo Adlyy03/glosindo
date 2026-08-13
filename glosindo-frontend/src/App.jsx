@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import * as faceapi from 'face-api.js';
 import useAuthStore from './store/authStore';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
@@ -23,6 +24,26 @@ import ReceptionistVisitorPage from './pages/receptionist/ReceptionistVisitorPag
 function App() {
   const { isAuthenticated, restoreSession } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
+  // Load face-api.js models on app init
+  useEffect(() => {
+    const loadModels = async () => {
+      try {
+        const MODEL_URL = '/models';
+        await Promise.all([
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        ]);
+        console.log('Face-api.js models loaded successfully');
+        setModelsLoaded(true);
+      } catch (error) {
+        console.error('Failed to load face-api.js models:', error);
+      }
+    };
+    loadModels();
+  }, []);
 
   useEffect(() => {
     restoreSession();

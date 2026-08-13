@@ -34,11 +34,30 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
     }
   };
 
-  const handleDescriptorCapture = (descriptor) => {
+  const handleDescriptorCapture = async (descriptor) => {
     const vectorArray = Array.from(descriptor);
-    setFaceVector(vectorArray);
-    setShowWebcam(false);
-    toast.success('Descriptor biometrik wajah berhasil ditangkap!');
+    
+    // Check duplicate face before setting
+    try {
+      const result = await faceService.checkDuplicate(vectorArray);
+      
+      if (result.duplicate) {
+        const existingVisitor = result.visitor;
+        toast.error(
+          `Wajah sudah terdaftar atas nama: ${existingVisitor.name}${existingVisitor.company ? ` (${existingVisitor.company})` : ''}`,
+          { duration: 5000 }
+        );
+        setShowWebcam(false);
+        return;
+      }
+      
+      setFaceVector(vectorArray);
+      setShowWebcam(false);
+      toast.success('Descriptor biometrik wajah berhasil ditangkap!');
+    } catch (err) {
+      console.error('Duplicate check error:', err);
+      toast.error('Gagal memeriksa duplikasi wajah. Coba lagi.');
+    }
   };
 
   const handleSubmit = async (e) => {

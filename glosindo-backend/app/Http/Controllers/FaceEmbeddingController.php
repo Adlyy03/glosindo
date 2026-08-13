@@ -55,7 +55,7 @@ class FaceEmbeddingController extends Controller
         }
 
         $embeddings = FaceEmbedding::with('visitor:id,name,company,photo')->get();
-        $threshold = 0.4; // lower threshold to reduce false-positive duplicates
+        $threshold = 0.3; // stricter threshold to reduce false-positive duplicates
 
         foreach ($embeddings as $embedding) {
             $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
@@ -109,7 +109,7 @@ class FaceEmbeddingController extends Controller
 
         // Check duplicate face before storing (except own embedding)
         $embeddings = FaceEmbedding::where('visitor_id', '!=', $visitorId)->get();
-        $threshold = 0.4;
+        $threshold = 0.3;
 
         foreach ($embeddings as $embedding) {
             $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
