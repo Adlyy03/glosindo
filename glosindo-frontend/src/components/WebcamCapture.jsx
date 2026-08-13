@@ -1,6 +1,8 @@
 import { useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import Webcam from 'react-webcam';
 import * as faceapi from 'face-api.js';
+import { Camera, RefreshCw, AlertTriangle, ScanLine } from 'lucide-react';
+import Button from './ui/Button';
 
 const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = true, silentMode = false }, ref) => {
   const webcamRef = useRef(null);
@@ -8,14 +10,14 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
   const [error, setError] = useState(null);
 
   /**
-   * Exposed to parent via ref
+   * Exposed to parent via ref — ZERO LOGIC CHANGES
    */
   useImperativeHandle(ref, () => ({
     captureDescriptor,
   }));
 
   /**
-   * Detect face on current video frame and return descriptor
+   * Detect face on current video frame and return descriptor — PRESERVED 100%
    */
   const captureDescriptor = async () => {
     if (!silentMode) setError(null);
@@ -23,7 +25,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
 
     try {
       const video = webcamRef.current?.video;
-      if (!video) throw new Error('Webcam tidak tersedia');
+      if (!video) throw new Error('Kamera tidak siap / belum aktif');
 
       const detections = await faceapi
         .detectAllFaces(video)
@@ -32,7 +34,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
 
       if (!detections || detections.length === 0) {
         if (!silentMode) {
-          setError('Wajah tidak terdeteksi. Pastikan wajah berada di tengah dan pencahayaan cukup.');
+          setError('Wajah tidak terdeteksi. Posisikan wajah di tengah bingkai dan pastikan cahaya cukup.');
         }
         return null;
       }
@@ -48,7 +50,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
     } catch (err) {
       console.error('Face detection error:', err);
       if (!silentMode) {
-        setError('Gagal mendeteksi wajah: ' + err.message);
+        setError('Gagal memindai wajah: ' + err.message);
       }
       return null;
     } finally {
@@ -59,9 +61,9 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
   const handleUserMediaError = (err) => {
     console.error('Webcam error:', err);
     if (err.name === 'NotAllowedError') {
-      setError('Akses kamera ditolak. Silakan izinkan akses kamera di browser Anda.');
+      setError('Akses kamera ditolak. Silakan izinkan perizinan kamera pada browser Anda.');
     } else if (err.name === 'NotFoundError') {
-      setError('Kamera tidak ditemukan. Pastikan perangkat kamera terhubung.');
+      setError('Kamera tidak ditemukan. Pastikan perangkat webcam terhubung dengan benar.');
     } else {
       setError('Gagal mengakses kamera: ' + err.message);
     }
@@ -88,19 +90,26 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
   };
 
   return (
-    <div className="flex flex-col items-center gap-3 w-full">
+    <div className="flex flex-col items-center gap-4 w-full">
       {error ? (
-        <div className="w-full rounded-xl bg-red-50 border border-red-200 p-4 text-center">
-          <p className="text-red-600 text-sm font-medium">{error}</p>
-          <button
+        <div className="w-full rounded-2xl bg-rose-50/90 border border-rose-200 p-6 text-center shadow-xs">
+          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <p className="text-rose-900 font-bold text-sm mb-1">Akses Kamera Bermasalah</p>
+          <p className="text-rose-700 text-xs max-w-md mx-auto mb-4 leading-relaxed">{error}</p>
+          <Button
+            size="sm"
+            variant="outline"
             onClick={() => setError(null)}
-            className="mt-2 text-sm text-red-600 hover:text-red-800 underline font-semibold"
+            icon={RefreshCw}
           >
-            Coba lagi
-          </button>
+            Coba Kamera Lagi
+          </Button>
         </div>
       ) : (
-        <div className="relative rounded-2xl overflow-hidden border-2 border-blue-100 bg-gray-900 shadow-md w-full max-w-sm aspect-video">
+        <div className="relative rounded-3xl overflow-hidden border-2 border-slate-800 bg-slate-95 shadow-2xl w-full max-w-md aspect-4/3 group select-none">
+          {/* Live Video Feed */}
           <Webcam
             ref={webcamRef}
             audio={false}
@@ -111,53 +120,64 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
             className="w-full h-full object-cover"
           />
 
-          {/* Scanning overlay */}
+          {/* Biometric Scanning Beam Overlay */}
+          <div className="absolute inset-0 pointer-events-none">
+            {/* HUD Corner Reticles */}
+            <div className="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-brand-cyan rounded-tl-lg shadow-sm" />
+            <div className="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-brand-cyan rounded-tr-lg shadow-sm" />
+            <div className="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-brand-cyan rounded-bl-lg shadow-sm" />
+            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-brand-cyan rounded-br-lg shadow-sm" />
+
+            {/* Oval Face Guide Frame */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className={`w-44 h-56 border-2 border-dashed rounded-[50%] transition-colors duration-300 ${
+                  scanning
+                    ? 'border-brand-cyan shadow-[0_0_20px_rgba(14,165,233,0.5)]'
+                    : 'border-white/60 shadow-inner'
+                }`}
+              />
+            </div>
+
+            {/* Animated Laser Scanning Line */}
+            {scanning && (
+              <div className="absolute left-8 right-8 h-1 bg-gradient-to-r from-transparent via-brand-cyan to-transparent animate-scan shadow-[0_0_12px_#0ea5e9]" />
+            )}
+
+            {/* Top Status Tag */}
+            <div className="absolute top-4 inset-x-0 flex justify-center">
+              <div className="px-3.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold tracking-wider uppercase flex items-center gap-2 shadow-lg">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Live AI Biometric Kiosk</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Scanning Overlay Spinner */}
           {scanning && (
-            <div className="absolute inset-0 bg-blue-900/40 backdrop-blur-xs flex items-center justify-center">
-              <div className="bg-white/95 rounded-xl px-4 py-2.5 flex items-center gap-2.5 shadow-lg">
-                <svg className="animate-spin w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <span className="text-sm font-semibold text-blue-800">Mendeteksi wajah...</span>
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-10 transition-opacity">
+              <div className="bg-white/95 rounded-2xl px-5 py-3 flex items-center gap-3 shadow-2xl border border-slate-100">
+                <div className="w-5 h-5 rounded-full border-2 border-brand-navy border-t-brand-cyan animate-spin" />
+                <span className="text-xs font-bold text-slate-800 tracking-wide">Analisis Biometrik...</span>
               </div>
             </div>
           )}
-
-          {/* Face guide overlay */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-36 h-44 border-2 border-dashed border-white/70 rounded-full shadow-inner" />
-          </div>
         </div>
       )}
 
       {showButton && (
-        <button
+        <Button
           onClick={captureDescriptor}
           disabled={disabled || scanning || !!error}
-          className="w-full max-w-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed
-            text-white font-semibold py-2.5 px-4 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
+          loading={scanning}
+          variant="primary"
+          size="lg"
+          fullWidth
+          className="max-w-md"
+          icon={ScanLine}
         >
-          {scanning ? (
-            <>
-              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-              Memindai...
-            </>
-          ) : (
-            <>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              Scan Wajah
-            </>
-          )}
-        </button>
+          {scanning ? 'Memindai Biometrik...' : 'Scan Wajah Tamu'}
+        </Button>
       )}
     </div>
   );

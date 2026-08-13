@@ -1,11 +1,39 @@
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Menu, LogOut, Clock, ShieldCheck, User } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { LOGO, APP_NAME } from '../constants';
 
 const Navbar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const [currentTime, setCurrentTime] = useState('');
+  const [currentDate, setCurrentDate] = useState('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }) + ' WIB'
+      );
+      setCurrentDate(
+        now.toLocaleDateString('id-ID', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -14,47 +42,72 @@ const Navbar = ({ onToggleSidebar }) => {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
-      {/* Left: Hamburger + Logo */}
-      <div className="flex items-center gap-3">
-        <button
-          onClick={onToggleSidebar}
-          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-          aria-label="Toggle sidebar"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <div className="flex items-center gap-2">
-          <img src={LOGO} alt={APP_NAME} className="h-8 w-8 object-contain" />
-          <span className="text-lg font-bold text-brand-navy tracking-tight">
-            {APP_NAME} <span className="text-gray-400 font-normal">Guestbook</span>
-          </span>
-        </div>
-      </div>
+    <nav className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 md:px-6 py-3 transition-all">
+      <div className="flex items-center justify-between gap-4">
+        {/* Left: Hamburger + Corporate Identity */}
+        <div className="flex items-center gap-3 md:gap-4">
+          <button
+            onClick={onToggleSidebar}
+            className="p-2.5 rounded-xl text-slate-600 hover:text-brand-navy hover:bg-slate-100/80 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 active:scale-95"
+            aria-label="Toggle navigation menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
 
-      {/* Right: User info + logout */}
-      <div className="flex items-center gap-3">
-        <div className="text-right hidden sm:block">
-          <p className="text-sm font-semibold text-gray-800">{user?.name}</p>
-          <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+          <div className="flex items-center gap-3">
+            <div className="relative p-1 bg-white rounded-xl shadow-xs border border-slate-100 flex items-center justify-center">
+              <img src={LOGO} alt={APP_NAME} className="h-8 w-8 object-contain" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-base md:text-lg font-bold text-brand-navy tracking-tight">
+                  GLOSINDO
+                </span>
+                <span className="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                  Guestbook Kiosk
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 hidden md:block leading-tight font-medium">
+                Global Media Pratama Solusindo
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="w-9 h-9 rounded-full bg-brand-navy flex items-center justify-center text-white font-bold text-sm">
-          {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+        {/* Center: Live Kiosk Clock */}
+        <div className="hidden lg:flex items-center gap-3 px-4 py-1.5 rounded-2xl bg-slate-50 border border-slate-200/80 shadow-inner">
+          <div className="flex items-center gap-2 text-brand-navy">
+            <Clock className="w-4 h-4 text-brand-cyan" />
+            <span className="text-sm font-bold tracking-wide font-mono">{currentTime}</span>
+          </div>
+          <span className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+          <span className="text-xs font-medium text-slate-600">{currentDate}</span>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-1.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          <span className="hidden sm:inline">Logout</span>
-        </button>
+        {/* Right: User Profile & Security Badge */}
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3 pr-3 border-r border-slate-200">
+            <div className="text-right">
+              <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || 'Petugas'}</p>
+              <div className="flex items-center justify-end gap-1 text-[11px] text-slate-500 capitalize">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                <span>{user?.role || 'User'}</span>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-navy to-slate-800 text-white font-bold flex items-center justify-center text-sm shadow-md shadow-brand-navy/10 border border-brand-navy/20">
+              {user?.name?.charAt(0)?.toUpperCase() || <User className="w-5 h-5" />}
+            </div>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-200 transition-all active:scale-95 cursor-pointer"
+            title="Keluar dari Sistem"
+          >
+            <LogOut className="w-4 h-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+        </div>
       </div>
     </nav>
   );

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
+import { Cpu, AlertCircle, CheckCircle2, UserX, Scan, RefreshCw } from 'lucide-react';
 import WebcamCapture from './WebcamCapture';
 import useFaceModels from '../hooks/useFaceModels';
 import useFaceMatcher from '../hooks/useFaceMatcher';
 import { descriptorToArray } from '../utils/faceUtils';
+import Badge from './ui/Badge';
 
 /**
  * FaceScanner — orchestrates face detection + matching
@@ -22,7 +24,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
     if (typeof reloadSignal === 'number' && reloadSignal > 0) {
       reload();
     }
-  }, [reloadSignal]);
+  }, [reloadSignal, reload]);
 
   const handleScan = async () => {
     setResult(null);
@@ -40,7 +42,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
     }
   };
 
-  // Auto-scan every 5 seconds
+  // Auto-scan every 5 seconds — LOGIC PRESERVED 100%
   useEffect(() => {
     if (!modelsLoaded || embeddingsLoading) return;
 
@@ -61,10 +63,17 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
   // Models loading state
   if (modelsLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-blue-50/50 rounded-2xl border border-blue-100 min-h-[280px]">
-        <div className="w-12 h-12 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin mb-4" />
-        <p className="text-gray-800 font-semibold text-sm">Memuat model pengenalan wajah...</p>
-        <p className="text-gray-500 text-xs mt-1">Harap tunggu beberapa detik saat sistem menginisialisasi AI camera.</p>
+      <div className="flex flex-col items-center justify-center p-8 bg-slate-50/80 rounded-3xl border border-slate-200 min-h-[320px] text-center shadow-xs">
+        <div className="relative mb-4">
+          <div className="w-16 h-16 rounded-2xl bg-brand-navy/10 border border-brand-navy/20 flex items-center justify-center text-brand-navy">
+            <Cpu className="w-8 h-8 animate-pulse text-brand-cyan" />
+          </div>
+          <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-brand-cyan border-2 border-white animate-ping" />
+        </div>
+        <h3 className="text-slate-900 font-bold text-base mb-1">Inisialisasi Model AI Biometrik...</h3>
+        <p className="text-slate-500 text-xs max-w-sm leading-relaxed">
+          Mengunggah bobot deteksi wajah face-api.js. Harap tunggu beberapa detik.
+        </p>
       </div>
     );
   }
@@ -72,19 +81,21 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
   // Models failed to load
   if (modelsError) {
     return (
-      <div className="rounded-2xl bg-red-50 border border-red-200 p-6 text-center">
-        <svg className="w-10 h-10 text-red-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
-        <p className="text-red-700 font-semibold text-sm">{modelsError}</p>
-        <p className="text-red-600 text-xs mt-1">Pastikan berkas model ada pada lokasi folder <code>/public/models/</code></p>
+      <div className="rounded-3xl bg-rose-50 border border-rose-200 p-6 text-center shadow-xs">
+        <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <h3 className="text-rose-900 font-bold text-base mb-1">Gagal Memuat Model Biometrik</h3>
+        <p className="text-rose-700 text-xs max-w-md mx-auto mb-3 leading-relaxed">{modelsError}</p>
+        <p className="text-[11px] text-rose-500 bg-white/80 py-1.5 px-3 rounded-lg inline-block border border-rose-200">
+          Pastikan berkas model tersedia di folder <code>/public/models/</code>
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5 w-full">
       {/* Webcam Stream */}
       <WebcamCapture
         ref={webcamRef}
@@ -93,41 +104,50 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
         silentMode={silentMode}
       />
 
-      {/* Auto-scan indicator */}
+      {/* Auto-scan status indicator */}
       {scanning && (
-        <div className="max-w-sm mx-auto w-full text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-200">
-            <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
-            <span className="text-xs font-semibold text-blue-700">Auto-scan aktif (refresh 5s)</span>
-          </div>
+        <div className="max-w-md mx-auto w-full text-center">
+          <Badge variant="cyan" dot className="shadow-xs py-1.5 px-4">
+            Auto-Scan Aktif (Refresh 5s)
+          </Badge>
         </div>
       )}
 
       {/* Feedback Alerts */}
       {result?.type === 'match' && (
-        <div className="rounded-xl bg-green-50 border border-green-200 p-4 flex items-start gap-3 max-w-sm mx-auto w-full">
-          <svg className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+        <div className="rounded-2xl bg-emerald-50/90 border border-emerald-200 p-4 flex items-start gap-3.5 max-w-md mx-auto w-full shadow-md animate-scaleIn">
+          <div className="p-2 rounded-xl bg-emerald-500 text-white flex-shrink-0 mt-0.5">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
           <div>
-            <p className="text-green-800 font-semibold text-sm">Wajah Teridentifikasi!</p>
-            <p className="text-green-700 text-xs mt-0.5">
-              <span className="font-semibold">{result.data.name}</span>
-              {result.data.company ? ` (${result.data.company})` : ''}
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+              Teridentifikasi
+            </span>
+            <h4 className="text-emerald-950 font-bold text-base mt-1 leading-tight">
+              {result.data.name}
+            </h4>
+            <p className="text-emerald-700 text-xs font-medium mt-0.5">
+              {result.data.company ? `Instansi: ${result.data.company}` : 'Tamu Terdaftar'}
             </p>
           </div>
         </div>
       )}
 
       {result?.type === 'no_match' && (
-        <div className="rounded-xl bg-amber-50 border border-amber-200 p-4 flex items-start gap-3 max-w-sm mx-auto w-full">
-          <svg className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
+        <div className="rounded-2xl bg-amber-50/90 border border-amber-200 p-4 flex items-start gap-3.5 max-w-md mx-auto w-full shadow-md animate-scaleIn">
+          <div className="p-2 rounded-xl bg-amber-500 text-white flex-shrink-0 mt-0.5">
+            <UserX className="w-5 h-5" />
+          </div>
           <div>
-            <p className="text-amber-800 font-semibold text-sm">Wajah Belum Terdaftar</p>
-            <p className="text-amber-700 text-xs mt-0.5">Silakan lengkapi formulir registrasi untuk mendaftarkan tamu baru.</p>
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
+              Belum Terdaftar
+            </span>
+            <h4 className="text-amber-950 font-bold text-sm mt-1 leading-tight">
+              Wajah Tidak Dikenali Sistem
+            </h4>
+            <p className="text-amber-700 text-xs mt-0.5">
+              Silakan mendaftar via formulir registrasi tamu baru.
+            </p>
           </div>
         </div>
       )}

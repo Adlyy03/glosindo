@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Lock, Mail, ShieldCheck, ArrowRight, KeyRound } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
 import { LOGO, APP_NAME, APP_FULL_NAME } from '../constants';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -28,89 +32,107 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo/Brand */}
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 md:p-6 relative overflow-hidden select-none">
+      {/* Ambient Corporate Gradient Orbs */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-navy/30 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-brand-cyan/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md relative z-10 animate-fadeIn">
+        {/* Brand & Kiosk Title Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
-            <img src={LOGO} alt={APP_NAME} className="h-32 w-32 object-contain" />
+          <div className="inline-flex items-center justify-center p-3 bg-white/10 backdrop-blur-md rounded-3xl border border-white/20 mb-4 shadow-xl">
+            <img src={LOGO} alt={APP_NAME} className="h-20 w-20 object-contain drop-shadow-md" />
           </div>
-          <h1 className="text-3xl font-bold text-brand-navy mb-2">{APP_NAME}</h1>
-          <p className="text-gray-500 text-sm">{APP_FULL_NAME}</p>
-          <p className="text-gray-400 text-sm mt-1">Digital Guestbook System</p>
+          <h1 className="text-3xl font-black text-white tracking-tight">{APP_NAME}</h1>
+          <p className="text-slate-300 text-xs font-semibold mt-1 tracking-wide">{APP_FULL_NAME}</p>
+          <div className="mt-3 inline-block">
+            <Badge variant="cyan" dot>Digital Guestbook System</Badge>
+          </div>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Login</h2>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
+        <Card padding="p-8" className="bg-white/95 backdrop-blur-md border border-white/40 shadow-2xl rounded-3xl">
+          <div className="flex items-center justify-between mb-6 pb-3 border-b border-slate-100">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-colors"
-                placeholder="admin@glosindo.com"
-              />
+              <h2 className="text-xl font-extrabold text-slate-900">Portal Petugas</h2>
+              <p className="text-xs text-slate-500 font-medium">Masuk untuk mengelola sistem buku tamu</p>
             </div>
-
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-colors"
-                placeholder="••••••••"
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ backgroundColor: '#1e3a8a', color: '#ffffff' }}
-              className="w-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-semibold py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <span>Memproses...</span>
-                </>
-              ) : (
-                <span>Login</span>
-              )}
-            </button>
-          </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-500 mb-2 font-medium">Demo Credentials:</p>
-            <div className="text-xs text-gray-600 space-y-1">
-              <p><span className="font-semibold">Admin:</span> admin@glosindo.com / Admin123!</p>
-              <p><span className="font-semibold">Receptionist:</span> receptionist@glosindo.com / Recep123!</p>
+            <div className="p-2 rounded-xl bg-brand-navy/10 text-brand-navy">
+              <ShieldCheck className="w-5 h-5" />
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        <p className="text-center text-sm text-gray-500 mt-6">
-          © 2026 {APP_NAME}. All rights reserved.
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email Input */}
+            <div>
+              <label htmlFor="email" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                Email Petugas
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <Mail className="w-5 h-5" />
+                </div>
+                <input
+                  type="email"
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  placeholder="admin@glosindo.com"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-all bg-slate-50/50"
+                />
+              </div>
+            </div>
+
+            {/* Password Input */}
+            <div>
+              <label htmlFor="password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                Kata Sandi
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-all bg-slate-50/50"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              size="lg"
+              fullWidth
+              loading={loading}
+              icon={ArrowRight}
+            >
+              Masuk ke Dashboard
+            </Button>
+          </form>
+
+          {/* Demo Credentials Card */}
+          <div className="mt-6 p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-2 uppercase tracking-wider">
+              <KeyRound className="w-4 h-4 text-brand-cyan" />
+              <span>Kredensial Demo:</span>
+            </div>
+            <div className="text-xs text-slate-600 space-y-1 font-mono">
+              <p><span className="font-bold text-brand-navy">Admin:</span> admin@glosindo.com / Admin123!</p>
+              <p><span className="font-bold text-brand-navy">Receptionist:</span> receptionist@glosindo.com / Recep123!</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Footer copyright */}
+        <p className="text-center text-xs text-slate-400 mt-6 font-medium">
+          © 2026 {APP_NAME}. Global Media Pratama Solusindo.
         </p>
       </div>
     </div>

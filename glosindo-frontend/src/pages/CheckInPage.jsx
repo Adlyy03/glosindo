@@ -1,10 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  UserPlus,
+  Search,
+  UserCheck,
+  CheckCircle,
+  X,
+  Building,
+  Phone,
+  User,
+  HelpCircle,
+  Sparkles,
+  Zap
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import SuccessScreen from '../components/SplashOverlay';
 import VisitorFormPage from './VisitorFormPage';
 import visitService from '../services/visitService';
 import visitorService from '../services/visitorService';
+import Card, { CardHeader } from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
 
 const CheckInPage = () => {
   const location = useLocation();
@@ -50,7 +66,7 @@ const CheckInPage = () => {
     setSplashType('newvisitor');
     setSplashMeta({});
     setSplashOpen(true);
-    toast.success('Pendaftaran tamu berhasil! Lanjutkan mengisi keperluan kunjungan.');
+    toast.success('Pendaftaran tamu berhasil! Lanjutkan mengisi rincian kunjungan.');
   };
 
   const handleCheckInSubmit = async (e) => {
@@ -76,7 +92,7 @@ const CheckInPage = () => {
       setSplashMeta({ meetTo, purpose });
       setSplashOpen(true);
 
-      toast.success(`Check-In Berhasil! ${selectedVisitor.name} status IN.`, {
+      toast.success(`Check-In Berhasil! ${selectedVisitor.name}`, {
         duration: 4000,
         icon: '🎉',
       });
@@ -97,17 +113,36 @@ const CheckInPage = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-fadeIn">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Check-In Tamu</h1>
-          <p className="text-sm text-gray-500 mt-1">Daftarkan tamu baru atau cari tamu yang sudah terdaftar untuk melakukan check-in</p>
+          <div className="flex items-center gap-2 mb-1">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Self-Service Check-In Desk
+            </h1>
+            <Badge variant="navy">Kiosk Portal</Badge>
+          </div>
+          <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
+            Daftarkan tamu baru atau cari data tamu terdaftar untuk konfirmasi kunjungan.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="md"
+            icon={Zap}
+            onClick={() => navigate('/quick-check-in')}
+          >
+            Quick Check-In
+          </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Column - Main Action Area */}
-        <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Interactive Form Area */}
+        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
           {showRegisterForm ? (
             <VisitorFormPage
               faceVectorPreset={null}
@@ -123,254 +158,214 @@ const CheckInPage = () => {
                 meta={splashMeta}
                 onClose={() => setSplashOpen(false)}
               />
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-bold text-gray-900">Form Check-In</h2>
+              <Card padding="p-6 md:p-8" className="border-2 border-brand-cyan/40 shadow-xl">
+                <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-6 h-6 text-brand-cyan" />
+                    <h2 className="text-lg font-bold text-slate-900">Konfirmasi Kunjungan Tamu</h2>
+                  </div>
                   <button
                     onClick={() => {
                       setSelectedVisitor(null);
                       setSearchResults([]);
                     }}
-                    className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                    className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-1 text-xs font-semibold"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Batal
+                    <X className="w-4 h-4" /> Batal
                   </button>
                 </div>
 
-                <div className="p-4 rounded-xl bg-blue-50/70 border border-blue-100 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xl flex-shrink-0">
+                {/* Selected Visitor Details Banner */}
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-brand-navy to-slate-800 text-white flex items-center gap-4 shadow-md mb-6">
+                  <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md text-brand-cyan-light font-extrabold flex items-center justify-center text-2xl border border-white/20 flex-shrink-0">
                     {selectedVisitor.name?.charAt(0)?.toUpperCase()}
                   </div>
-                  <div className="flex-1">
-                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Tamu Terpilih</span>
-                    <h3 className="text-lg font-bold text-gray-900">{selectedVisitor.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      {selectedVisitor.company || 'Instansi tidak diisi'} • {selectedVisitor.phone || 'Tanpa no. telepon'}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] font-bold text-cyan-200 uppercase tracking-widest bg-white/10 px-2.5 py-0.5 rounded-full">
+                      Tamu Terpilih
+                    </span>
+                    <h3 className="text-xl font-bold text-white truncate mt-0.5">{selectedVisitor.name}</h3>
+                    <p className="text-xs text-slate-300 truncate mt-0.5">
+                      {selectedVisitor.company || 'Instansi tidak diisi'} • {selectedVisitor.phone || 'Tanpa telepon'}
                     </p>
                   </div>
                 </div>
 
-                <form onSubmit={handleCheckInSubmit} className="space-y-4">
+                {/* Form Check-In Details */}
+                <form onSubmit={handleCheckInSubmit} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Bertemu Dengan Siapa? <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      Bertemu Dengan Siapa? <span className="text-rose-500">*</span>
                     </label>
                     <input
                       type="text"
                       required
                       value={meetTo}
                       onChange={(e) => setMeetTo(e.target.value)}
-                      placeholder="Contoh: Bpk. Budi - HRD"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Contoh: Bpk. Budi - Manager HRD"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-all bg-slate-50/50"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Keperluan Kunjungan <span className="text-red-500">*</span>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      Keperluan Kunjungan <span className="text-rose-500">*</span>
                     </label>
                     <textarea
                       required
                       rows={3}
                       value={purpose}
                       onChange={(e) => setPurpose(e.target.value)}
-                      placeholder="Contoh: Meeting koordinasi proyek digitalisasi"
-                      className="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Contoh: Meeting koordinasi proyek digitalisasi guestbook"
+                      className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-all bg-slate-50/50"
                     />
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
-                    disabled={submittingCheckIn}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-bold py-3 rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                    variant="emerald"
+                    size="kiosk"
+                    fullWidth
+                    loading={submittingCheckIn}
+                    icon={CheckCircle}
                   >
-                    {submittingCheckIn ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Memproses...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Konfirmasi Check-In
-                      </>
-                    )}
-                  </button>
+                    Konfirmasi Check-In Tamu
+                  </Button>
                 </form>
-              </div>
+              </Card>
             </>
           ) : (
-            <div className="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm space-y-6">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center mb-4 mx-auto shadow-lg">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
+            <Card padding="p-6 md:p-8" className="space-y-6">
+              <div className="text-center py-2">
+                <div className="w-16 h-16 rounded-3xl bg-brand-navy/10 text-brand-navy flex items-center justify-center mb-4 mx-auto border border-brand-navy/20 shadow-xs">
+                  <UserCheck className="w-8 h-8 text-brand-cyan" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Pilih Tamu</h3>
-                <p className="text-sm text-gray-600 max-w-sm mx-auto">
-                  Daftarkan tamu baru atau cari tamu yang sudah terdaftar untuk melanjutkan check-in
+                <h3 className="text-xl font-bold text-slate-900 mb-1">Pilih Metode Check-In</h3>
+                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                  Daftarkan tamu baru atau cari data tamu yang sudah tersimpan di database.
                 </p>
               </div>
 
+              {/* Action Buttons */}
               <div className="space-y-4">
-                <button
+                <Button
+                  variant="primary"
+                  size="kiosk"
+                  fullWidth
                   onClick={() => setShowRegisterForm(true)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-4 rounded-xl text-base shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
+                  icon={UserPlus}
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                      d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
                   Daftar Tamu Baru
-                </button>
+                </Button>
 
-                <div className="relative py-3">
+                <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t-2 border-gray-200"></div>
+                    <div className="w-full border-t border-slate-200"></div>
                   </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-gray-500 font-semibold">ATAU</span>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="px-4 bg-white text-slate-400 font-extrabold uppercase tracking-widest">
+                      Atau Cari Tamu Terdaftar
+                    </span>
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="block text-sm font-semibold text-gray-700">
-                    Cari Tamu yang Sudah Terdaftar
-                  </label>
-                  <form onSubmit={handleManualSearch} className="space-y-3">
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </div>
-                      <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Ketik nama, telepon, atau instansi..."
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-300 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
+                {/* Search Form */}
+                <form onSubmit={handleManualSearch} className="space-y-3">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                      <Search className="w-5 h-5" />
                     </div>
-                    <button
-                      type="submit"
-                      disabled={searching || !searchQuery.trim()}
-                      className="w-full bg-white hover:bg-gray-50 disabled:bg-gray-50 border-2 border-gray-300 disabled:border-gray-200 text-gray-700 disabled:text-gray-400 font-semibold py-3 rounded-xl text-sm transition-all"
-                    >
-                      {searching ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                          Mencari...
-                        </span>
-                      ) : (
-                        'Cari Tamu'
-                      )}
-                    </button>
-                  </form>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Cari nama, nomor telepon, atau instansi..."
+                      className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan bg-slate-50/50"
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    variant="outline"
+                    size="md"
+                    fullWidth
+                    loading={searching}
+                    disabled={!searchQuery.trim()}
+                  >
+                    {searching ? 'Mencari...' : 'Cari Data Tamu'}
+                  </Button>
+                </form>
 
-                  {searchResults.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                      <p className="text-sm font-semibold text-gray-700 px-1">
-                        Hasil Pencarian ({searchResults.length} tamu):
-                      </p>
-                      <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
-                        {searchResults.map((visitor) => (
-                          <button
-                            key={visitor.id}
-                            onClick={() => {
-                              setSelectedVisitor(visitor);
-                              setSearchResults([]);
-                              setSearchQuery('');
-                            }}
-                            className="w-full text-left px-4 py-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 border-2 border-gray-200 hover:border-blue-300 transition-all group"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center flex-shrink-0">
-                                {visitor.name?.charAt(0)?.toUpperCase()}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-sm font-bold text-gray-900 group-hover:text-blue-700">
-                                  {visitor.name}
-                                </p>
-                                <p className="text-xs text-gray-600">
-                                  {visitor.company || 'Tanpa instansi'} • {visitor.phone || 'Tanpa telepon'}
-                                </p>
-                              </div>
-                              <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                {/* Search Results list */}
+                {searchResults.length > 0 && (
+                  <div className="mt-4 space-y-2.5 pt-3 border-t border-slate-100">
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wider px-1">
+                      Hasil Pencarian ({searchResults.length} ditemukan):
+                    </p>
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {searchResults.map((visitor) => (
+                        <button
+                          key={visitor.id}
+                          onClick={() => {
+                            setSelectedVisitor(visitor);
+                            setSearchResults([]);
+                            setSearchQuery('');
+                          }}
+                          className="w-full text-left p-3.5 rounded-2xl bg-slate-50 hover:bg-cyan-50/80 border border-slate-200 hover:border-brand-cyan/40 transition-all group flex items-center gap-3 cursor-pointer"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-brand-navy text-white font-bold flex items-center justify-center flex-shrink-0 text-sm">
+                            {visitor.name?.charAt(0)?.toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-900 group-hover:text-brand-navy truncate">
+                              {visitor.name}
+                            </p>
+                            <p className="text-xs text-slate-500 truncate">
+                              {visitor.company || 'Tanpa instansi'} • {visitor.phone || 'Tanpa telepon'}
+                            </p>
+                          </div>
+                          <Badge variant="cyan" className="group-hover:bg-brand-cyan group-hover:text-white transition-colors">
+                            Pilih
+                          </Badge>
+                        </button>
+                      ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
-            </div>
+            </Card>
           )}
         </div>
 
-        {/* Right Column - Information */}
-        <div className="space-y-4">
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-blue-900 mb-1">Petunjuk Check-In</h3>
-                <p className="text-sm text-blue-700">Ikuti langkah berikut untuk check-in tamu</p>
-              </div>
-            </div>
-            <ol className="space-y-3 text-sm text-blue-800">
-              <li className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">1</span>
-                <span><strong>Tamu Baru:</strong> Klik "Daftar Tamu Baru" untuk registrasi dengan data lengkap dan foto wajah</span>
+        {/* Right Info Column */}
+        <div className="lg:col-span-5 xl:col-span-4 space-y-5">
+          <Card padding="p-6">
+            <CardHeader className="flex items-center gap-2 pb-3 mb-3">
+              <HelpCircle className="w-5 h-5 text-brand-cyan" />
+              <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                Panduan Kiosk Self-Service
+              </h3>
+            </CardHeader>
+            <ol className="space-y-3 text-xs md:text-sm text-slate-600 font-medium">
+              <li className="flex items-start gap-2.5">
+                <span className="w-6 h-6 rounded-full bg-brand-navy text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  1
+                </span>
+                <span><strong>Tamu Baru:</strong> Klik "Daftar Tamu Baru" untuk pendaftaran lengkap + foto wajah biometrik.</span>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">2</span>
-                <span><strong>Tamu Terdaftar:</strong> Gunakan kolom pencarian untuk menemukan tamu berdasarkan nama, telepon, atau instansi</span>
+              <li className="flex items-start gap-2.5">
+                <span className="w-6 h-6 rounded-full bg-brand-navy text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  2
+                </span>
+                <span><strong>Tamu Terdaftar:</strong> Gunakan pencarian instan nama atau telepon.</span>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">3</span>
-                <span><strong>Lengkapi Data:</strong> Isi tujuan bertemu dan keperluan kunjungan</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">4</span>
-                <span><strong>Konfirmasi:</strong> Klik tombol "Konfirmasi Check-In" untuk menyelesaikan</span>
+              <li className="flex items-start gap-2.5">
+                <span className="w-6 h-6 rounded-full bg-brand-navy text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                  3
+                </span>
+                <span><strong>Isi Keperluan:</strong> Masukkan nama pihak yang ditemui dan keperluan kunjungan.</span>
               </li>
             </ol>
-          </div>
-
-          <div className="bg-amber-50 rounded-2xl p-6 border border-amber-200">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-500 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                    d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-amber-900 mb-2">Quick Check-In/Out</h3>
-                <p className="text-sm text-amber-800">
-                  Untuk check-in/out cepat tanpa form, gunakan menu <strong>Quick Check-In/Out</strong> di sidebar. 
-                  Scan wajah langsung untuk proses otomatis.
-                </p>
-              </div>
-            </div>
-          </div>
+          </Card>
         </div>
       </div>
     </div>
