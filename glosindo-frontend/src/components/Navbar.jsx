@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
+import { LOGO, APP_NAME } from '../constants';
 
 const Navbar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuthStore();
@@ -25,9 +26,12 @@ const Navbar = ({ onToggleSidebar }) => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <span className="text-lg font-bold text-blue-700 tracking-tight">
-          GLOSINDO <span className="text-gray-400 font-normal">Guestbook</span>
-        </span>
+        <div className="flex items-center gap-2">
+          <img src={LOGO} alt={APP_NAME} className="h-8 w-8 object-contain" />
+          <span className="text-lg font-bold text-brand-navy tracking-tight">
+            {APP_NAME} <span className="text-gray-400 font-normal">Guestbook</span>
+          </span>
+        </div>
       </div>
 
       {/* Right: User info + logout */}
@@ -37,7 +41,7 @@ const Navbar = ({ onToggleSidebar }) => {
           <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
         </div>
 
-        <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm">
+        <div className="w-9 h-9 rounded-full bg-brand-navy flex items-center justify-center text-white font-bold text-sm">
           {user?.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
 

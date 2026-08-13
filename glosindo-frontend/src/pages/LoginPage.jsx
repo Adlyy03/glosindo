@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import useAuthStore from '../store/authStore';
+import { LOGO, APP_NAME, APP_FULL_NAME } from '../constants';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -27,15 +28,16 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo/Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-600 text-white text-2xl font-bold mb-4">
-            G
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src={LOGO} alt={APP_NAME} className="h-32 w-32 object-contain" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">GLOSINDO</h1>
-          <p className="text-gray-500">Digital Guestbook System</p>
+          <h1 className="text-3xl font-bold text-brand-navy mb-2">{APP_NAME}</h1>
+          <p className="text-gray-500 text-sm">{APP_FULL_NAME}</p>
+          <p className="text-gray-400 text-sm mt-1">Digital Guestbook System</p>
         </div>
 
         {/* Login Card */}
@@ -54,7 +56,7 @@ const LoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-colors"
                 placeholder="admin@glosindo.com"
               />
             </div>
@@ -70,7 +72,7 @@ const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-colors"
                 placeholder="••••••••"
               />
             </div>
@@ -79,19 +81,19 @@ const LoginPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed
-                text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+              style={{ backgroundColor: '#1e3a8a', color: '#ffffff' }}
+              className="w-full hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed font-semibold py-3 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg"
             >
               {loading ? (
                 <>
-                  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  Memproses...
+                  <span>Memproses...</span>
                 </>
               ) : (
-                'Login'
+                <span>Login</span>
               )}
             </button>
           </form>
@@ -108,7 +110,7 @@ const LoginPage = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-gray-500 mt-6">
-          © 2026 GLOSINDO. All rights reserved.
+          © 2026 {APP_NAME}. All rights reserved.
         </p>
       </div>
     </div>

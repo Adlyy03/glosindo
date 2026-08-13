@@ -53,6 +53,8 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
 
     // Visits (ownership handled in controller)
     $router->get('visits', 'VisitController@index');
+    $router->get('visits/active', 'VisitController@active');
+    $router->get('visits/history', 'VisitController@history');
     $router->post('visits', 'VisitController@store');
     $router->get('visits/{id}', 'VisitController@show');
     $router->put('visits/{id}/checkout', 'VisitController@checkout');

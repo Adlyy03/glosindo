@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
+import { LOGO, APP_NAME } from '../constants';
 
 const navItems = [
   {
@@ -116,8 +117,9 @@ const Sidebar = ({ isOpen, onClose }) => {
         `}
       >
       {/* Brand header */}
-      <div className="h-16 flex items-center px-5 border-b border-gray-100 bg-blue-700">
-        <span className="text-white font-bold text-lg tracking-wide">GLOSINDO</span>
+      <div className="h-16 flex items-center justify-center px-5 border-b border-gray-100 bg-brand-navy">
+        <img src={LOGO} alt={APP_NAME} className="h-10 w-10 object-contain" />
+        <span className="ml-2 text-white font-bold text-lg tracking-wide">{APP_NAME}</span>
       </div>
 
       <nav className="py-4 px-3">
@@ -129,7 +131,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-1 text-sm font-medium transition-colors
               ${isActive
-                ? 'bg-blue-50 text-blue-700'
+                ? 'bg-brand-cyan/10 text-brand-navy border-l-4 border-brand-cyan'
                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`
             }

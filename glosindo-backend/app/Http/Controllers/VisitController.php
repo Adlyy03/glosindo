@@ -101,6 +101,71 @@ class VisitController extends Controller
     }
 
     /**
+     * Get active visits (status = IN).
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function active()
+    {
+        $user = auth()->user();
+        $query = Visit::with(['visitor', 'receptionist:id,name,email'])
+            ->where('status', 'IN');
+
+        // Receptionist only see their own visits
+        if ($user->role === 'receptionist') {
+            $query->where('receptionist_id', $user->id);
+        }
+
+        $visits = $query->orderBy('check_in', 'desc')->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $visits,
+        ]);
+    }
+
+    /**
+     * Get visit history with pagination and filters.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function history(Request $request)
+    {
+        $user = auth()->user();
+        $query = Visit::with(['visitor', 'receptionist:id,name,email']);
+
+        // Receptionist only see their own visits
+        if ($user->role === 'receptionist') {
+            $query->where('receptionist_id', $user->id);
+        }
+
+        // Filter by date range
+        if ($request->has('start_date') && !empty($request->start_date)) {
+            $query->whereDate('check_in', '>=', $request->start_date);
+        }
+
+        if ($request->has('end_date') && !empty($request->end_date)) {
+            $query->whereDate('check_in', '<=', $request->end_date);
+        }
+
+        // Search by visitor name
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $query->whereHas('visitor', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
+        }
+
+        $visits = $query->orderBy('check_in', 'desc')->paginate(15);
+
+        return response()->json([
+            'success' => true,
+            'data' => $visits,
+        ]);
+    }
+
+    /**
      * Display the specified visit.
      *
      * @param  int  $id
