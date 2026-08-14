@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Phone, Mail, Building, Camera, CheckCircle2, AlertCircle, X, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
+import { User, Phone, Mail, Building, Camera, CheckCircle2, AlertCircle, X, ArrowRight, ArrowLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import visitorService from '../services/visitorService';
 import faceService from '../services/faceService';
@@ -26,6 +26,7 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
   const [submitting, setSubmitting] = useState(false);
   const [splashOpen, setSplashOpen] = useState(false);
   const [splashVisitorName, setSplashVisitorName] = useState('');
+  const [duplicateCheckFailed, setDuplicateCheckFailed] = useState(false);
 
   // Update faceVector saat faceVectorPreset berubah — PRESERVED LOGIC
   useEffect(() => {
@@ -41,9 +42,16 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
   };
 
   const handleDescriptorCapture = async (descriptor) => {
+    // Validate descriptor before processing (Float32Array or Array)
+    if (!descriptor || descriptor.length !== 128) {
+      toast.error('Gagal menangkap vektor biometrik wajah. Pastikan wajah terlihat jelas dan coba lagi.');
+      setShowWebcam(false);
+      return;
+    }
+
     const vectorArray = Array.from(descriptor);
     
-    // Check duplicate face before setting — PRESERVED LOGIC
+    // Check duplicate face before setting
     try {
       const result = await faceService.checkDuplicate(vectorArray);
       
@@ -58,11 +66,45 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       }
       
       setFaceVector(vectorArray);
+      setDuplicateCheckFailed(false);
       setShowWebcam(false);
       toast.success('Descriptor biometrik wajah berhasil ditangkap!');
     } catch (err) {
       console.error('Duplicate check error:', err);
-      toast.error('Gagal memeriksa duplikasi wajah. Coba lagi.');
+      
+      // Detailed error + actionable message
+      if (err.response?.status === 422) {
+        const validationMsg = err.response?.data?.message || 'Validasi vektor wajah gagal';
+        toast.error(`Validasi error: ${validationMsg}`, { duration: 4000 });
+        setShowWebcam(false);
+        return;
+      } else if (err.response?.status >= 500) {
+        console.warn('[Fallback Mode] Server error, saving vector anyway');
+        toast('⚠️ Server error, vektor tetap disimpan sebagai cadangan.', { 
+          duration: 5000,
+          icon: '⚠️'
+        });
+        setFaceVector(vectorArray);
+        setDuplicateCheckFailed(true);
+      } else if (err.code === 'ERR_NETWORK') {
+        console.warn('[Fallback Mode] Network error, saving vector anyway');
+        toast('⚠️ Koneksi terputus, vektor disimpan sebagai cadangan.', { 
+          duration: 5000,
+          icon: '⚠️'
+        });
+        setFaceVector(vectorArray);
+        setDuplicateCheckFailed(true);
+      } else {
+        console.warn('[Fallback Mode] Unknown error, saving vector anyway');
+        toast('⚠️ Error tidak diketahui, vektor disimpan sebagai cadangan.', { 
+          duration: 5000,
+          icon: '⚠️'
+        });
+        setFaceVector(vectorArray);
+        setDuplicateCheckFailed(true);
+      }
+      
+      setShowWebcam(false);
     }
   };
 
@@ -90,25 +132,14 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       let savedVisitor;
       if (isEditing) {
         const res = await visitorService.update(visitorToEdit.id, formData);
-        savedVisitor = res.data;
+        savedVisitor = res.data ?? res;
         toast.success(`Data tamu ${name} berhasil diperbarui`);
       } else {
         const res = await visitorService.create(formData);
-        savedVisitor = res.data;
+        savedVisitor = res.data ?? res;
         toast.success(`Tamu baru ${name} berhasil terdaftar`);
         setSplashVisitorName(name);
         setSplashOpen(true);
-      }
-
-      // Save face embedding vector if captured — PRESERVED LOGIC
-      if (faceVector && savedVisitor?.id) {
-        try {
-          await faceService.saveEmbedding(savedVisitor.id, faceVector);
-          toast.success('Vektor biometrik wajah tersimpan!');
-        } catch (embedErr) {
-          console.error('Failed saving face vector:', embedErr);
-          toast.error('Tamu tersimpan, namun vektor biometrik wajah gagal tersimpan.');
-        }
       }
 
       onSuccess?.(savedVisitor);
@@ -341,7 +372,9 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
                     <h4 className="text-sm font-bold text-slate-900">Rekam AI Biometrik Wajah</h4>
                     <p className="text-xs text-slate-500">
                       {faceVector
-                        ? '✓ Vector 128-D biometrik berhasil direkam'
+                        ? duplicateCheckFailed
+                          ? '⚠️ Vector tersimpan (duplikasi tidak tervalidasi)'
+                          : '✓ Vector 128-D biometrik berhasil direkam'
                         : 'Belum ada rekaman biometrik terlampir.'}
                     </p>
                   </div>
@@ -356,6 +389,15 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
                   {showWebcam ? 'Tutup Kamera' : faceVector ? 'Rekam Ulang' : 'Buka Kamera'}
                 </Button>
               </div>
+
+              {duplicateCheckFailed && faceVector && (
+                <div className="mb-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>
+                    Pemeriksaan duplikasi gagal (server/jaringan error). Vektor tetap disimpan, namun potensi duplikasi tidak tervalidasi.
+                  </span>
+                </div>
+              )}
 
               {showWebcam && (
                 <div className="mt-4 pt-4 border-t border-slate-200">

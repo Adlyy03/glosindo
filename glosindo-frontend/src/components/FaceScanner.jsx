@@ -12,8 +12,9 @@ import Badge from './ui/Badge';
  *   onMatchFound(visitor)   — called when face matches existing visitor
  *   onNoMatch(descriptor)   — called when no match (new visitor), passes descriptor
  *   silentMode              — if true, no error alerts shown (for auto-scan mode)
+ *   paused                  — if true, stop auto-scan (prevent spam during processing)
  */
-const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false }) => {
+const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false, paused = false }) => {
   const webcamRef = useRef(null);
   const { modelsLoaded, loading: modelsLoading, error: modelsError } = useFaceModels();
   const { loading: embeddingsLoading, matchFace, reload } = useFaceMatcher();
@@ -42,9 +43,12 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
     }
   };
 
-  // Auto-scan every 5 seconds — LOGIC PRESERVED 100%
+  // Auto-scan every 5 seconds — STOP when paused
   useEffect(() => {
-    if (!modelsLoaded || embeddingsLoading) return;
+    if (!modelsLoaded || embeddingsLoading || paused) {
+      setScanning(false);
+      return;
+    }
 
     setScanning(true);
     const interval = setInterval(() => {
@@ -58,7 +62,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
       clearInterval(interval);
       setScanning(false);
     };
-  }, [modelsLoaded, embeddingsLoading]);
+  }, [modelsLoaded, embeddingsLoading, paused]);
 
   // Models loading state
   if (modelsLoading) {

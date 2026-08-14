@@ -87,6 +87,7 @@ class VisitController extends Controller
             'receptionist_id' => auth()->id(),
             'purpose' => $request->purpose,
             'meet_to' => $request->meet_to,
+            'check_in' => Carbon::now(),
             'status' => 'IN',
         ]);
 
@@ -108,7 +109,8 @@ class VisitController extends Controller
     public function active()
     {
         $user = auth()->user();
-        $query = Visit::with(['visitor', 'receptionist:id,name,email'])
+        $query = Visit::whereHas('visitor')
+            ->with(['visitor', 'receptionist:id,name,email'])
             ->where('status', 'IN');
 
         // Receptionist only see their own visits

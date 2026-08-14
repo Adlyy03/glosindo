@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Zap, Camera, CheckCircle2, LogOut, LogIn, AlertCircle, ArrowRight } from 'lucide-react';
 import FaceScanner from '../components/FaceScanner';
 import SplashOverlay from '../components/SplashOverlay';
+import ConfirmModal from '../components/ConfirmModal';
 import visitService from '../services/visitService';
 import toast from 'react-hot-toast';
 import Card, { CardHeader } from '../components/ui/Card';
@@ -16,32 +17,27 @@ const QuickCheckInPage = () => {
   const [splashType, setSplashType] = useState('checkin');
   const [visitorName, setVisitorName] = useState('');
   const [reloadSignal, setReloadSignal] = useState(0);
+  const [showNoMatchModal, setShowNoMatchModal] = useState(false);
 
   const handleMatchFound = async (visitor) => {
     if (processing) return;
     
-    console.log('=== Quick Check Debug ===');
-    console.log('Visitor matched:', visitor);
-    
     setProcessing(true);
     try {
-      // Cek dulu apakah visitor punya active visit — PRESERVED LOGIC
+      // Cek dulu apakah visitor punya active visit
       const activeVisitsRes = await visitService.getActive();
-      console.log('Active visits response:', activeVisitsRes);
       
       const visitorId = visitor.id || visitor.visitor_id;
       const activeVisit = activeVisitsRes.data?.find(v => v.visitor_id === visitorId);
-      console.log('Found active visit for this visitor:', activeVisit);
       
       if (activeVisit) {
         // Ada active visit, lakukan check-out
-        console.log('Attempting check-out for visit ID:', activeVisit.id);
         await visitService.checkOut(activeVisit.id);
         
         setVisitorName(visitor.name);
         setSplashType('checkout');
         setSplashOpen(true);
-        toast.success(`Check-Out Berhasil! ${visitor.name}`, { icon: '👋' });
+        toast.success(`Check-Out Berhasil! ${visitor.name}`, { icon: '👋', id: 'quick-toast' });
       } else {
         // Tidak ada active visit, lakukan check-in
         const checkInData = {
@@ -49,15 +45,13 @@ const QuickCheckInPage = () => {
           purpose: 'Quick Check-In',
           meet_to: '-',
         };
-        console.log('Attempting check-in with data:', checkInData);
         
         const result = await visitService.checkIn(checkInData);
-        console.log('Check-in result:', result);
         
         setVisitorName(visitor.name);
         setSplashType('checkin');
         setSplashOpen(true);
-        toast.success(`Check-In Berhasil! ${visitor.name}`, { icon: '✅' });
+        toast.success(`Check-In Berhasil! ${visitor.name}`, { icon: '✅', id: 'quick-toast' });
       }
       
       // Reload scanner setelah 3 detik
@@ -68,19 +62,24 @@ const QuickCheckInPage = () => {
     } catch (err) {
       console.error('Quick process error:', err);
       const msg = err.response?.data?.message || 'Gagal memproses';
-      toast.error(msg, { duration: 5000 });
+      toast.error(msg, { duration: 5000, id: 'quick-toast' });
     } finally {
       setProcessing(false);
     }
   };
 
   const handleNoMatch = () => {
-    toast.error('Wajah belum terdaftar. Menuju halaman registrasi...', {
-      duration: 2000,
-    });
-    setTimeout(() => {
-      navigate('/check-in/manual');
-    }, 2000);
+    setShowNoMatchModal(true);
+  };
+
+  const handleGoToRegister = () => {
+    setShowNoMatchModal(false);
+    navigate('/check-in/manual');
+  };
+
+  const handleStayOnPage = () => {
+    setShowNoMatchModal(false);
+    setReloadSignal((prev) => prev + 1);
   };
 
   const handleSplashClose = () => {
@@ -94,6 +93,17 @@ const QuickCheckInPage = () => {
         type={splashType}
         visitorName={visitorName}
         onClose={handleSplashClose}
+      />
+
+      <ConfirmModal
+        isOpen={showNoMatchModal}
+        onClose={handleStayOnPage}
+        onConfirm={handleGoToRegister}
+        title="Wajah Belum Terdaftar"
+        message="Wajah Anda tidak ditemukan di sistem database. Pilih opsi untuk mendaftar tamu baru atau tetap berada di halaman ini."
+        confirmText="Ke Halaman Tamu Baru"
+        cancelText="Tetap di Halaman Ini"
+        type="warning"
       />
 
       {/* Page Title */}
@@ -138,6 +148,7 @@ const QuickCheckInPage = () => {
               onNoMatch={handleNoMatch}
               reloadSignal={reloadSignal}
               silentMode={true}
+              paused={processing || splashOpen || showNoMatchModal}
             />
           )}
           

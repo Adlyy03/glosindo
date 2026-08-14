@@ -37,6 +37,18 @@ class Visit extends Model
     ];
 
     /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function ($visit) {
+            if (!$visit->check_in) {
+                $visit->check_in = \Illuminate\Support\Carbon::now();
+            }
+        });
+    }
+
+    /**
      * Get the visitor that owns the visit.
      */
     public function visitor()

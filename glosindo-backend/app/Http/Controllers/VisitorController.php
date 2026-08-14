@@ -230,6 +230,9 @@ class VisitorController extends Controller
             Storage::disk('public')->delete($visitor->photo);
         }
 
+        // Soft-delete active and associated visits of deleted visitor
+        $visitor->visits()->delete();
+
         $visitor->delete();
 
         return response()->json([

@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 import { History, Search, Calendar, RefreshCw, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import visitService from '../services/visitService';
 import Card, { CardHeader } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault('Asia/Jakarta');
 
 const VisitHistoryPage = () => {
   const [visits, setVisits] = useState([]);

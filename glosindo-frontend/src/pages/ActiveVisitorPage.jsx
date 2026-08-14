@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 import { UserCheck, RefreshCw, LogOut, Camera, ShieldCheck, Clock, User, X } from 'lucide-react';
 import FaceScanner from '../components/FaceScanner';
 import SuccessScreen from '../components/SplashOverlay';
@@ -8,6 +10,10 @@ import visitService from '../services/visitService';
 import Card, { CardHeader } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.tz.setDefault('Asia/Jakarta');
 
 const ActiveVisitorPage = () => {
   const [activeVisits, setActiveVisits] = useState([]);
@@ -44,6 +50,8 @@ const ActiveVisitorPage = () => {
   }, [fetchActive]);
 
   const handleScanMatch = async (visitor) => {
+    if (checkingOutId || splashOpen) return;
+
     if (!verificationVisit) {
       setVerificationMessage(`Tamu ${visitor.name} teridentifikasi, tetapi tidak ada sesi checkout aktif.`);
       return;
@@ -58,7 +66,10 @@ const ActiveVisitorPage = () => {
     setCheckingOutId(verificationVisit.id);
     try {
       await visitService.checkOut(verificationVisit.id);
-      toast.success(`Check-Out Berhasil! ${verificationVisit.visitor?.name} telah keluar.`, { icon: '👋' });
+      toast.success(`Check-Out Berhasil! ${verificationVisit.visitor?.name} telah keluar.`, {
+        icon: '👋',
+        id: 'visit-checkout-toast',
+      });
       setSplashVisitorName(verificationVisit.visitor?.name || 'Tamu');
       setSplashMeta({ checkOutTime: new Date() });
       setSplashOpen(true);
@@ -67,7 +78,9 @@ const ActiveVisitorPage = () => {
       setVerificationError('');
       fetchActive();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Gagal melakukan check-out');
+      toast.error(err.response?.data?.message || 'Gagal melakukan check-out', {
+        id: 'visit-checkout-toast',
+      });
     } finally {
       setCheckingOutId(null);
     }
@@ -128,7 +141,11 @@ const ActiveVisitorPage = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             <div className="lg:col-span-7">
-              <FaceScanner onMatchFound={handleScanMatch} onNoMatch={handleScanNoMatch} />
+              <FaceScanner
+                onMatchFound={handleScanMatch}
+                onNoMatch={handleScanNoMatch}
+                paused={checkingOutId !== null || splashOpen}
+              />
             </div>
             <div className="lg:col-span-5 space-y-4 text-center lg:text-left">
               <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
