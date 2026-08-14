@@ -19,9 +19,13 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
   const [email, setEmail] = useState(visitorToEdit?.email || '');
   const [company, setCompany] = useState(visitorToEdit?.company || '');
   const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(
+    visitorToEdit?.photo ? (visitorToEdit.photo.startsWith('http') ? visitorToEdit.photo : `/storage/${visitorToEdit.photo}`) : null
+  );
 
-  const [faceVector, setFaceVector] = useState(faceVectorPreset || null);
+  const [faceVector, setFaceVector] = useState(
+    faceVectorPreset || visitorToEdit?.face_embedding?.face_vector || visitorToEdit?.faceEmbedding?.face_vector || null
+  );
   const [showWebcam, setShowWebcam] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [splashOpen, setSplashOpen] = useState(false);
@@ -30,7 +34,9 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
 
   // Update faceVector saat faceVectorPreset berubah — PRESERVED LOGIC
   useEffect(() => {
-    setFaceVector(faceVectorPreset || null);
+    if (faceVectorPreset) {
+      setFaceVector(faceVectorPreset);
+    }
   }, [faceVectorPreset]);
 
   const handleFileChange = (e) => {
@@ -57,12 +63,15 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       
       if (result.duplicate) {
         const existingVisitor = result.visitor;
-        toast.error(
-          `Wajah sudah terdaftar atas nama: ${existingVisitor.name}${existingVisitor.company ? ` (${existingVisitor.company})` : ''}`,
-          { duration: 5000 }
-        );
-        setShowWebcam(false);
-        return;
+        // Ignore duplicate if it's the same visitor being edited
+        if (!isEditing || Number(existingVisitor?.id) !== Number(visitorToEdit?.id)) {
+          toast.error(
+            `Wajah sudah terdaftar atas nama: ${existingVisitor.name}${existingVisitor.company ? ` (${existingVisitor.company})` : ''}`,
+            { duration: 5000 }
+          );
+          setShowWebcam(false);
+          return;
+        }
       }
       
       setFaceVector(vectorArray);
@@ -132,11 +141,11 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       let savedVisitor;
       if (isEditing) {
         const res = await visitorService.update(visitorToEdit.id, formData);
-        savedVisitor = res.data ?? res;
+        savedVisitor = res.data?.data || res.data || res;
         toast.success(`Data tamu ${name} berhasil diperbarui`);
       } else {
         const res = await visitorService.create(formData);
-        savedVisitor = res.data ?? res;
+        savedVisitor = res.data?.data || res.data || res;
         toast.success(`Tamu baru ${name} berhasil terdaftar`);
         setSplashVisitorName(name);
         setSplashOpen(true);

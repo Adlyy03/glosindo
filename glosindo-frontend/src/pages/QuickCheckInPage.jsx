@@ -17,7 +17,11 @@ const QuickCheckInPage = () => {
   const [splashType, setSplashType] = useState('checkin');
   const [visitorName, setVisitorName] = useState('');
   const [reloadSignal, setReloadSignal] = useState(0);
+<<<<<<< HEAD
   const [showNoMatchModal, setShowNoMatchModal] = useState(false);
+=======
+  const [noMatchModal, setNoMatchModal] = useState(false);
+>>>>>>> d24414d (push)
 
   const handleMatchFound = async (visitor) => {
     if (processing) return;
@@ -69,6 +73,7 @@ const QuickCheckInPage = () => {
   };
 
   const handleNoMatch = () => {
+<<<<<<< HEAD
     setShowNoMatchModal(true);
   };
 
@@ -80,6 +85,23 @@ const QuickCheckInPage = () => {
   const handleStayOnPage = () => {
     setShowNoMatchModal(false);
     setReloadSignal((prev) => prev + 1);
+=======
+    setNoMatchModal(true);
+  };
+
+  const handleRegisterChoice = () => {
+    setNoMatchModal(false);
+    toast.success('Menuju halaman registrasi tamu...', { icon: '📝' });
+    navigate('/check-in/manual');
+  };
+
+  const handleStayChoice = () => {
+    setNoMatchModal(false);
+    toast('Scanner akan dimuat ulang...', { icon: '🔄' });
+    setTimeout(() => {
+      setReloadSignal(prev => prev + 1);
+    }, 500);
+>>>>>>> d24414d (push)
   };
 
   const handleSplashClose = () => {
@@ -231,6 +253,49 @@ const QuickCheckInPage = () => {
           </Card>
         </div>
       </div>
+
+      {/* Modal Wajah Tidak Terdaftar */}
+      {noMatchModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-scale transform transition-all duration-200">
+            {/* Header dengan icon */}
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-6 text-center">
+              <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center ring-4 ring-white/30">
+                <AlertCircle className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-white tracking-tight">
+                Wajah Belum Terdaftar
+              </h3>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-slate-600 text-center mb-6 leading-relaxed">
+                Wajah Anda tidak ditemukan dalam sistem. Apakah Anda ingin mendaftar sebagai tamu baru?
+              </p>
+
+              {/* Buttons */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleRegisterChoice}
+                  className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-xl bg-gradient-to-r from-brand-navy to-blue-700 text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  <span>Daftar Jadi Tamu</span>
+                </button>
+
+                <button
+                  onClick={handleStayChoice}
+                  className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-base hover:bg-slate-200 active:bg-slate-300 transition-all duration-200"
+                >
+                  <Camera className="w-5 h-5" />
+                  <span>Tetap di Sini</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

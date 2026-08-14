@@ -20,13 +20,16 @@ class FaceEmbeddingController extends Controller
         $embeddings = FaceEmbedding::with('visitor:id,name,company')->get();
 
         $data = $embeddings->map(function ($embedding) {
+            if (!$embedding->visitor) {
+                return null;
+            }
             return [
                 'visitor_id' => $embedding->visitor_id,
                 'name' => $embedding->visitor->name,
                 'company' => $embedding->visitor->company,
                 'face_vector' => $embedding->face_vector,
             ];
-        });
+        })->filter()->values();
 
         return response()->json([
             'success' => true,
@@ -58,6 +61,9 @@ class FaceEmbeddingController extends Controller
         $threshold = 0.5; // relaxed from 0.4 to reduce false-positives when lighting/angle varies
 
         foreach ($embeddings as $embedding) {
+            if (!$embedding->visitor) {
+                continue;
+            }
             $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
             
             \Log::info('Face comparison', [
@@ -144,7 +150,7 @@ class FaceEmbeddingController extends Controller
         // Update or create face embedding
         $embedding = FaceEmbedding::updateOrCreate(
             ['visitor_id' => $visitorId],
-            ['face_vector' => $request->face_vector]
+            ['face_vector' => array_map('floatval', $request->face_vector)]
         );
 
         return response()->json([
@@ -155,18 +161,36 @@ class FaceEmbeddingController extends Controller
     }
 
     /**
-     * Calculate Euclidean distance between two face vectors.
+     * Calculate Euclidean distance between two face vectors safely.
      *
-     * @param  array  $vector1
-     * @param  array  $vector2
+     * @param  mixed  $vector1
+     * @param  mixed  $vector2
      * @return float
      */
     private function calculateEuclideanDistance($vector1, $vector2)
     {
-        $sum = 0;
-        for ($i = 0; $i < count($vector1); $i++) {
-            $sum += pow($vector1[$i] - $vector2[$i], 2);
+        if (is_string($vector1)) {
+            $vector1 = json_decode($vector1, true);
         }
+        if (is_string($vector2)) {
+            $vector2 = json_decode($vector2, true);
+        }
+
+        if (!is_array($vector1) || !is_array($vector2)) {
+            return 999.0;
+        }
+
+        if (count($vector1) !== 128 || count($vector2) !== 128) {
+            return 999.0;
+        }
+
+        $sum = 0;
+        for ($i = 0; $i < 128; $i++) {
+            $v1 = isset($vector1[$i]) ? floatval($vector1[$i]) : 0;
+            $v2 = isset($vector2[$i]) ? floatval($vector2[$i]) : 0;
+            $sum += pow($v1 - $v2, 2);
+        }
+
         return sqrt($sum);
     }
 
@@ -196,3 +220,4 @@ class FaceEmbeddingController extends Controller
         ]);
     }
 }
+
