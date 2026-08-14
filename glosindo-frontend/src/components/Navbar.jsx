@@ -63,8 +63,8 @@ const Navbar = ({ onToggleSidebar }) => {
                 <span className="text-base md:text-lg font-bold text-brand-navy tracking-tight">
                   GLOSINDO
                 </span>
-                <span className="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                  Guestbook Kiosk
+                <span className="hidden sm:inline-block text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                  Glide GuestBook
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 hidden md:block leading-tight font-medium">
@@ -86,7 +86,7 @@ const Navbar = ({ onToggleSidebar }) => {
 
         {/* Right: User Profile & Security Badge */}
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-3 pr-3 border-r border-slate-200">
+          <div className="flex items-center gap-3">
             <div className="text-right">
               <p className="text-xs font-bold text-slate-900 leading-tight">{user?.name || 'Petugas'}</p>
               <div className="flex items-center justify-end gap-1 text-[11px] text-slate-500 capitalize">
@@ -94,19 +94,10 @@ const Navbar = ({ onToggleSidebar }) => {
                 <span>{user?.role || 'User'}</span>
               </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-navy to-slate-800 text-white font-bold flex items-center justify-center text-sm shadow-md shadow-brand-navy/10 border border-brand-navy/20">
+            <div className="w-10 h-10 rounded-2xl bg-[#4c65e8] text-white font-extrabold flex items-center justify-center text-sm shadow-md shadow-blue-500/20 border border-blue-400/30">
               {user?.name?.charAt(0)?.toUpperCase() || <User className="w-5 h-5" />}
             </div>
           </div>
-
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-200 transition-all active:scale-95 cursor-pointer"
-            title="Keluar dari Sistem"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Logout</span>
-          </button>
         </div>
       </div>
     </nav>

@@ -1,5 +1,6 @@
-// Brand Assets
 export const LOGO = '/src/assets/images/logo-glosindo.webp';
+export const LOGIN_ILLUSTRATION = '/src/assets/images/login-illustration.jpg';
+export const LOGIN_MASCOT = '/src/assets/images/login-mascot.png';
 
 // Brand Colors (matching Tailwind config)
 export const COLORS = {
