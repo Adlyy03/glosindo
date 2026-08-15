@@ -219,9 +219,22 @@ class VisitorController extends Controller
             ], 404);
         }
 
+        // Parse face_vector dari request/FormData
         $faceVector = $this->parseFaceVector($request);
+
         if ($faceVector !== null) {
             $request->merge(['face_vector' => $faceVector]);
+        } else {
+            // Fallback: decode face_vector JSON string dari FormData
+            $faceVectorInput = $request->input('face_vector');
+
+            if (is_string($faceVectorInput)) {
+                $decoded = json_decode($faceVectorInput, true);
+
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                    $request->merge(['face_vector' => $decoded]);
+                }
+            }
         }
 
         $this->validate($request, [
@@ -261,15 +274,22 @@ class VisitorController extends Controller
             }
 
             // Check duplicate face (exclude own embedding)
-            $embeddings = FaceEmbedding::where('visitor_id', '!=', $id)->with('visitor:id,name,company,photo')->get();
+            $embeddings = FaceEmbedding::where('visitor_id', '!=', $id)
+                ->with('visitor:id,name,company,photo')
+                ->get();
+
             $threshold = 0.3;
 
             foreach ($embeddings as $embedding) {
                 if (!$embedding->visitor) {
                     continue;
                 }
-                $distance = $this->calculateEuclideanDistance($faceVector, $embedding->face_vector);
-                
+
+                $distance = $this->calculateEuclideanDistance(
+                    $faceVector,
+                    $embedding->face_vector
+                );
+
                 if ($distance < $threshold) {
                     return response()->json([
                         'success' => false,

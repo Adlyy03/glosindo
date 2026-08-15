@@ -133,9 +133,7 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       if (company) formData.append('company', company.trim());
       if (photoFile) formData.append('photo', photoFile);
       if (faceVector && Array.isArray(faceVector) && faceVector.length === 128) {
-        faceVector.forEach((value) => {
-          formData.append('face_vector[]', value);
-        });
+        formData.append('face_vector', JSON.stringify(faceVector));
       }
 
       let savedVisitor;
@@ -154,6 +152,7 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
       onSuccess?.(savedVisitor);
     } catch (err) {
       console.error('Submit error:', err);
+      console.error('Response data:', err.response?.data);
       const msg = err.response?.data?.message || err.response?.data?.errors?.name?.[0] || 'Gagal menyimpan data tamu';
       toast.error(msg);
     } finally {
