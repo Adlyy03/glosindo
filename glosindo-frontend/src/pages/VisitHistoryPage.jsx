@@ -3,11 +3,12 @@ import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { History, Search, Calendar, RefreshCw, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { History, Search, Calendar, RefreshCw, FileText, ChevronLeft, ChevronRight, Trash2, AlertTriangle } from 'lucide-react';
 import visitService from '../services/visitService';
 import Card, { CardHeader } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
+import Modal from '../components/ui/Modal';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -23,6 +24,11 @@ const VisitHistoryPage = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
+
+  // Delete modal
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [visitToDelete, setVisitToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadHistory = useCallback(async () => {
     setLoading(true);
@@ -51,6 +57,28 @@ const VisitHistoryPage = () => {
     setStartDate('');
     setEndDate('');
     setPage(1);
+  };
+
+  const openDeleteModal = (visit) => {
+    setVisitToDelete(visit);
+    setDeleteModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!visitToDelete) return;
+
+    setDeleting(true);
+    try {
+      await visitService.delete(visitToDelete.id);
+      toast.success('Riwayat kunjungan berhasil dihapus');
+      setDeleteModal(false);
+      setVisitToDelete(null);
+      loadHistory(); // Reload data
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal menghapus riwayat');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -166,6 +194,7 @@ const VisitHistoryPage = () => {
                     <th className="px-6 py-4">Check-In</th>
                     <th className="px-6 py-4 hidden lg:table-cell">Check-Out</th>
                     <th className="px-6 py-4 text-center">Status</th>
+                    <th className="px-6 py-4 text-center">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -192,6 +221,15 @@ const VisitHistoryPage = () => {
                           <Badge variant="neutral">OUT</Badge>
                         )}
                       </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => openDeleteModal(visit)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                          title="Hapus riwayat"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -207,11 +245,19 @@ const VisitHistoryPage = () => {
                       <p className="font-bold text-slate-900 truncate">{visit.visitor?.name}</p>
                       <p className="text-xs text-slate-400 font-medium">{visit.visitor?.company || 'Pribadi'}</p>
                     </div>
-                    {visit.status === 'IN' ? (
-                      <Badge variant="emerald" dot>IN</Badge>
-                    ) : (
-                      <Badge variant="neutral">OUT</Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {visit.status === 'IN' ? (
+                        <Badge variant="emerald" dot>IN</Badge>
+                      ) : (
+                        <Badge variant="neutral">OUT</Badge>
+                      )}
+                      <button
+                        onClick={() => openDeleteModal(visit)}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-1.5 text-xs text-slate-600 font-medium bg-slate-50 p-3 rounded-xl">
@@ -278,6 +324,72 @@ const VisitHistoryPage = () => {
           </>
         )}
       </Card>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={deleteModal}
+        onClose={() => !deleting && setDeleteModal(false)}
+        title="Hapus Riwayat Kunjungan"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-4 bg-red-50 rounded-xl border border-red-100">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-5 h-5 text-red-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-slate-900 text-sm mb-1">
+                Konfirmasi Penghapusan Data
+              </p>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Anda yakin ingin menghapus riwayat kunjungan <span className="font-bold text-slate-900">{visitToDelete?.visitor?.name}</span>?
+                Data yang dihapus tidak dapat dikembalikan.
+              </p>
+            </div>
+          </div>
+
+          {visitToDelete && (
+            <div className="p-4 bg-slate-50 rounded-xl space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Tamu:</span>
+                <span className="font-bold text-slate-900">{visitToDelete.visitor?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Perusahaan:</span>
+                <span className="font-medium text-slate-700">{visitToDelete.visitor?.company || 'Pribadi'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Check-In:</span>
+                <span className="font-medium text-slate-700">{dayjs(visitToDelete.check_in).format('DD/MM/YYYY HH:mm')}</span>
+              </div>
+              {visitToDelete.check_out && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Check-Out:</span>
+                  <span className="font-medium text-slate-700">{dayjs(visitToDelete.check_out).format('DD/MM/YYYY HH:mm')}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() => setDeleteModal(false)}
+              disabled={deleting}
+            >
+              Batal
+            </Button>
+            <Button
+              variant="danger"
+              fullWidth
+              onClick={handleDelete}
+              loading={deleting}
+            >
+              Hapus Riwayat
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

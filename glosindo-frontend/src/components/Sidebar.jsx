@@ -11,7 +11,8 @@ import {
   UserCog,
   Settings,
   LogOut,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { LOGO, APP_NAME } from '../constants';
@@ -66,6 +67,13 @@ const navSections = [
         roles: ['admin', 'receptionist'],
         icon: Users,
         badge: null,
+      },
+      {
+        label: 'Laporan & Statistik',
+        to: '/reports',
+        roles: ['admin', 'receptionist'],
+        icon: FileText,
+        badge: 'New',
       },
     ]
   },
@@ -250,3 +258,4 @@ const Sidebar = ({ isOpen, onClose }) => {
 };
 
 export default Sidebar;
+

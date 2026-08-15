@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import FaceScanner from '../../components/FaceScanner';
 import visitorService from '../../services/visitorService';
 import visitService from '../../services/visitService';
+import PublicRegistrationToggle from '../../components/PublicRegistrationToggle';
 
 const quickActions = ['Scan Wajah', 'Input Manual', 'Registrasi Baru'];
 
@@ -47,6 +48,8 @@ const ReceptionistCheckInPage = () => {
         <h1 className="text-2xl font-bold">Check-In Tamu</h1>
         <p className="mt-2 text-sm text-emerald-100">Area operasi resepsionis untuk mencatat kedatangan tamu dan memverifikasi wajah.</p>
       </div>
+
+      <PublicRegistrationToggle showLink={true} />
 
       <div className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]">
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Zap, Camera, CheckCircle2, LogOut, LogIn, AlertCircle, ArrowRight } from 'lucide-react';
 import FaceScanner from '../components/FaceScanner';
 import SplashOverlay from '../components/SplashOverlay';
-import ConfirmModal from '../components/ConfirmModal';
 import visitService from '../services/visitService';
 import toast from 'react-hot-toast';
 import Card, { CardHeader } from '../components/ui/Card';
@@ -17,11 +16,9 @@ const QuickCheckInPage = () => {
   const [splashType, setSplashType] = useState('checkin');
   const [visitorName, setVisitorName] = useState('');
   const [reloadSignal, setReloadSignal] = useState(0);
-<<<<<<< HEAD
-  const [showNoMatchModal, setShowNoMatchModal] = useState(false);
-=======
   const [noMatchModal, setNoMatchModal] = useState(false);
->>>>>>> d24414d (push)
+  const [earlyCheckoutModal, setEarlyCheckoutModal] = useState(false);
+  const [pendingCheckout, setPendingCheckout] = useState(null);
 
   const handleMatchFound = async (visitor) => {
     if (processing) return;
@@ -35,7 +32,25 @@ const QuickCheckInPage = () => {
       const activeVisit = activeVisitsRes.data?.find(v => v.visitor_id === visitorId);
       
       if (activeVisit) {
-        // Ada active visit, lakukan check-out
+        // Ada active visit, cek durasi kunjungan
+        // Backend return 'check_in', bukan 'check_in_time'
+        const checkInTime = new Date(activeVisit.check_in);
+        const now = new Date();
+        const durationMs = now - checkInTime;
+        const durationMinutes = durationMs / (1000 * 60);
+
+        console.log('Check-in time:', activeVisit.check_in);
+        console.log('Duration minutes:', durationMinutes);
+
+        // Jika kurang dari 60 menit (1 jam), tampilkan modal konfirmasi
+        if (durationMinutes < 60) {
+          setPendingCheckout({ visitor, visitId: activeVisit.id, durationMinutes });
+          setEarlyCheckoutModal(true);
+          setProcessing(false);
+          return;
+        }
+
+        // Durasi sudah >= 1 jam, langsung checkout
         await visitService.checkOut(activeVisit.id);
         
         setVisitorName(visitor.name);
@@ -50,7 +65,7 @@ const QuickCheckInPage = () => {
           meet_to: '-',
         };
         
-        const result = await visitService.checkIn(checkInData);
+        await visitService.checkIn(checkInData);
         
         setVisitorName(visitor.name);
         setSplashType('checkin');
@@ -73,19 +88,6 @@ const QuickCheckInPage = () => {
   };
 
   const handleNoMatch = () => {
-<<<<<<< HEAD
-    setShowNoMatchModal(true);
-  };
-
-  const handleGoToRegister = () => {
-    setShowNoMatchModal(false);
-    navigate('/check-in/manual');
-  };
-
-  const handleStayOnPage = () => {
-    setShowNoMatchModal(false);
-    setReloadSignal((prev) => prev + 1);
-=======
     setNoMatchModal(true);
   };
 
@@ -101,7 +103,42 @@ const QuickCheckInPage = () => {
     setTimeout(() => {
       setReloadSignal(prev => prev + 1);
     }, 500);
->>>>>>> d24414d (push)
+  };
+
+  const handleConfirmEarlyCheckout = async () => {
+    if (!pendingCheckout) return;
+    
+    setEarlyCheckoutModal(false);
+    setProcessing(true);
+
+    try {
+      await visitService.checkOut(pendingCheckout.visitId);
+      
+      setVisitorName(pendingCheckout.visitor.name);
+      setSplashType('checkout');
+      setSplashOpen(true);
+      toast.success(`Check-Out Berhasil! ${pendingCheckout.visitor.name}`, { icon: '�', id: 'quick-toast' });
+      
+      setTimeout(() => {
+        setReloadSignal(prev => prev + 1);
+      }, 3000);
+    } catch (err) {
+      console.error('Early checkout error:', err);
+      toast.error('Gagal check-out', { duration: 5000 });
+    } finally {
+      setPendingCheckout(null);
+      setProcessing(false);
+    }
+  };
+
+  const handleCancelEarlyCheckout = () => {
+    setEarlyCheckoutModal(false);
+    setPendingCheckout(null);
+    setProcessing(false);
+    toast('Check-out dibatalkan', { icon: 'ℹ️' });
+    setTimeout(() => {
+      setReloadSignal(prev => prev + 1);
+    }, 500);
   };
 
   const handleSplashClose = () => {
@@ -115,17 +152,6 @@ const QuickCheckInPage = () => {
         type={splashType}
         visitorName={visitorName}
         onClose={handleSplashClose}
-      />
-
-      <ConfirmModal
-        isOpen={showNoMatchModal}
-        onClose={handleStayOnPage}
-        onConfirm={handleGoToRegister}
-        title="Wajah Belum Terdaftar"
-        message="Wajah Anda tidak ditemukan di sistem database. Pilih opsi untuk mendaftar tamu baru atau tetap berada di halaman ini."
-        confirmText="Ke Halaman Tamu Baru"
-        cancelText="Tetap di Halaman Ini"
-        type="warning"
       />
 
       {/* Page Title */}
@@ -170,7 +196,7 @@ const QuickCheckInPage = () => {
               onNoMatch={handleNoMatch}
               reloadSignal={reloadSignal}
               silentMode={true}
-              paused={processing || splashOpen || showNoMatchModal}
+              paused={processing || splashOpen || noMatchModal || earlyCheckoutModal}
             />
           )}
           
@@ -289,6 +315,56 @@ const QuickCheckInPage = () => {
                   className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-base hover:bg-slate-200 active:bg-slate-300 transition-all duration-200"
                 >
                   <Camera className="w-5 h-5" />
+                  <span>Tetap di Sini</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Check-Out Kurang dari 1 Jam */}
+      {earlyCheckoutModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-scale transform transition-all duration-200">
+            {/* Header dengan icon */}
+            <div className="bg-gradient-to-br from-red-500 to-rose-600 p-6 text-center">
+              <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center ring-4 ring-white/30">
+                <AlertCircle className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-white tracking-tight">
+                Durasi Kunjungan Singkat
+              </h3>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <p className="text-slate-600 text-center mb-2 leading-relaxed">
+                Anda baru saja check-in <strong className="text-red-600">kurang dari 1 jam</strong>.
+              </p>
+              {pendingCheckout?.durationMinutes !== undefined && (
+                <p className="text-slate-500 text-sm text-center mb-4">
+                  Durasi kunjungan: <strong>{Math.floor(pendingCheckout.durationMinutes)} menit</strong>
+                </p>
+              )}
+              <p className="text-slate-700 text-center mb-6 font-semibold">
+                Yakin ingin check-out sekarang?
+              </p>
+
+              {/* Buttons */}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleConfirmEarlyCheckout}
+                  className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 text-white font-bold text-base shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                >
+                  <LogOut className="w-5 h-5" />
+                  <span>Ya, Check-Out Sekarang</span>
+                </button>
+
+                <button
+                  onClick={handleCancelEarlyCheckout}
+                  className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-base hover:bg-slate-200 active:bg-slate-300 transition-all duration-200"
+                >
                   <span>Tetap di Sini</span>
                 </button>
               </div>

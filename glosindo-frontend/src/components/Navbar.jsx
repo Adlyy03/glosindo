@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { Menu, LogOut, Clock, ShieldCheck, User } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { LOGO, APP_NAME } from '../constants';
+import PublicRegistrationToggle from './PublicRegistrationToggle';
 
 const Navbar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuthStore();

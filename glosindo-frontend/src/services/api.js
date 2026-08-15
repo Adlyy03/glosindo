@@ -37,7 +37,10 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('user');
 
-      if (window.location.pathname !== '/login') {
+      const publicPaths = ['/login', '/register', '/guest-register', '/registrasi-tamu', '/guest-registration'];
+      const isPublicPath = publicPaths.some((p) => window.location.pathname.startsWith(p));
+
+      if (!isPublicPath) {
         window.location.href = '/login';
       }
     }

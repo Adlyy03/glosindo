@@ -20,6 +20,8 @@ import ReceptionistCheckInPage from './pages/receptionist/ReceptionistCheckInPag
 import ReceptionistActivePage from './pages/receptionist/ReceptionistActivePage';
 import ReceptionistHistoryPage from './pages/receptionist/ReceptionistHistoryPage';
 import ReceptionistVisitorPage from './pages/receptionist/ReceptionistVisitorPage';
+import ReportsPage from './pages/ReportsPage';
+import PublicGuestRegisterPage from './pages/PublicGuestRegisterPage';
 
 function App() {
   const { isAuthenticated, restoreSession } = useAuthStore();
@@ -111,11 +113,15 @@ function App() {
       />
 
       <Routes>
-        {/* Public route */}
+        {/* Public routes */}
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
         />
+        <Route path="/register" element={<PublicGuestRegisterPage />} />
+        <Route path="/guest-register" element={<PublicGuestRegisterPage />} />
+        <Route path="/registrasi-tamu" element={<PublicGuestRegisterPage />} />
+        <Route path="/guest-registration" element={<PublicGuestRegisterPage />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
@@ -135,6 +141,7 @@ function App() {
                       <Route path="/active-visitors" element={<ActiveVisitorPage />} />
                       <Route path="/visit-history" element={<VisitHistoryPage />} />
                       <Route path="/visitors" element={<VisitorListPage />} />
+                      <Route path="/reports" element={<ReportsPage />} />
                       <Route element={<ProtectedRoute allowedRoles={['receptionist']} />}>
                         <Route path="/receptionist/check-in" element={<ReceptionistCheckInPage />} />
                         <Route path="/receptionist/active" element={<ReceptionistActivePage />} />
