@@ -30,8 +30,15 @@ class CorsMiddleware
 
         $response = $next($request);
 
-        foreach ($headers as $key => $value) {
-            $response->header($key, $value);
+        // Handle BinaryFileResponse (file downloads) differently
+        if ($response instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
+            foreach ($headers as $key => $value) {
+                $response->headers->set($key, $value);
+            }
+        } else {
+            foreach ($headers as $key => $value) {
+                $response->header($key, $value);
+            }
         }
 
         return $response;

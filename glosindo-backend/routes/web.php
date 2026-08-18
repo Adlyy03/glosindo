@@ -19,6 +19,10 @@ $router->get('/', function () use ($router) {
 $router->group(['prefix' => 'api'], function () use ($router) {
     // Authentication
     $router->post('login', 'AuthController@login');
+    
+    // Public registration
+    $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
+    $router->post('public-registration/register', 'PublicRegistrationController@register');
 });
 
 // Protected routes (require JWT token)
@@ -58,7 +62,7 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->post('visits', 'VisitController@store');
     $router->get('visits/{id}', 'VisitController@show');
     $router->put('visits/{id}/checkout', 'VisitController@checkout');
-    $router->delete('visits/{id}', ['middleware' => 'role:admin', 'uses' => 'VisitController@destroy']);
+    $router->delete('visits/{id}', 'VisitController@destroy');
 
     // Dashboard - Admin
     $router->group(['middleware' => 'role:admin'], function () use ($router) {
@@ -70,6 +74,15 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
 
     // Dashboard - Receptionist
     $router->get('dashboard/receptionist-stats', ['middleware' => 'role:receptionist', 'uses' => 'DashboardController@receptionistStats']);
+
+    // Public Registration Settings (Admin & Receptionist only)
+    $router->post('public-registration/toggle', ['middleware' => 'role:admin,receptionist', 'uses' => 'PublicRegistrationController@toggleStatus']);
+    $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
+
+    // Reports
+    $router->get('reports/statistics', 'ReportController@statistics');
+    $router->get('reports/export-excel', 'ReportController@exportExcel');
+    $router->get('reports/export-pdf', 'ReportController@exportPdf');
 });
 
 // Swagger UI route
