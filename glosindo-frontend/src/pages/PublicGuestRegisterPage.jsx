@@ -233,39 +233,26 @@ const PublicGuestRegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-[#0f172a] to-slate-900 text-slate-100 flex flex-col justify-between selection:bg-brand-cyan selection:text-white">
-      {/* Background Glow Decorations */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-brand-cyan/15 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 -left-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 right-1/3 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between">
+      {/* Subtle gradient overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 pointer-events-none z-0" />
 
       {/* Header Bar */}
-      <header className="relative z-10 w-full border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-4 py-3.5 sm:px-8">
+      <header className="relative z-10 w-full border-b border-slate-700 bg-slate-800 px-4 py-4 sm:px-8">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1 shadow-md border border-slate-200 flex-shrink-0">
+            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1">
               <img src={LOGO} alt={APP_NAME} className="w-full h-full object-contain" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold tracking-tight text-white text-base md:text-lg">
-                  GLOSINDO
-                </span>
-                <span className="text-[10px] px-2 py-0.5 font-bold uppercase rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                  Guest Portal
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-400 font-medium">
-                Pendaftaran Kunjungan Mandiri
-              </p>
+              <span className="font-bold text-white text-lg">GLOSINDO</span>
+              <p className="text-xs text-slate-400">Pendaftaran Kunjungan Mandiri</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 bg-slate-800/80 border border-slate-700/60 px-3 py-1.5 rounded-full">
+          <div className="flex items-center gap-2 text-xs text-slate-400">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="hidden sm:inline">Portal Resmi Tamu</span>
+            <span className="hidden sm:inline">Portal Resmi</span>
           </div>
         </div>
       </header>
@@ -273,124 +260,89 @@ const PublicGuestRegisterPage = () => {
       {/* Main Content Area */}
       <main className="relative z-10 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-center">
         {checkingStatus ? (
-          <div className="bg-slate-800/80 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-10 text-center shadow-2xl max-w-md mx-auto w-full">
-            <div className="w-14 h-14 rounded-2xl bg-brand-cyan/20 border border-brand-cyan/30 text-brand-cyan flex items-center justify-center mx-auto mb-4 animate-pulse">
-              <RefreshCw className="w-7 h-7 animate-spin" />
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center max-w-md mx-auto">
+            <div className="w-12 h-12 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-4">
+              <RefreshCw className="w-6 h-6 animate-spin" />
             </div>
-            <h2 className="text-lg font-bold text-white mb-1">Memeriksa Status Layanan...</h2>
-            <p className="text-xs text-slate-400">Menghubungkan ke sistem resepsionis GLOSINDO</p>
+            <h2 className="text-lg font-bold text-white mb-1">Memeriksa Status...</h2>
+            <p className="text-sm text-slate-400">Menghubungkan ke sistem</p>
           </div>
         ) : !isEnabled ? (
-          /* When Registration is DISABLED by Admin/Receptionist */
-          <div className="bg-slate-800/90 backdrop-blur-xl border border-rose-500/30 rounded-3xl p-8 sm:p-10 text-center shadow-2xl max-w-lg mx-auto w-full animate-fadeIn">
-            <div className="w-16 h-16 rounded-3xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-5 shadow-inner">
-              <Lock className="w-8 h-8" />
+          /* When Registration is DISABLED */
+          <div className="bg-slate-800 border border-rose-500/30 rounded-xl p-8 text-center max-w-lg mx-auto">
+            <div className="w-14 h-14 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-7 h-7" />
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-bold uppercase tracking-wider mb-3">
-              <XCircle className="w-3.5 h-3.5 text-rose-400" />
-              Pendaftaran Ditutup
-            </div>
-
-            <h2 className="text-2xl font-black text-white tracking-tight mb-2">
-              Pendaftaran Mandiri Sedang Nonaktif
+            <h2 className="text-xl font-bold text-white mb-2">
+              Pendaftaran Sedang Nonaktif
             </h2>
 
-            <p className="text-sm text-slate-300 leading-relaxed max-w-md mx-auto mb-6">
-              Mohon maaf, saat ini fitur registrasi tamu dari luar / rumah sedang dinonaktifkan oleh petugas resepsionis atau administrator.
+            <p className="text-sm text-slate-300 mb-6">
+              Fitur registrasi mandiri sedang dinonaktifkan. Silakan datang langsung ke kantor untuk pendaftaran di meja resepsionis.
             </p>
-
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-700/80 text-left space-y-2 mb-6">
-              <p className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-brand-cyan flex-shrink-0" />
-                Petunjuk Bagi Pengunjung:
-              </p>
-              <ul className="text-xs text-slate-400 space-y-1.5 list-disc list-inside">
-                <li>Silakan datang langsung ke gedung kantor PT GLOSINDO.</li>
-                <li>Lakukan pendaftaran on-the-spot di meja resepsionis / kiosk resepsionis.</li>
-                <li>Petugas kami siap membantu proses check-in Anda.</li>
-              </ul>
-            </div>
 
             <Button
               variant="outline"
               size="md"
               onClick={fetchStatus}
               icon={RefreshCw}
-              className="border-slate-700 hover:bg-slate-700 text-slate-200"
+              className="border-slate-600 hover:bg-slate-700 text-slate-200"
             >
               Muat Ulang Status
             </Button>
           </div>
         ) : isSuccess && successData ? (
-          /* SUCCESS CONFIRMATION PASS SCREEN */
-          <div className="bg-slate-800/90 backdrop-blur-xl border border-emerald-500/30 rounded-3xl p-6 sm:p-10 shadow-2xl max-w-xl mx-auto w-full animate-fadeIn">
-            <div className="text-center pb-6 border-b border-slate-700/80">
-              <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/10">
-                <CheckCircle2 className="w-10 h-10" />
+          /* SUCCESS CONFIRMATION */
+          <div className="bg-slate-800 border border-emerald-500/30 rounded-xl p-8 max-w-xl mx-auto">
+            <div className="text-center pb-6 border-b border-slate-700">
+              <div className="w-14 h-14 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle2 className="w-8 h-8" />
               </div>
-              <span className="text-[11px] px-3 py-1 font-extrabold uppercase tracking-widest rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Registrasi Berhasil
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight mt-2">
-                Konfirmasi Pendaftaran Tamu
+              <h2 className="text-2xl font-bold text-white">
+                Pendaftaran Berhasil
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                Data pra-kunjungan Anda telah berhasil disimpan di sistem GLOSINDO.
+              <p className="text-sm text-slate-300 mt-1">
+                Data kunjungan Anda telah disimpan.
               </p>
             </div>
 
-            {/* Digital Visitor Pass Card */}
-            <div className="my-6 p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-950 border border-cyan-500/30 shadow-inner relative overflow-hidden">
-              <div className="absolute top-0 right-0 transform translate-x-4 -translate-y-4 w-28 h-28 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none" />
-
+            {/* Visitor Card */}
+            <div className="my-6 p-5 rounded-lg bg-slate-900 border border-slate-700">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
-                    Nama Pengunjung
-                  </span>
-                  <h3 className="text-xl font-extrabold text-white">
+                  <span className="text-xs text-cyan-400 uppercase">Pengunjung</span>
+                  <h3 className="text-xl font-bold text-white">
                     {successData.visitor.name}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {successData.visitor.company || 'Pribadi / Umum'} • {successData.visitor.phone}
+                  <p className="text-xs text-slate-400">
+                    {successData.visitor.company || 'Pribadi'} • {successData.visitor.phone}
                   </p>
                 </div>
 
                 {photoPreview && (
                   <img
                     src={photoPreview}
-                    alt="Foto Tamu"
-                    className="w-14 h-14 rounded-2xl object-cover border border-cyan-400 shadow-md flex-shrink-0"
+                    alt="Foto"
+                    className="w-12 h-12 rounded-lg object-cover border border-cyan-400"
                   />
                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
                 <div>
-                  <span className="text-slate-500 font-semibold block">Bertemu Dengan:</span>
-                  <span className="text-white font-bold">{successData.visit.meet_to}</span>
+                  <span className="text-slate-500">Bertemu:</span>
+                  <span className="text-white font-medium block">{successData.visit.meet_to}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 font-semibold block">Keperluan:</span>
-                  <span className="text-white font-bold truncate block">{successData.visit.purpose}</span>
+                  <span className="text-slate-500">Keperluan:</span>
+                  <span className="text-white font-medium block">{successData.visit.purpose}</span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-slate-500 font-semibold block">Waktu Registrasi:</span>
-                  <span className="text-cyan-300 font-medium">{successData.registeredAt}</span>
+                  <span className="text-slate-500">Waktu:</span>
+                  <span className="text-cyan-300 block">{successData.registeredAt}</span>
                 </div>
               </div>
-            </div>
-
-            {/* Next Steps Guide */}
-            <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-700/80 mb-6 space-y-2">
-              <p className="text-xs font-bold text-slate-200 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                Langkah Selanjutnya Saat Tiba:
-              </p>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Tiba di lobi kantor PT GLOSINDO dan sebutkan nama lengkap atau nomor telepon Anda ke petugas resepsionis untuk konfirmasi kedatangan.
-              </p>
             </div>
 
             {/* Actions */}
@@ -402,16 +354,16 @@ const PublicGuestRegisterPage = () => {
                 onClick={() => window.print()}
                 icon={Printer}
               >
-                Cetak / Simpan Bukti
+                Cetak Bukti
               </Button>
               <Button
                 variant="outline"
                 size="lg"
                 fullWidth
                 onClick={handleReset}
-                className="border-slate-700 text-slate-300 hover:bg-slate-700 hover:text-white"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
               >
-                Daftar Tamu Lain
+                Daftar Lagi
               </Button>
             </div>
           </div>

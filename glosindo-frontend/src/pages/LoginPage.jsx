@@ -405,7 +405,7 @@ const LoginPage = () => {
           <div className="mt-6 pt-4 border-t border-slate-100">
 
             <p className="text-[11px] text-slate-400 text-center mb-3 leading-relaxed font-normal">
-              Belum punya akun? Akun dibuat oleh admin — hubungi Kaprog atau Wakasek Humas untuk mendapatkan akses.
+              Belum punya akun? Akun dibuat oleh admin — hubungi admin untuk mendapatkan akses.
             </p>
 
 

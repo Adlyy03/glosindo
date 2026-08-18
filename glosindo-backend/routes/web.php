@@ -15,6 +15,11 @@ $router->get('/', function () use ($router) {
     ]);
 });
 
+// Handle CORS preflight OPTIONS requests
+$router->options('{any:.*}', function () {
+    return response('', 200);
+});
+
 // Public routes
 $router->group(['prefix' => 'api'], function () use ($router) {
     // Authentication
@@ -23,6 +28,23 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // Public registration
     $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
     $router->post('public-registration/register', 'PublicRegistrationController@register');
+    
+    // Temp debug route - check users
+    $router->get('debug/users', function () {
+        $users = \App\Models\User::all();
+        return response()->json([
+            'count' => $users->count(),
+            'users' => $users->map(function($u) {
+                return [
+                    'id' => $u->id,
+                    'name' => $u->name,
+                    'email' => $u->email,
+                    'role' => $u->role,
+                    'password_hash' => substr($u->password, 0, 20) . '...',
+                ];
+            }),
+        ]);
+    });
 });
 
 // Protected routes (require JWT token)
