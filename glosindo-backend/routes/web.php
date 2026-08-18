@@ -105,6 +105,19 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->get('reports/statistics', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReportController@statistics']);
     $router->get('reports/export-excel', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReportController@exportExcel']);
     $router->get('reports/export-pdf', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReportController@exportPdf']);
+
+    // Event Reports - Admin, Receptionist, Supervisor
+    $router->get('reports/events', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@eventReport']);
+    $router->get('reports/events/export-excel', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@exportExcel']);
+    $router->get('reports/events/export-pdf', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@exportPdf']);
+
+    // Events - IMPORTANT: specific routes BEFORE dynamic {id} route
+    $router->get('events/active', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@activeEvents']);
+    $router->get('events', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@index']);
+    $router->post('events', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@store']);
+    $router->get('events/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@show']);
+    $router->put('events/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@update']);
+    $router->delete('events/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@destroy']);
 });
 
 // Swagger UI route

@@ -22,6 +22,11 @@ import ReceptionistHistoryPage from './pages/receptionist/ReceptionistHistoryPag
 import ReceptionistVisitorPage from './pages/receptionist/ReceptionistVisitorPage';
 import PublicGuestRegisterPage from './pages/PublicGuestRegisterPage';
 
+import EventListPage from './pages/events/EventListPage';
+import EventFormPage from './pages/events/EventFormPage';
+import EventDetailPage from './pages/events/EventDetailPage';
+import EventReportPage from './pages/events/EventReportPage';
+
 function App() {
   const { isAuthenticated, restoreSession } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
@@ -140,6 +145,12 @@ function App() {
                       <Route path="/active-visitors" element={<ActiveVisitorPage />} />
                       <Route path="/visit-history" element={<VisitHistoryPage />} />
                       <Route path="/visitors" element={<VisitorListPage />} />
+                      {/* Events */}
+                      <Route path="/events" element={<EventListPage />} />
+                      <Route path="/events/new" element={<EventFormPage />} />
+                      <Route path="/events/reports" element={<EventReportPage />} />
+                      <Route path="/events/:id" element={<EventDetailPage />} />
+                      <Route path="/events/:id/edit" element={<EventFormPage />} />
                       <Route element={<ProtectedRoute allowedRoles={['receptionist']} />}>
                         <Route path="/receptionist/check-in" element={<ReceptionistCheckInPage />} />
                         <Route path="/receptionist/active" element={<ReceptionistActivePage />} />

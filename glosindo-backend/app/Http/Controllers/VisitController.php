@@ -19,7 +19,7 @@ class VisitController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $query = Visit::with(['visitor', 'receptionist:id,name,email']);
+        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name']);
 
         // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
@@ -66,9 +66,27 @@ class VisitController extends Controller
     {
         $this->validate($request, [
             'visitor_id' => 'required|exists:visitors,id',
-            'purpose' => 'required|string|max:255',
-            'meet_to' => 'required|string|max:255',
+            'purpose'    => 'required|string|max:255',
+            'meet_to'    => 'required_without:event_id|nullable|string|max:255',
+            'event_id'   => 'nullable|exists:events,id',
         ]);
+
+        // Validate event if provided
+        if ($request->event_id) {
+            $event = \App\Models\Event::find($request->event_id);
+            if (!$event) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event tidak ditemukan.',
+                ], 422);
+            }
+            if (in_array($event->status, ['cancelled', 'finished'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event sudah ' . ($event->status === 'cancelled' ? 'dibatalkan' : 'selesai') . ' dan tidak dapat digunakan untuk check-in.',
+                ], 422);
+            }
+        }
 
         // Check if visitor already has an active visit
         $activeVisit = Visit::where('visitor_id', $request->visitor_id)
@@ -83,12 +101,13 @@ class VisitController extends Controller
         }
 
         $visit = Visit::create([
-            'visitor_id' => $request->visitor_id,
-            'receptionist_id' => auth()->id(),
-            'purpose' => $request->purpose,
-            'meet_to' => $request->meet_to,
-            'check_in' => Carbon::now(),
-            'status' => 'IN',
+            'visitor_id'       => $request->visitor_id,
+            'receptionist_id'  => auth()->id(),
+            'event_id'         => $request->event_id ?? null,
+            'purpose'          => $request->purpose,
+            'meet_to'          => $request->meet_to ?? '-',
+            'check_in'         => Carbon::now(),
+            'status'           => 'IN',
         ]);
 
         // Audit log
@@ -97,7 +116,7 @@ class VisitController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Check-in successful',
-            'data' => $visit->load(['visitor', 'receptionist:id,name,email']),
+            'data'    => $visit->load(['visitor', 'receptionist:id,name,email', 'event:id,name']),
         ], 201);
     }
 
@@ -110,7 +129,7 @@ class VisitController extends Controller
     {
         $user = auth()->user();
         $query = Visit::whereHas('visitor')
-            ->with(['visitor', 'receptionist:id,name,email'])
+            ->with(['visitor', 'receptionist:id,name,email', 'event:id,name'])
             ->where('status', 'IN');
 
         // Receptionist only see their own visits, supervisor & admin see all
@@ -134,13 +153,9 @@ class VisitController extends Controller
      */
     public function history(Request $request)
     {
-        $user = auth()->user();
-        $query = Visit::with(['visitor', 'receptionist:id,name,email']);
+        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name']);
 
-        // Receptionist only see their own visits, supervisor & admin see all
-        if ($user->role === 'receptionist') {
-            $query->where('receptionist_id', $user->id);
-        }
+        // All roles (admin, receptionist, supervisor) see full visit history
 
         // Filter by date range
         if ($request->has('start_date') && !empty($request->start_date)) {
@@ -176,7 +191,7 @@ class VisitController extends Controller
     public function show($id)
     {
         $user = auth()->user();
-        $query = Visit::with(['visitor', 'receptionist:id,name,email']);
+        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name']);
 
         // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
@@ -243,7 +258,7 @@ class VisitController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Check-out successful',
-            'data' => $visit->load(['visitor', 'receptionist:id,name,email']),
+            'data'    => $visit->load(['visitor', 'receptionist:id,name,email', 'event:id,name']),
         ]);
     }
 

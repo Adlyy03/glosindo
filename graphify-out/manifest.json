@@ -1,0 +1,1088 @@
+{
+  ".agents/skills/caveman-compress/scripts/__init__.py": {
+    "mtime": 1786419169.8207388,
+    "seen": 1787036956.978647,
+    "ast_hash": "d6acae7e188357d1bc1258ce02a29811",
+    "semantic_hash": "d6acae7e188357d1bc1258ce02a29811"
+  },
+  ".agents/skills/caveman-compress/scripts/__main__.py": {
+    "mtime": 1786419169.8207388,
+    "seen": 1787036956.978647,
+    "ast_hash": "5bd0e02db4907bf4e435e5d770256fef",
+    "semantic_hash": "5bd0e02db4907bf4e435e5d770256fef"
+  },
+  ".agents/skills/caveman-compress/scripts/benchmark.py": {
+    "mtime": 1786419169.8217385,
+    "seen": 1787036956.978647,
+    "ast_hash": "98430522d4bc3cbf02ee535074d7a439",
+    "semantic_hash": "98430522d4bc3cbf02ee535074d7a439"
+  },
+  ".agents/skills/caveman-compress/scripts/cli.py": {
+    "mtime": 1786419169.8217385,
+    "seen": 1787036956.978647,
+    "ast_hash": "9ed03f4b75aae3f25ea0d9c15dbf6894",
+    "semantic_hash": "9ed03f4b75aae3f25ea0d9c15dbf6894"
+  },
+  ".agents/skills/caveman-compress/scripts/compress.py": {
+    "mtime": 1786419169.8235035,
+    "seen": 1787036956.978647,
+    "ast_hash": "1905ed7421df9f00f09aa4df89a35db2",
+    "semantic_hash": "1905ed7421df9f00f09aa4df89a35db2"
+  },
+  ".agents/skills/caveman-compress/scripts/detect.py": {
+    "mtime": 1786419169.8242674,
+    "seen": 1787036956.978647,
+    "ast_hash": "8625ebf4ad9103f2973e935ca3da0b2e",
+    "semantic_hash": "8625ebf4ad9103f2973e935ca3da0b2e"
+  },
+  ".agents/skills/caveman-compress/scripts/validate.py": {
+    "mtime": 1786419169.8264463,
+    "seen": 1787036956.978647,
+    "ast_hash": "6de5228546e76576ec05394b6fd94768",
+    "semantic_hash": "6de5228546e76576ec05394b6fd94768"
+  },
+  ".kiro/steering/brand/scripts/extract-colors.cjs": {
+    "mtime": 1786591948.9227698,
+    "seen": 1787036956.978647,
+    "ast_hash": "267ef00a878b8c0cec252443796c6122",
+    "semantic_hash": "267ef00a878b8c0cec252443796c6122"
+  },
+  ".kiro/steering/brand/scripts/inject-brand-context.cjs": {
+    "mtime": 1786591949.0285552,
+    "seen": 1787036956.978647,
+    "ast_hash": "72ab4372fcdb90d68b5cb09b912e34f4",
+    "semantic_hash": "72ab4372fcdb90d68b5cb09b912e34f4"
+  },
+  ".kiro/steering/brand/scripts/sync-brand-to-tokens.cjs": {
+    "mtime": 1786591949.0376132,
+    "seen": 1787036956.978647,
+    "ast_hash": "0bd6e8f1cb486753d11da715a548650a",
+    "semantic_hash": "0bd6e8f1cb486753d11da715a548650a"
+  },
+  ".kiro/steering/brand/scripts/tests/test_sync_brand_to_tokens.py": {
+    "mtime": 1786591949.780697,
+    "seen": 1787036956.978647,
+    "ast_hash": "1cc075890cd68fa5c5f7463b9e1a4618",
+    "semantic_hash": "1cc075890cd68fa5c5f7463b9e1a4618"
+  },
+  ".kiro/steering/brand/scripts/validate-asset.cjs": {
+    "mtime": 1786591949.0506525,
+    "seen": 1787036956.978647,
+    "ast_hash": "8217a1364af59e1acfb95d71fd41df1e",
+    "semantic_hash": "8217a1364af59e1acfb95d71fd41df1e"
+  },
+  ".kiro/steering/design-system/scripts/embed-tokens.cjs": {
+    "mtime": 1786591948.8027546,
+    "seen": 1787036956.978647,
+    "ast_hash": "d50aed608ed2c44c64c006b1fd915663",
+    "semantic_hash": "d50aed608ed2c44c64c006b1fd915663"
+  },
+  ".kiro/steering/design-system/scripts/fetch-background.py": {
+    "mtime": 1786591949.6927,
+    "seen": 1787036956.978647,
+    "ast_hash": "3269f2ebc8024e55b65008108910f3d4",
+    "semantic_hash": "3269f2ebc8024e55b65008108910f3d4"
+  },
+  ".kiro/steering/design-system/scripts/generate-slide.py": {
+    "mtime": 1786591949.6971846,
+    "seen": 1787036956.978647,
+    "ast_hash": "622d80cd7d9696f269e2da6b063754f7",
+    "semantic_hash": "622d80cd7d9696f269e2da6b063754f7"
+  },
+  ".kiro/steering/design-system/scripts/generate-tokens.cjs": {
+    "mtime": 1786591948.9926353,
+    "seen": 1787036956.978647,
+    "ast_hash": "a9a15066eeca1f70bd2edb90c645c9eb",
+    "semantic_hash": "a9a15066eeca1f70bd2edb90c645c9eb"
+  },
+  ".kiro/steering/design-system/scripts/html-token-validator.py": {
+    "mtime": 1786591949.7166538,
+    "seen": 1787036956.978647,
+    "ast_hash": "1d18dae9d3d916137c50df5ec7e65039",
+    "semantic_hash": "1d18dae9d3d916137c50df5ec7e65039"
+  },
+  ".kiro/steering/design-system/scripts/search-slides.py": {
+    "mtime": 1786591949.7225645,
+    "seen": 1787036956.978647,
+    "ast_hash": "bc70c45549014b579fb2a27f3acf3d2e",
+    "semantic_hash": "bc70c45549014b579fb2a27f3acf3d2e"
+  },
+  ".kiro/steering/design-system/scripts/slide-token-validator.py": {
+    "mtime": 1786591949.7515721,
+    "seen": 1787036956.978647,
+    "ast_hash": "ee5d76c06903f98a460a8661e150c5d3",
+    "semantic_hash": "ee5d76c06903f98a460a8661e150c5d3"
+  },
+  ".kiro/steering/design-system/scripts/slide_search_core.py": {
+    "mtime": 1786591949.7483177,
+    "seen": 1787036956.978647,
+    "ast_hash": "994ab50455710fce437399e86df23286",
+    "semantic_hash": "994ab50455710fce437399e86df23286"
+  },
+  ".kiro/steering/design-system/scripts/tests/test_validate_tokens.py": {
+    "mtime": 1786591949.792763,
+    "seen": 1787036956.978647,
+    "ast_hash": "32a9d34bbfa0041852963c189ea0ee5c",
+    "semantic_hash": "32a9d34bbfa0041852963c189ea0ee5c"
+  },
+  ".kiro/steering/design-system/scripts/validate-tokens.cjs": {
+    "mtime": 1786591949.05473,
+    "seen": 1787036956.978647,
+    "ast_hash": "ebb5e5897d942f59ecd76bf710d06dff",
+    "semantic_hash": "ebb5e5897d942f59ecd76bf710d06dff"
+  },
+  ".kiro/steering/design-system/templates/design-tokens-starter.json": {
+    "mtime": 1786591949.402513,
+    "seen": 1787036956.978647,
+    "ast_hash": "a5771c378d6fea057242eeebe83a7747",
+    "semantic_hash": "a5771c378d6fea057242eeebe83a7747"
+  },
+  ".kiro/steering/design/scripts/cip/core.py": {
+    "mtime": 1786591949.6823401,
+    "seen": 1787036956.978647,
+    "ast_hash": "9fcf192c150e285ab6176a9bbacd475b",
+    "semantic_hash": "9fcf192c150e285ab6176a9bbacd475b"
+  },
+  ".kiro/steering/design/scripts/cip/generate.py": {
+    "mtime": 1786591949.7047045,
+    "seen": 1787036956.978647,
+    "ast_hash": "5662ddd34b366544e6541686ec9c8d22",
+    "semantic_hash": "5662ddd34b366544e6541686ec9c8d22"
+  },
+  ".kiro/steering/design/scripts/cip/render-html.py": {
+    "mtime": 1786591949.7225645,
+    "seen": 1787036956.978647,
+    "ast_hash": "6fe3ce567110811670f05f40d386b48f",
+    "semantic_hash": "6fe3ce567110811670f05f40d386b48f"
+  },
+  ".kiro/steering/design/scripts/cip/search.py": {
+    "mtime": 1786591949.7367666,
+    "seen": 1787036956.978647,
+    "ast_hash": "21a63380316bd899c49302e1b9a59191",
+    "semantic_hash": "21a63380316bd899c49302e1b9a59191"
+  },
+  ".kiro/steering/design/scripts/icon/generate.py": {
+    "mtime": 1786591949.7047045,
+    "seen": 1787036956.978647,
+    "ast_hash": "b142cc490fdf8a45bcf95bfe972284df",
+    "semantic_hash": "b142cc490fdf8a45bcf95bfe972284df"
+  },
+  ".kiro/steering/design/scripts/logo/core.py": {
+    "mtime": 1786591949.6823401,
+    "seen": 1787036956.978647,
+    "ast_hash": "b8ea226dde31603e5a5e790641334055",
+    "semantic_hash": "b8ea226dde31603e5a5e790641334055"
+  },
+  ".kiro/steering/design/scripts/logo/generate.py": {
+    "mtime": 1786591949.7159338,
+    "seen": 1787036956.978647,
+    "ast_hash": "6f973ff8ea948cb774340703c8b51b54",
+    "semantic_hash": "6f973ff8ea948cb774340703c8b51b54"
+  },
+  ".kiro/steering/design/scripts/logo/search.py": {
+    "mtime": 1786591949.7405944,
+    "seen": 1787036956.978647,
+    "ast_hash": "56aa8e1e15479f304a7e4709a767c98b",
+    "semantic_hash": "56aa8e1e15479f304a7e4709a767c98b"
+  },
+  ".kiro/steering/ui-styling/scripts/shadcn_add.py": {
+    "mtime": 1786591949.7433045,
+    "seen": 1787036956.978647,
+    "ast_hash": "4eb5eb020e3b45a8f73f4a371abbdbe1",
+    "semantic_hash": "4eb5eb020e3b45a8f73f4a371abbdbe1"
+  },
+  ".kiro/steering/ui-styling/scripts/tailwind_config_gen.py": {
+    "mtime": 1786591949.7547524,
+    "seen": 1787036956.978647,
+    "ast_hash": "cafc602e66323d217188d319c9a0412e",
+    "semantic_hash": "cafc602e66323d217188d319c9a0412e"
+  },
+  ".kiro/steering/ui-styling/scripts/tests/test_shadcn_add.py": {
+    "mtime": 1786591949.76582,
+    "seen": 1787036956.978647,
+    "ast_hash": "51024123de02865d0c6dee29df6a887a",
+    "semantic_hash": "51024123de02865d0c6dee29df6a887a"
+  },
+  ".kiro/steering/ui-styling/scripts/tests/test_tailwind_config_gen.py": {
+    "mtime": 1786591949.7889712,
+    "seen": 1787036956.978647,
+    "ast_hash": "f5d99288827b293f4b6fdb86b8b56229",
+    "semantic_hash": "f5d99288827b293f4b6fdb86b8b56229"
+  },
+  ".kiro/steering/ui-ux-pro-max/scripts/core.py": {
+    "mtime": 1786591949.677292,
+    "seen": 1787036956.978647,
+    "ast_hash": "41d488b60b5bfb818c4b17413f7477c3",
+    "semantic_hash": "41d488b60b5bfb818c4b17413f7477c3"
+  },
+  ".kiro/steering/ui-ux-pro-max/scripts/design_system.py": {
+    "mtime": 1786591949.6823401,
+    "seen": 1787036956.978647,
+    "ast_hash": "f261c292ddae64226b2c8b264f797898",
+    "semantic_hash": "f261c292ddae64226b2c8b264f797898"
+  },
+  ".kiro/steering/ui-ux-pro-max/scripts/search.py": {
+    "mtime": 1786591949.7323787,
+    "seen": 1787036956.978647,
+    "ast_hash": "10012353bb7d92c645ea7ab245e461e6",
+    "semantic_hash": "10012353bb7d92c645ea7ab245e461e6"
+  },
+  ".kiro/steering/ui-ux-pro-max/scripts/tests/test_core.py": {
+    "mtime": 1786591949.7577524,
+    "seen": 1787036956.978647,
+    "ast_hash": "136d8ec87735cf5b77d70ad0adea59c0",
+    "semantic_hash": "136d8ec87735cf5b77d70ad0adea59c0"
+  },
+  ".kiro/steering/ui-ux-pro-max/scripts/tests/test_design_system_mode.py": {
+    "mtime": 1786591949.7616546,
+    "seen": 1787036956.978647,
+    "ast_hash": "267b7b2d413c3822139be0f684a5db18",
+    "semantic_hash": "267b7b2d413c3822139be0f684a5db18"
+  },
+  ".kiro/steering/ui-ux-pro-max/scripts/validate_data.py": {
+    "mtime": 1786591949.799456,
+    "seen": 1787036956.978647,
+    "ast_hash": "9ea4300a8385a7377457dd6d1ee99224",
+    "semantic_hash": "9ea4300a8385a7377457dd6d1ee99224"
+  },
+  "composer.json": {
+    "mtime": 1787023854.9740715,
+    "seen": 1787036956.978647,
+    "ast_hash": "17c85bd3c730d0ad21623b1d66c29994",
+    "semantic_hash": "17c85bd3c730d0ad21623b1d66c29994"
+  },
+  "glosindo-backend/app/Console/Kernel.php": {
+    "mtime": 1786419169.8457851,
+    "seen": 1787036956.978647,
+    "ast_hash": "1f704b67adcaceb0a10bfbd55d4bb819",
+    "semantic_hash": "1f704b67adcaceb0a10bfbd55d4bb819"
+  },
+  "glosindo-backend/app/Events/Event.php": {
+    "mtime": 1786419169.8457851,
+    "seen": 1787036956.978647,
+    "ast_hash": "56a0ac6084dfd2acdf2766ea471b96e7",
+    "semantic_hash": "56a0ac6084dfd2acdf2766ea471b96e7"
+  },
+  "glosindo-backend/app/Events/ExampleEvent.php": {
+    "mtime": 1786419169.8457851,
+    "seen": 1787036956.978647,
+    "ast_hash": "ddb35f1c0934ca817a9eff721b936fe2",
+    "semantic_hash": "ddb35f1c0934ca817a9eff721b936fe2"
+  },
+  "glosindo-backend/app/Exceptions/Handler.php": {
+    "mtime": 1786419169.8457851,
+    "seen": 1787036956.978647,
+    "ast_hash": "81a1e2b07b4d9ffc4426dd13fe36e5f7",
+    "semantic_hash": "81a1e2b07b4d9ffc4426dd13fe36e5f7"
+  },
+  "glosindo-backend/app/Http/Controllers/AuthController.php": {
+    "mtime": 1786419169.8457851,
+    "seen": 1787036956.978647,
+    "ast_hash": "1cbe163b8b9ecdd796f6b4fb7f79f469",
+    "semantic_hash": "1cbe163b8b9ecdd796f6b4fb7f79f469"
+  },
+  "glosindo-backend/app/Http/Controllers/Controller.php": {
+    "mtime": 1786419169.8587909,
+    "seen": 1787036956.978647,
+    "ast_hash": "3e18b04422b9034213af83ca5b5b129e",
+    "semantic_hash": "3e18b04422b9034213af83ca5b5b129e"
+  },
+  "glosindo-backend/app/Http/Controllers/DashboardController.php": {
+    "mtime": 1787036620.9528806,
+    "seen": 1787036956.978647,
+    "ast_hash": "3629fa1eb733a99d6f221d203014d0a7",
+    "semantic_hash": "3629fa1eb733a99d6f221d203014d0a7"
+  },
+  "glosindo-backend/app/Http/Controllers/EventController.php": {
+    "mtime": 1787036913.0528865,
+    "seen": 1787036956.978647,
+    "ast_hash": "a15a016faf440922457c192cef2764e7",
+    "semantic_hash": "a15a016faf440922457c192cef2764e7"
+  },
+  "glosindo-backend/app/Http/Controllers/ExampleController.php": {
+    "mtime": 1786419169.8623397,
+    "seen": 1787036956.978647,
+    "ast_hash": "a39bbba6d3c3010310addb46f2afda4c",
+    "semantic_hash": "a39bbba6d3c3010310addb46f2afda4c"
+  },
+  "glosindo-backend/app/Http/Controllers/FaceEmbeddingController.php": {
+    "mtime": 1786696925.4921045,
+    "seen": 1787036956.978647,
+    "ast_hash": "792cc436b1a7d7acd354fade2af40b1f",
+    "semantic_hash": "792cc436b1a7d7acd354fade2af40b1f"
+  },
+  "glosindo-backend/app/Http/Controllers/PublicRegistrationController.php": {
+    "mtime": 1786787161.4234066,
+    "seen": 1787036956.978647,
+    "ast_hash": "bd27b5b27c15595471eebec83e6204b0",
+    "semantic_hash": "bd27b5b27c15595471eebec83e6204b0"
+  },
+  "glosindo-backend/app/Http/Controllers/ReportController.php": {
+    "mtime": 1787020732.637194,
+    "seen": 1787036956.978647,
+    "ast_hash": "38b64e3c6691d0e433a020f32248116a",
+    "semantic_hash": "38b64e3c6691d0e433a020f32248116a"
+  },
+  "glosindo-backend/app/Http/Controllers/UserController.php": {
+    "mtime": 1787020404.3271616,
+    "seen": 1787036956.978647,
+    "ast_hash": "d269480e1239608926a54804dfbfe2d1",
+    "semantic_hash": "d269480e1239608926a54804dfbfe2d1"
+  },
+  "glosindo-backend/app/Http/Controllers/VisitController.php": {
+    "mtime": 1787036604.7158139,
+    "seen": 1787036956.978647,
+    "ast_hash": "fa3ef42671321a1f40b324f0789de316",
+    "semantic_hash": "fa3ef42671321a1f40b324f0789de316"
+  },
+  "glosindo-backend/app/Http/Controllers/VisitorController.php": {
+    "mtime": 1786782840.7155292,
+    "seen": 1787036956.978647,
+    "ast_hash": "091fc4a8bc9a9d9c30a707a301bae1db",
+    "semantic_hash": "091fc4a8bc9a9d9c30a707a301bae1db"
+  },
+  "glosindo-backend/app/Http/Middleware/Authenticate.php": {
+    "mtime": 1786419169.8659377,
+    "seen": 1787036956.978647,
+    "ast_hash": "4c8e61041fe05239f16dc49304517103",
+    "semantic_hash": "4c8e61041fe05239f16dc49304517103"
+  },
+  "glosindo-backend/app/Http/Middleware/CorsMiddleware.php": {
+    "mtime": 1787023854.9810753,
+    "seen": 1787036956.978647,
+    "ast_hash": "bae40be39834ff3b08fedee48ab714dd",
+    "semantic_hash": "bae40be39834ff3b08fedee48ab714dd"
+  },
+  "glosindo-backend/app/Http/Middleware/ExampleMiddleware.php": {
+    "mtime": 1786419169.8659377,
+    "seen": 1787036956.978647,
+    "ast_hash": "7584d4a76d74e2a9986d510381961a96",
+    "semantic_hash": "7584d4a76d74e2a9986d510381961a96"
+  },
+  "glosindo-backend/app/Http/Middleware/JwtMiddleware.php": {
+    "mtime": 1786419169.8659377,
+    "seen": 1787036956.978647,
+    "ast_hash": "9e71fe7270d600426b9edb8d9a51f776",
+    "semantic_hash": "9e71fe7270d600426b9edb8d9a51f776"
+  },
+  "glosindo-backend/app/Http/Middleware/RoleMiddleware.php": {
+    "mtime": 1786419169.8659377,
+    "seen": 1787036956.978647,
+    "ast_hash": "b50e3a4b2031f0aec47061478611a26e",
+    "semantic_hash": "b50e3a4b2031f0aec47061478611a26e"
+  },
+  "glosindo-backend/app/Jobs/ExampleJob.php": {
+    "mtime": 1786419169.8659377,
+    "seen": 1787036956.978647,
+    "ast_hash": "39841208fcd2c9cb33c4052dc09b18e5",
+    "semantic_hash": "39841208fcd2c9cb33c4052dc09b18e5"
+  },
+  "glosindo-backend/app/Jobs/Job.php": {
+    "mtime": 1786419169.8659377,
+    "seen": 1787036956.978647,
+    "ast_hash": "6b0883b54738b295bf7ded4c97066e19",
+    "semantic_hash": "6b0883b54738b295bf7ded4c97066e19"
+  },
+  "glosindo-backend/app/Listeners/ExampleListener.php": {
+    "mtime": 1786419169.8754032,
+    "seen": 1787036956.978647,
+    "ast_hash": "981597e4fda24aeed66f30b5d39fe911",
+    "semantic_hash": "981597e4fda24aeed66f30b5d39fe911"
+  },
+  "glosindo-backend/app/Models/AuditLog.php": {
+    "mtime": 1786435711.909934,
+    "seen": 1787036956.978647,
+    "ast_hash": "fe48d0144b259f99f7bd61521169494c",
+    "semantic_hash": "fe48d0144b259f99f7bd61521169494c"
+  },
+  "glosindo-backend/app/Models/Event.php": {
+    "mtime": 1787036913.055738,
+    "seen": 1787036956.978647,
+    "ast_hash": "32dd5c659f71059813ecde01ef23f7de",
+    "semantic_hash": "32dd5c659f71059813ecde01ef23f7de"
+  },
+  "glosindo-backend/app/Models/FaceEmbedding.php": {
+    "mtime": 1786419169.8772552,
+    "seen": 1787036956.978647,
+    "ast_hash": "3abbcdeb2041b19a86fb79d2ef4679a7",
+    "semantic_hash": "3abbcdeb2041b19a86fb79d2ef4679a7"
+  },
+  "glosindo-backend/app/Models/SystemSetting.php": {
+    "mtime": 1786786497.5072355,
+    "seen": 1787036956.978647,
+    "ast_hash": "eebbe2680b9abfe01090b06fe2543a03",
+    "semantic_hash": "eebbe2680b9abfe01090b06fe2543a03"
+  },
+  "glosindo-backend/app/Models/User.php": {
+    "mtime": 1786435740.5298107,
+    "seen": 1787036956.978647,
+    "ast_hash": "9581d6c97a6acfbeb5ca2b74739de140",
+    "semantic_hash": "9581d6c97a6acfbeb5ca2b74739de140"
+  },
+  "glosindo-backend/app/Models/Visit.php": {
+    "mtime": 1787036524.506266,
+    "seen": 1787036956.978647,
+    "ast_hash": "84c15c98a41b7b1d21376594856852c4",
+    "semantic_hash": "84c15c98a41b7b1d21376594856852c4"
+  },
+  "glosindo-backend/app/Models/Visitor.php": {
+    "mtime": 1786435853.8835962,
+    "seen": 1787036956.978647,
+    "ast_hash": "35737b73c936308424bdd9b054cab5eb",
+    "semantic_hash": "35737b73c936308424bdd9b054cab5eb"
+  },
+  "glosindo-backend/app/Providers/AppServiceProvider.php": {
+    "mtime": 1786419169.8827066,
+    "seen": 1787036956.978647,
+    "ast_hash": "ba2ae52a913dce8f7bf1897bf2520b28",
+    "semantic_hash": "ba2ae52a913dce8f7bf1897bf2520b28"
+  },
+  "glosindo-backend/app/Providers/AuthServiceProvider.php": {
+    "mtime": 1786419169.8827066,
+    "seen": 1787036956.978647,
+    "ast_hash": "b181282da4dfeedf13a01c85a6319116",
+    "semantic_hash": "b181282da4dfeedf13a01c85a6319116"
+  },
+  "glosindo-backend/app/Providers/EventServiceProvider.php": {
+    "mtime": 1786419169.8827066,
+    "seen": 1787036956.978647,
+    "ast_hash": "16315f8eacb6aae5f172d6f223d14cba",
+    "semantic_hash": "16315f8eacb6aae5f172d6f223d14cba"
+  },
+  "glosindo-backend/app/Traits/Auditable.php": {
+    "mtime": 1786435715.7161849,
+    "seen": 1787036956.978647,
+    "ast_hash": "4c2ca9fd2167b67ea5b22bf80b1b01d0",
+    "semantic_hash": "4c2ca9fd2167b67ea5b22bf80b1b01d0"
+  },
+  "glosindo-backend/artisan": {
+    "mtime": 1786419169.8827066,
+    "seen": 1787036956.978647,
+    "ast_hash": "ca913e5eb22bba2237357cade61c6ea1",
+    "semantic_hash": "ca913e5eb22bba2237357cade61c6ea1"
+  },
+  "glosindo-backend/bootstrap/app.php": {
+    "mtime": 1787023854.9822018,
+    "seen": 1787036956.978647,
+    "ast_hash": "ced9e9a8efadf01401cb11d53c30b420",
+    "semantic_hash": "ced9e9a8efadf01401cb11d53c30b420"
+  },
+  "glosindo-backend/composer.json": {
+    "mtime": 1786784360.159786,
+    "seen": 1787036956.978647,
+    "ast_hash": "ccaa767770376a9c9c1c50f7037ff61a",
+    "semantic_hash": "ccaa767770376a9c9c1c50f7037ff61a"
+  },
+  "glosindo-backend/config/auth.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "dda2d9d338d75b10544e95b1b3b5bcb0",
+    "semantic_hash": "dda2d9d338d75b10544e95b1b3b5bcb0"
+  },
+  "glosindo-backend/config/jwt.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "78eeb16e7abd7fa0ee232c391f812f2f",
+    "semantic_hash": "78eeb16e7abd7fa0ee232c391f812f2f"
+  },
+  "glosindo-backend/database/factories/UserFactory.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "095a94c92d6d1f5e49375b8f1dfa0369",
+    "semantic_hash": "095a94c92d6d1f5e49375b8f1dfa0369"
+  },
+  "glosindo-backend/database/migrations/2026_08_07_141831_create_users_table.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "70bd9d7ce58fcd077ffe9dbf92f0e2bc",
+    "semantic_hash": "70bd9d7ce58fcd077ffe9dbf92f0e2bc"
+  },
+  "glosindo-backend/database/migrations/2026_08_07_141838_create_visitors_table.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "390f0a9e4672a4472808dbc535629823",
+    "semantic_hash": "390f0a9e4672a4472808dbc535629823"
+  },
+  "glosindo-backend/database/migrations/2026_08_07_141844_create_face_embeddings_table.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "0b5af68a680ec196d4cebdab74bd4595",
+    "semantic_hash": "0b5af68a680ec196d4cebdab74bd4595"
+  },
+  "glosindo-backend/database/migrations/2026_08_07_141850_create_visits_table.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "ff8805fa837ba723cdc1b0c3073e7184",
+    "semantic_hash": "ff8805fa837ba723cdc1b0c3073e7184"
+  },
+  "glosindo-backend/database/migrations/2026_08_11_120000_add_receptionist_id_to_visits_table.php": {
+    "mtime": 1786435699.4539926,
+    "seen": 1787036956.978647,
+    "ast_hash": "12a03c8d82339a5551b5e79558974251",
+    "semantic_hash": "12a03c8d82339a5551b5e79558974251"
+  },
+  "glosindo-backend/database/migrations/2026_08_11_120001_create_audit_logs_table.php": {
+    "mtime": 1786435701.3734665,
+    "seen": 1787036956.978647,
+    "ast_hash": "0aed208f093bb589b81f163cdc81a0df",
+    "semantic_hash": "0aed208f093bb589b81f163cdc81a0df"
+  },
+  "glosindo-backend/database/migrations/2026_08_11_120002_add_soft_deletes_to_visitors_and_visits.php": {
+    "mtime": 1786435703.3978348,
+    "seen": 1787036956.978647,
+    "ast_hash": "8ae5d3251ff53debe56ea00a4e681ebe",
+    "semantic_hash": "8ae5d3251ff53debe56ea00a4e681ebe"
+  },
+  "glosindo-backend/database/migrations/2026_08_15_163427_create_system_settings_table.php": {
+    "mtime": 1786786476.957891,
+    "seen": 1787036956.978647,
+    "ast_hash": "6813c4179fbf0922fe7624b3d362642a",
+    "semantic_hash": "6813c4179fbf0922fe7624b3d362642a"
+  },
+  "glosindo-backend/database/migrations/2026_08_18_000000_add_supervisor_role.php": {
+    "mtime": 1787020384.81147,
+    "seen": 1787036956.978647,
+    "ast_hash": "49777cc43dfe8febf65b719a65c5b1f9",
+    "semantic_hash": "49777cc43dfe8febf65b719a65c5b1f9"
+  },
+  "glosindo-backend/database/migrations/2026_08_18_140000_create_events_table.php": {
+    "mtime": 1787036498.0710807,
+    "seen": 1787036956.978647,
+    "ast_hash": "137b5e8d21e288b04fed54dd293dc39f",
+    "semantic_hash": "137b5e8d21e288b04fed54dd293dc39f"
+  },
+  "glosindo-backend/database/migrations/2026_08_18_140001_add_event_id_to_visits_table.php": {
+    "mtime": 1787036505.4938176,
+    "seen": 1787036956.978647,
+    "ast_hash": "cfd873e7ffd0637b4feb0ed3ca72fe1f",
+    "semantic_hash": "cfd873e7ffd0637b4feb0ed3ca72fe1f"
+  },
+  "glosindo-backend/database/seeders/DatabaseSeeder.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "1fe21882b53ec444ade7f04769422627",
+    "semantic_hash": "1fe21882b53ec444ade7f04769422627"
+  },
+  "glosindo-backend/database/seeders/UserSeeder.php": {
+    "mtime": 1787020799.4419904,
+    "seen": 1787036956.978647,
+    "ast_hash": "df42a428d8daa606a3bd92105404154c",
+    "semantic_hash": "df42a428d8daa606a3bd92105404154c"
+  },
+  "glosindo-backend/database/seeders/VisitorSeeder.php": {
+    "mtime": 1786419169.893787,
+    "seen": 1787036956.978647,
+    "ast_hash": "cb7f424a7ddf669fa4bf8f75045d21e0",
+    "semantic_hash": "cb7f424a7ddf669fa4bf8f75045d21e0"
+  },
+  "glosindo-backend/public/index.php": {
+    "mtime": 1786419169.9110103,
+    "seen": 1787036956.978647,
+    "ast_hash": "d1d369d0f3d3a939e4fcc2a15370a16e",
+    "semantic_hash": "d1d369d0f3d3a939e4fcc2a15370a16e"
+  },
+  "glosindo-backend/resources/views/reports/events.blade.php": {
+    "mtime": 1787036658.7429485,
+    "seen": 1787036956.978647,
+    "ast_hash": "060645a245dfe7e0bd348e58bc5d8564",
+    "semantic_hash": "060645a245dfe7e0bd348e58bc5d8564"
+  },
+  "glosindo-backend/resources/views/reports/visits.blade.php": {
+    "mtime": 1786784324.8476536,
+    "seen": 1787036956.978647,
+    "ast_hash": "99dd33d9da0f78e92766e66c24c615ee",
+    "semantic_hash": "99dd33d9da0f78e92766e66c24c615ee"
+  },
+  "glosindo-backend/routes/web.php": {
+    "mtime": 1787036635.1704564,
+    "seen": 1787036956.978647,
+    "ast_hash": "cfff8747a4c00218f513136a71deb935",
+    "semantic_hash": "cfff8747a4c00218f513136a71deb935"
+  },
+  "glosindo-backend/tests/ExampleTest.php": {
+    "mtime": 1786419169.9236872,
+    "seen": 1787036956.978647,
+    "ast_hash": "494805655e09d8c0b88bf713dde90be6",
+    "semantic_hash": "494805655e09d8c0b88bf713dde90be6"
+  },
+  "glosindo-backend/tests/TestCase.php": {
+    "mtime": 1786419169.927038,
+    "seen": 1787036956.978647,
+    "ast_hash": "d17e9f8bf9432c2b9b3a28788f15f238",
+    "semantic_hash": "d17e9f8bf9432c2b9b3a28788f15f238"
+  },
+  "glosindo-backend/tests/check_embeddings.php": {
+    "mtime": 1786419169.9280362,
+    "seen": 1787036956.978647,
+    "ast_hash": "165f28635e8570321ecb89366f608863",
+    "semantic_hash": "165f28635e8570321ecb89366f608863"
+  },
+  "glosindo-backend/tests/save_sample_embedding.php": {
+    "mtime": 1786419169.929032,
+    "seen": 1787036956.978647,
+    "ast_hash": "0af64a5ae0200ec3729f0d17083ef56f",
+    "semantic_hash": "0af64a5ae0200ec3729f0d17083ef56f"
+  },
+  "glosindo-backend/tests/verify_login.php": {
+    "mtime": 1786419169.9300294,
+    "seen": 1787036956.978647,
+    "ast_hash": "7810ff2aaaca4075a4fad911ca8d745e",
+    "semantic_hash": "7810ff2aaaca4075a4fad911ca8d745e"
+  },
+  "glosindo-frontend/package.json": {
+    "mtime": 1786784891.610721,
+    "seen": 1787036956.978647,
+    "ast_hash": "70662985e503c65e2801ad223a04b5e6",
+    "semantic_hash": "70662985e503c65e2801ad223a04b5e6"
+  },
+  "glosindo-frontend/postcss.config.js": {
+    "mtime": 1786419169.9357066,
+    "seen": 1787036956.978647,
+    "ast_hash": "ac96fa81e8dd4224012bce81068fe169",
+    "semantic_hash": "ac96fa81e8dd4224012bce81068fe169"
+  },
+  "glosindo-frontend/src/App.jsx": {
+    "mtime": 1787036875.7172496,
+    "seen": 1787036956.978647,
+    "ast_hash": "1e80f0ef787d4a619232814b3ecdc39f",
+    "semantic_hash": "1e80f0ef787d4a619232814b3ecdc39f"
+  },
+  "glosindo-frontend/src/components/ConfirmModal.jsx": {
+    "mtime": 1786594374.0791237,
+    "seen": 1787036956.978647,
+    "ast_hash": "17c5ec43b667ce983e71a36a5d528ac1",
+    "semantic_hash": "17c5ec43b667ce983e71a36a5d528ac1"
+  },
+  "glosindo-frontend/src/components/FaceScanner.jsx": {
+    "mtime": 1786696890.2098236,
+    "seen": 1787036956.978647,
+    "ast_hash": "3b49972ad94b1f337694b9720df1741b",
+    "semantic_hash": "3b49972ad94b1f337694b9720df1741b"
+  },
+  "glosindo-frontend/src/components/Navbar.jsx": {
+    "mtime": 1786787271.2587237,
+    "seen": 1787036956.978647,
+    "ast_hash": "1cc3fb20a9024222597d31896489c23c",
+    "semantic_hash": "1cc3fb20a9024222597d31896489c23c"
+  },
+  "glosindo-frontend/src/components/ProtectedRoute.jsx": {
+    "mtime": 1786419170.0981834,
+    "seen": 1787036956.978647,
+    "ast_hash": "bcd560c157f9e4ba2a039bea42dede38",
+    "semantic_hash": "bcd560c157f9e4ba2a039bea42dede38"
+  },
+  "glosindo-frontend/src/components/PublicRegistrationToggle.jsx": {
+    "mtime": 1786787239.9035807,
+    "seen": 1787036956.978647,
+    "ast_hash": "4a9df2f123433588c5347e552f8e8a19",
+    "semantic_hash": "4a9df2f123433588c5347e552f8e8a19"
+  },
+  "glosindo-frontend/src/components/Sidebar.jsx": {
+    "mtime": 1787036865.1096814,
+    "seen": 1787036956.978647,
+    "ast_hash": "105dd1fccbc165bd422d42734431a35f",
+    "semantic_hash": "105dd1fccbc165bd422d42734431a35f"
+  },
+  "glosindo-frontend/src/components/SplashOverlay.jsx": {
+    "mtime": 1786594307.0609233,
+    "seen": 1787036956.978647,
+    "ast_hash": "0db6ef889d144356a29fcb1e6a4ddd9f",
+    "semantic_hash": "0db6ef889d144356a29fcb1e6a4ddd9f"
+  },
+  "glosindo-frontend/src/components/StatCard.jsx": {
+    "mtime": 1786594319.9479134,
+    "seen": 1787036956.978647,
+    "ast_hash": "6826aaad6bb31b9478617e7123a622de",
+    "semantic_hash": "6826aaad6bb31b9478617e7123a622de"
+  },
+  "glosindo-frontend/src/components/VisitorTable.jsx": {
+    "mtime": 1786594338.9285176,
+    "seen": 1787036956.978647,
+    "ast_hash": "580d89bd3ee0950b425bdaa0df2fa1d9",
+    "semantic_hash": "580d89bd3ee0950b425bdaa0df2fa1d9"
+  },
+  "glosindo-frontend/src/components/WebcamCapture.jsx": {
+    "mtime": 1786594265.5344696,
+    "seen": 1787036956.978647,
+    "ast_hash": "98bb4b1533764b6329d8ba6f199443b0",
+    "semantic_hash": "98bb4b1533764b6329d8ba6f199443b0"
+  },
+  "glosindo-frontend/src/components/ui/Badge.jsx": {
+    "mtime": 1786594247.4933686,
+    "seen": 1787036956.978647,
+    "ast_hash": "34f2535aa17b42af076c73028caf0baa",
+    "semantic_hash": "34f2535aa17b42af076c73028caf0baa"
+  },
+  "glosindo-frontend/src/components/ui/Button.jsx": {
+    "mtime": 1786594237.296026,
+    "seen": 1787036956.978647,
+    "ast_hash": "9901b23ee81af20f4ae0208ddc6d884c",
+    "semantic_hash": "9901b23ee81af20f4ae0208ddc6d884c"
+  },
+  "glosindo-frontend/src/components/ui/Card.jsx": {
+    "mtime": 1786594241.8527873,
+    "seen": 1787036956.978647,
+    "ast_hash": "8670d5c8b418739eab5e88a5f1ccf62d",
+    "semantic_hash": "8670d5c8b418739eab5e88a5f1ccf62d"
+  },
+  "glosindo-frontend/src/components/ui/Modal.jsx": {
+    "mtime": 1786786023.933734,
+    "seen": 1787036956.978647,
+    "ast_hash": "e11eb4c08e673cd4d99f65e350bdebf1",
+    "semantic_hash": "e11eb4c08e673cd4d99f65e350bdebf1"
+  },
+  "glosindo-frontend/src/constants/index.js": {
+    "mtime": 1786690939.6237202,
+    "seen": 1787036956.978647,
+    "ast_hash": "3c3eb78acb797d29425b61fe0f3d47e7",
+    "semantic_hash": "3c3eb78acb797d29425b61fe0f3d47e7"
+  },
+  "glosindo-frontend/src/hooks/useAuth.js": {
+    "mtime": 1786419170.10879,
+    "seen": 1787036956.978647,
+    "ast_hash": "250d5c1aafd53250b63c258d901a7079",
+    "semantic_hash": "250d5c1aafd53250b63c258d901a7079"
+  },
+  "glosindo-frontend/src/hooks/useFaceMatcher.js": {
+    "mtime": 1786435066.838712,
+    "seen": 1787036956.978647,
+    "ast_hash": "8f0ef98266c08489444e311f1f32b66f",
+    "semantic_hash": "8f0ef98266c08489444e311f1f32b66f"
+  },
+  "glosindo-frontend/src/hooks/useFaceModels.js": {
+    "mtime": 1786419170.1118932,
+    "seen": 1787036956.978647,
+    "ast_hash": "97efb8fba64139f04e9729eacf98d7fb",
+    "semantic_hash": "97efb8fba64139f04e9729eacf98d7fb"
+  },
+  "glosindo-frontend/src/layouts/DashboardLayout.jsx": {
+    "mtime": 1786690939.6277425,
+    "seen": 1787036956.978647,
+    "ast_hash": "6b547dd295cfac14bb109cf89c8485cc",
+    "semantic_hash": "6b547dd295cfac14bb109cf89c8485cc"
+  },
+  "glosindo-frontend/src/main.jsx": {
+    "mtime": 1786419170.1139114,
+    "seen": 1787036956.978647,
+    "ast_hash": "efa83fe7cf5527f4172d41e7b0d84ec3",
+    "semantic_hash": "efa83fe7cf5527f4172d41e7b0d84ec3"
+  },
+  "glosindo-frontend/src/pages/ActiveVisitorPage.jsx": {
+    "mtime": 1787021273.4674861,
+    "seen": 1787036956.978647,
+    "ast_hash": "ee07bd3492bd84605b18234c35cfd390",
+    "semantic_hash": "ee07bd3492bd84605b18234c35cfd390"
+  },
+  "glosindo-frontend/src/pages/CheckInCameraPage.jsx": {
+    "mtime": 1786594277.5497797,
+    "seen": 1787036956.978647,
+    "ast_hash": "02f169c61b5b83107eadd390da81e6b7",
+    "semantic_hash": "02f169c61b5b83107eadd390da81e6b7"
+  },
+  "glosindo-frontend/src/pages/CheckInPage.jsx": {
+    "mtime": 1787036895.5190568,
+    "seen": 1787036956.978647,
+    "ast_hash": "cd15774f2f423e0e9dfdef9b3134d84b",
+    "semantic_hash": "cd15774f2f423e0e9dfdef9b3134d84b"
+  },
+  "glosindo-frontend/src/pages/DashboardPage.jsx": {
+    "mtime": 1787036859.3722472,
+    "seen": 1787036956.978647,
+    "ast_hash": "d4a87b00a42aedd119a28131d5db8974",
+    "semantic_hash": "d4a87b00a42aedd119a28131d5db8974"
+  },
+  "glosindo-frontend/src/pages/LoginPage.jsx": {
+    "mtime": 1787023854.98874,
+    "seen": 1787036956.978647,
+    "ast_hash": "abb0e735949c66d13b88505195924cd0",
+    "semantic_hash": "abb0e735949c66d13b88505195924cd0"
+  },
+  "glosindo-frontend/src/pages/PublicGuestRegisterPage.jsx": {
+    "mtime": 1787024155.9387186,
+    "seen": 1787036956.978647,
+    "ast_hash": "8a752d6ed615a316df73ec53f9502686",
+    "semantic_hash": "8a752d6ed615a316df73ec53f9502686"
+  },
+  "glosindo-frontend/src/pages/QuickCheckInPage.jsx": {
+    "mtime": 1786783992.727044,
+    "seen": 1787036956.978647,
+    "ast_hash": "2889301762303fef1ce6f77e1a6fab03",
+    "semantic_hash": "2889301762303fef1ce6f77e1a6fab03"
+  },
+  "glosindo-frontend/src/pages/ReportsPage.jsx": {
+    "mtime": 1786784438.3026352,
+    "seen": 1787036956.978647,
+    "ast_hash": "878431c689a67c94624f37e65fbb13af",
+    "semantic_hash": "878431c689a67c94624f37e65fbb13af"
+  },
+  "glosindo-frontend/src/pages/VisitHistoryPage.jsx": {
+    "mtime": 1787036895.5281289,
+    "seen": 1787036956.978647,
+    "ast_hash": "cd059ffbb91aede0b9cdde4992286730",
+    "semantic_hash": "cd059ffbb91aede0b9cdde4992286730"
+  },
+  "glosindo-frontend/src/pages/VisitorFormPage.jsx": {
+    "mtime": 1786782840.719334,
+    "seen": 1787036956.978647,
+    "ast_hash": "ba01c4ea67e35f6c84669a5f45c0f716",
+    "semantic_hash": "ba01c4ea67e35f6c84669a5f45c0f716"
+  },
+  "glosindo-frontend/src/pages/VisitorListPage.jsx": {
+    "mtime": 1787021244.216896,
+    "seen": 1787036956.978647,
+    "ast_hash": "e4aa6e5a3dce3de40dc7b73fb2855875",
+    "semantic_hash": "e4aa6e5a3dce3de40dc7b73fb2855875"
+  },
+  "glosindo-frontend/src/pages/admin/AdminSettingsPage.jsx": {
+    "mtime": 1786787251.2696207,
+    "seen": 1787036956.978647,
+    "ast_hash": "872fb65cd9d0ca43e328696e286af1c2",
+    "semantic_hash": "872fb65cd9d0ca43e328696e286af1c2"
+  },
+  "glosindo-frontend/src/pages/admin/AdminUsersPage.jsx": {
+    "mtime": 1787020936.6392043,
+    "seen": 1787036956.978647,
+    "ast_hash": "6c2c245b70049af575443fd0eced7108",
+    "semantic_hash": "6c2c245b70049af575443fd0eced7108"
+  },
+  "glosindo-frontend/src/pages/events/EventDetailPage.jsx": {
+    "mtime": 1787036895.5036716,
+    "seen": 1787036956.978647,
+    "ast_hash": "719e54ab19c5e81b47d77d5ebc87fe3d",
+    "semantic_hash": "719e54ab19c5e81b47d77d5ebc87fe3d"
+  },
+  "glosindo-frontend/src/pages/events/EventFormPage.jsx": {
+    "mtime": 1787036895.4997199,
+    "seen": 1787036956.978647,
+    "ast_hash": "3093aa0a50d75a86631978015f0c6e77",
+    "semantic_hash": "3093aa0a50d75a86631978015f0c6e77"
+  },
+  "glosindo-frontend/src/pages/events/EventListPage.jsx": {
+    "mtime": 1787036895.2983415,
+    "seen": 1787036956.978647,
+    "ast_hash": "98f496215345c72c25d7ee5c03f641f8",
+    "semantic_hash": "98f496215345c72c25d7ee5c03f641f8"
+  },
+  "glosindo-frontend/src/pages/events/EventReportPage.jsx": {
+    "mtime": 1787036895.5130062,
+    "seen": 1787036956.978647,
+    "ast_hash": "bffaf08c99e73e71cfc6cdec5841c737",
+    "semantic_hash": "bffaf08c99e73e71cfc6cdec5841c737"
+  },
+  "glosindo-frontend/src/pages/receptionist/ReceptionistActivePage.jsx": {
+    "mtime": 1786419170.1325965,
+    "seen": 1787036956.978647,
+    "ast_hash": "c16cea9a3bae9b625ffc9673fdfeccae",
+    "semantic_hash": "c16cea9a3bae9b625ffc9673fdfeccae"
+  },
+  "glosindo-frontend/src/pages/receptionist/ReceptionistCheckInPage.jsx": {
+    "mtime": 1787036895.5331728,
+    "seen": 1787036956.978647,
+    "ast_hash": "f259a83a628862a4c6c3f3e787631fe8",
+    "semantic_hash": "f259a83a628862a4c6c3f3e787631fe8"
+  },
+  "glosindo-frontend/src/pages/receptionist/ReceptionistHistoryPage.jsx": {
+    "mtime": 1787036895.5451286,
+    "seen": 1787036956.978647,
+    "ast_hash": "aff43415ea3215fd034de41eea07035a",
+    "semantic_hash": "aff43415ea3215fd034de41eea07035a"
+  },
+  "glosindo-frontend/src/pages/receptionist/ReceptionistVisitorPage.jsx": {
+    "mtime": 1786419170.1362965,
+    "seen": 1787036956.978647,
+    "ast_hash": "08df339829d94b80866a2c8605661d31",
+    "semantic_hash": "08df339829d94b80866a2c8605661d31"
+  },
+  "glosindo-frontend/src/services/api.js": {
+    "mtime": 1786787177.8200092,
+    "seen": 1787036956.978647,
+    "ast_hash": "08eaceecf25584d3ea359a435db5bc38",
+    "semantic_hash": "08eaceecf25584d3ea359a435db5bc38"
+  },
+  "glosindo-frontend/src/services/authService.js": {
+    "mtime": 1786419170.1383715,
+    "seen": 1787036956.978647,
+    "ast_hash": "43cb807c5431c64b92f3cd96bc0be267",
+    "semantic_hash": "43cb807c5431c64b92f3cd96bc0be267"
+  },
+  "glosindo-frontend/src/services/dashboardService.js": {
+    "mtime": 1786419170.1393936,
+    "seen": 1787036956.978647,
+    "ast_hash": "626bdee26b49b47751a53d8d6426e86e",
+    "semantic_hash": "626bdee26b49b47751a53d8d6426e86e"
+  },
+  "glosindo-frontend/src/services/eventService.js": {
+    "mtime": 1787036673.3982253,
+    "seen": 1787036956.978647,
+    "ast_hash": "8b68f743eb328f13455e297940ed6979",
+    "semantic_hash": "8b68f743eb328f13455e297940ed6979"
+  },
+  "glosindo-frontend/src/services/faceService.js": {
+    "mtime": 1786591124.3764713,
+    "seen": 1787036956.978647,
+    "ast_hash": "a9de98a07ac990dce2e6093baf5cfed1",
+    "semantic_hash": "a9de98a07ac990dce2e6093baf5cfed1"
+  },
+  "glosindo-frontend/src/services/publicRegistrationService.js": {
+    "mtime": 1786787170.274331,
+    "seen": 1787036956.978647,
+    "ast_hash": "421216f57136c35cb20af8b6c4613ca1",
+    "semantic_hash": "421216f57136c35cb20af8b6c4613ca1"
+  },
+  "glosindo-frontend/src/services/reportService.js": {
+    "mtime": 1786784373.3074899,
+    "seen": 1787036956.978647,
+    "ast_hash": "58715fb924f02f7ee86ca186362e272b",
+    "semantic_hash": "58715fb924f02f7ee86ca186362e272b"
+  },
+  "glosindo-frontend/src/services/userService.js": {
+    "mtime": 1787020892.587078,
+    "seen": 1787036956.978647,
+    "ast_hash": "5f0207bfbaa7daad9260cce62e9267b0",
+    "semantic_hash": "5f0207bfbaa7daad9260cce62e9267b0"
+  },
+  "glosindo-frontend/src/services/visitService.js": {
+    "mtime": 1786419170.1444173,
+    "seen": 1787036956.978647,
+    "ast_hash": "415d320f075c556301ba382849fdb108",
+    "semantic_hash": "415d320f075c556301ba382849fdb108"
+  },
+  "glosindo-frontend/src/services/visitorService.js": {
+    "mtime": 1786419170.1454153,
+    "seen": 1787036956.978647,
+    "ast_hash": "6f8cb9108c5e17f2a60acd242a7634f1",
+    "semantic_hash": "6f8cb9108c5e17f2a60acd242a7634f1"
+  },
+  "glosindo-frontend/src/store/authStore.js": {
+    "mtime": 1786419170.147649,
+    "seen": 1787036956.978647,
+    "ast_hash": "37365f90be71f27c41fbc592fcb3e75e",
+    "semantic_hash": "37365f90be71f27c41fbc592fcb3e75e"
+  },
+  "glosindo-frontend/src/utils/faceUtils.js": {
+    "mtime": 1786419170.1486466,
+    "seen": 1787036956.978647,
+    "ast_hash": "156840878b23f4247f254dd54bffd6a9",
+    "semantic_hash": "156840878b23f4247f254dd54bffd6a9"
+  },
+  "glosindo-frontend/tailwind.config.js": {
+    "mtime": 1786587071.5912764,
+    "seen": 1787036956.978647,
+    "ast_hash": "c7849beb50ec9760b502154b91f369a7",
+    "semantic_hash": "c7849beb50ec9760b502154b91f369a7"
+  },
+  "glosindo-frontend/tsconfig.app.json": {
+    "mtime": 1786419170.1511264,
+    "seen": 1787036956.978647,
+    "ast_hash": "c8a06a5c7d728682ef4bc91ffd488149",
+    "semantic_hash": "c8a06a5c7d728682ef4bc91ffd488149"
+  },
+  "glosindo-frontend/tsconfig.json": {
+    "mtime": 1786419170.1511264,
+    "seen": 1787036956.978647,
+    "ast_hash": "852c3a5df14a4b43ac28e9554ebedf4a",
+    "semantic_hash": "852c3a5df14a4b43ac28e9554ebedf4a"
+  },
+  "glosindo-frontend/tsconfig.node.json": {
+    "mtime": 1786419170.1521285,
+    "seen": 1787036956.978647,
+    "ast_hash": "74cde0261ad0a13045ca0a05ab1542ae",
+    "semantic_hash": "74cde0261ad0a13045ca0a05ab1542ae"
+  },
+  "glosindo-frontend/vite.config.js": {
+    "mtime": 1786419170.1531036,
+    "seen": 1787036956.978647,
+    "ast_hash": "0bd3093390b53c08907310179023220e",
+    "semantic_hash": "0bd3093390b53c08907310179023220e"
+  },
+  "glosindo-frontend/vite.config.ts": {
+    "mtime": 1786419170.1531036,
+    "seen": 1787036956.978647,
+    "ast_hash": "26be88be6ee9abfd55310126e9d4163d",
+    "semantic_hash": "26be88be6ee9abfd55310126e9d4163d"
+  },
+  "package.json": {
+    "mtime": 1787019769.4678228,
+    "seen": 1787036956.978647,
+    "ast_hash": "74998aa6eb0a79ecc98817c5f71d3690",
+    "semantic_hash": "74998aa6eb0a79ecc98817c5f71d3690"
+  },
+  "testtttttttttt.php": {
+    "mtime": 1786419170.1559286,
+    "seen": 1787036956.978647,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "vendor/autoload.php": {
+    "mtime": 1787023854.995146,
+    "seen": 1787036956.978647,
+    "ast_hash": "a7e91b7a03b2cc2d1c763b7501f7e0ac",
+    "semantic_hash": "a7e91b7a03b2cc2d1c763b7501f7e0ac"
+  },
+  "vendor/bin/carbon": {
+    "mtime": 1787023854.9991574,
+    "seen": 1787036956.978647,
+    "ast_hash": "19752386c5b17c75fa843f39c97e9578",
+    "semantic_hash": "19752386c5b17c75fa843f39c97e9578"
+  },
+  "vendor/composer/ClassLoader.php": {
+    "mtime": 1787023855.006071,
+    "seen": 1787036956.978647,
+    "ast_hash": "f4790d0053c6b6a427000c1f011e3d1a",
+    "semantic_hash": "f4790d0053c6b6a427000c1f011e3d1a"
+  },
+  "vendor/composer/InstalledVersions.php": {
+    "mtime": 1787023855.0080829,
+    "seen": 1787036956.978647,
+    "ast_hash": "9069f5694081fa02f06f68a172ca9d0e",
+    "semantic_hash": "9069f5694081fa02f06f68a172ca9d0e"
+  },
+  "vendor/composer/autoload_classmap.php": {
+    "mtime": 1787023855.0120833,
+    "seen": 1787036956.978647,
+    "ast_hash": "1e65b8487a2aad29fb78f79eb3598d02",
+    "semantic_hash": "1e65b8487a2aad29fb78f79eb3598d02"
+  },
+  "vendor/composer/autoload_files.php": {
+    "mtime": 1787023855.0135937,
+    "seen": 1787036956.978647,
+    "ast_hash": "8418b38938c70b4cd28315fc772e445c",
+    "semantic_hash": "8418b38938c70b4cd28315fc772e445c"
+  },
+  "vendor/composer/autoload_namespaces.php": {
+    "mtime": 1787023855.0219166,
+    "seen": 1787036956.978647,
+    "ast_hash": "b331c025a2fe911124f4d544d6c2a0c3",
+    "semantic_hash": "b331c025a2fe911124f4d544d6c2a0c3"
+  },
+  "vendor/composer/autoload_psr4.php": {
+    "mtime": 1787023855.0239258,
+    "seen": 1787036956.978647,
+    "ast_hash": "ab1eeadbabbc214a7042c745fb1f7e1b",
+    "semantic_hash": "ab1eeadbabbc214a7042c745fb1f7e1b"
+  },
+  "vendor/composer/autoload_real.php": {
+    "mtime": 1787023855.0273001,
+    "seen": 1787036956.978647,
+    "ast_hash": "28b85a3bcfce477b891b342e1cc778de",
+    "semantic_hash": "28b85a3bcfce477b891b342e1cc778de"
+  },
+  "vendor/composer/autoload_static.php": {
+    "mtime": 1787023855.029311,
+    "seen": 1787036956.978647,
+    "ast_hash": "d171280a036e1a6817ec05a7adbdcbaa",
+    "semantic_hash": "d171280a036e1a6817ec05a7adbdcbaa"
+  },
+  "vendor/composer/installed.php": {
+    "mtime": 1787023855.0349243,
+    "seen": 1787036956.978647,
+    "ast_hash": "b58ad2b0f14b8a19d45a39cd122afee8",
+    "semantic_hash": "b58ad2b0f14b8a19d45a39cd122afee8"
+  },
+  "vendor/composer/platform_check.php": {
+    "mtime": 1787023855.0369396,
+    "seen": 1787036956.978647,
+    "ast_hash": "e3a728189e9d52021c7666c3befc82a9",
+    "semantic_hash": "e3a728189e9d52021c7666c3befc82a9"
+  }
+}

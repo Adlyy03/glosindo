@@ -273,6 +273,13 @@ const DashboardPage = () => {
       subtitle: dayjs().format('MMMM YYYY'),
       icon: TrendingUp,
     },
+    {
+      title: 'Event Hari Ini',
+      value: stats?.event_today || stats?.events_today || 0,
+      color: 'cyan',
+      subtitle: `${stats?.active_events || 0} event berlangsung`,
+      icon: Calendar,
+    },
   ];
 
   return (

@@ -19,6 +19,7 @@ class Visit extends Model
     protected $fillable = [
         'visitor_id',
         'receptionist_id',
+        'event_id',
         'purpose',
         'meet_to',
         'check_in',
@@ -62,6 +63,14 @@ class Visit extends Model
     public function receptionist()
     {
         return $this->belongsTo(User::class, 'receptionist_id');
+    }
+
+    /**
+     * Get the event associated with this visit.
+     */
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
     }
 
     /**

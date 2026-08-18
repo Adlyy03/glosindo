@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
 use App\Models\Visit;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
@@ -18,12 +19,14 @@ class DashboardController extends Controller
     public function stats()
     {
         $stats = [
-            'total_visitor' => Visitor::count(),
-            'visitor_today' => Visit::whereDate('check_in', Carbon::today())->distinct('visitor_id')->count('visitor_id'),
-            'active_visitor' => Visit::where('status', 'IN')->count(),
+            'total_visitor'          => Visitor::count(),
+            'visitor_today'          => Visit::whereDate('check_in', Carbon::today())->distinct('visitor_id')->count('visitor_id'),
+            'active_visitor'         => Visit::where('status', 'IN')->count(),
             'total_visit_this_month' => Visit::whereMonth('check_in', Carbon::now()->month)
                 ->whereYear('check_in', Carbon::now()->year)
                 ->count(),
+            'event_today'            => Event::whereDate('event_date', Carbon::today())->whereNotIn('status', ['cancelled'])->count(),
+            'active_events'          => Event::where('status', 'ongoing')->count(),
         ];
 
         return response()->json([
@@ -42,15 +45,18 @@ class DashboardController extends Controller
         $user = auth()->user();
         
         $stats = [
-            'active_visitor' => Visit::where('status', 'IN')
+            'active_visitor'       => Visit::where('status', 'IN')
                 ->where('receptionist_id', $user->id)
                 ->count(),
-            'visitor_today' => Visit::whereDate('check_in', Carbon::today())
+            'visitor_today'        => Visit::whereDate('check_in', Carbon::today())
                 ->where('receptionist_id', $user->id)
                 ->distinct('visitor_id')
                 ->count('visitor_id'),
             'total_check_in_today' => Visit::whereDate('check_in', Carbon::today())
                 ->where('receptionist_id', $user->id)
+                ->count(),
+            'events_today'         => Event::whereDate('event_date', Carbon::today())
+                ->whereNotIn('status', ['cancelled'])
                 ->count(),
         ];
 

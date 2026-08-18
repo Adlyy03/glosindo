@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import visitService from '../../services/visitService';
+import Badge from '../../components/ui/Badge';
+import { CalendarRange } from 'lucide-react';
 
 const ReceptionistHistoryPage = () => {
   const [history, setHistory] = useState([]);
@@ -43,7 +45,17 @@ const ReceptionistHistoryPage = () => {
             {history.map((entry) => (
               <div key={entry.id} className="p-5 flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-gray-900">{entry.visitor?.name || 'Tamu'}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-gray-900">{entry.visitor?.name || 'Tamu'}</p>
+                    {entry.event ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-50 text-brand-cyan-dark border border-cyan-200">
+                        <CalendarRange className="w-3 h-3" />
+                        {entry.event.name}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-gray-400 font-medium">-</span>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-500">{entry.visitor?.company || '—'}</p>
                 </div>
                 <div className="text-right">

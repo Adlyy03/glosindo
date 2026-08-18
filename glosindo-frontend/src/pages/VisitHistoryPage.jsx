@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
-import { History, Search, Calendar, RefreshCw, FileText, ChevronLeft, ChevronRight, Trash2, AlertTriangle } from 'lucide-react';
+import {
+  History, Search, Calendar, RefreshCw, FileText,
+  ChevronLeft, ChevronRight, Trash2, AlertTriangle, CalendarRange
+} from 'lucide-react';
 import visitService from '../services/visitService';
 import useAuthStore from '../store/authStore';
 import Card, { CardHeader } from '../components/ui/Card';
@@ -77,7 +80,7 @@ const VisitHistoryPage = () => {
       toast.success('Riwayat kunjungan berhasil dihapus');
       setDeleteModal(false);
       setVisitToDelete(null);
-      loadHistory(); // Reload data
+      loadHistory();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Gagal menghapus riwayat');
     } finally {
@@ -97,7 +100,7 @@ const VisitHistoryPage = () => {
             <Badge variant="navy">Audit History</Badge>
           </div>
           <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
-            Laporan lengkap riwayat log masuk (check-in) dan log keluar (check-out) seluruh tamu.
+            Laporan lengkap riwayat log masuk (check-in) dan log keluar (check-out) seluruh tamu biasa maupun event.
           </p>
         </div>
 
@@ -194,6 +197,7 @@ const VisitHistoryPage = () => {
                   <tr className="border-b border-slate-200/80 bg-slate-50/80 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
                     <th className="px-6 py-4">Nama Tamu</th>
                     <th className="px-6 py-4">Bertemu With</th>
+                    <th className="px-6 py-4">Event</th>
                     <th className="px-6 py-4 hidden lg:table-cell">Maksud Keperluan</th>
                     <th className="px-6 py-4">Check-In</th>
                     <th className="px-6 py-4 hidden lg:table-cell">Check-Out</th>
@@ -208,7 +212,17 @@ const VisitHistoryPage = () => {
                         <p className="font-bold text-slate-900">{visit.visitor?.name}</p>
                         <p className="text-xs text-slate-400 font-medium">{visit.visitor?.company || 'Pribadi'}</p>
                       </td>
-                      <td className="px-6 py-4 font-bold text-slate-800">{visit.meet_to}</td>
+                      <td className="px-6 py-4 font-bold text-slate-800">{visit.meet_to || '-'}</td>
+                      <td className="px-6 py-4">
+                        {visit.event?.name ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-cyan-50 text-cyan-800 border border-cyan-200">
+                            <CalendarRange className="w-3.5 h-3.5 text-cyan-600" />
+                            {visit.event.name}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-semibold text-xs">-</span>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-xs text-slate-600 max-w-xs truncate hidden lg:table-cell font-medium">
                         {visit.purpose}
                       </td>
@@ -271,8 +285,16 @@ const VisitHistoryPage = () => {
                   <div className="space-y-1.5 text-xs text-slate-600 font-medium bg-slate-50 p-3 rounded-xl">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Bertemu:</span>
-                      <span className="font-bold text-slate-900">{visit.meet_to}</span>
+                      <span className="font-bold text-slate-900">{visit.meet_to || '-'}</span>
                     </div>
+                    {visit.event?.name && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-400">Event:</span>
+                        <span className="font-bold text-brand-cyan-dark bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                          {visit.event.name}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-slate-400">Keperluan:</span>
                       <span className="text-slate-700 truncate max-w-[60%]">{visit.purpose}</span>
@@ -365,6 +387,12 @@ const VisitHistoryPage = () => {
                 <span className="text-slate-500">Perusahaan:</span>
                 <span className="font-medium text-slate-700">{visitToDelete.visitor?.company || 'Pribadi'}</span>
               </div>
+              {visitToDelete.event?.name && (
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Event:</span>
+                  <span className="font-medium text-brand-navy">{visitToDelete.event.name}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-slate-500">Check-In:</span>
                 <span className="font-medium text-slate-700">{dayjs(visitToDelete.check_in).format('DD/MM/YYYY HH:mm')}</span>

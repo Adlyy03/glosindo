@@ -1,23 +1,15 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
-  UserPlus,
-  Search,
-  UserCheck,
-  CheckCircle,
-  X,
-  Building,
-  Phone,
-  User,
-  HelpCircle,
-  Sparkles,
-  Zap
+  UserPlus, Search, UserCheck, CheckCircle, X, HelpCircle,
+  Zap, CalendarRange, Users, Sparkles
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import SuccessScreen from '../components/SplashOverlay';
 import VisitorFormPage from './VisitorFormPage';
 import visitService from '../services/visitService';
 import visitorService from '../services/visitorService';
+import eventService from '../services/eventService';
 import Card, { CardHeader } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -30,6 +22,12 @@ const CheckInPage = () => {
   const [splashOpen, setSplashOpen] = useState(false);
   const [splashType, setSplashType] = useState('checkin');
   const [splashMeta, setSplashMeta] = useState({});
+
+  // Visit Type: 'regular' | 'event'
+  const [visitType, setVisitType] = useState('regular');
+  const [eventId, setEventId] = useState('');
+  const [activeEvents, setActiveEvents] = useState([]);
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   const [purpose, setPurpose] = useState('');
   const [meetTo, setMeetTo] = useState('');
@@ -44,6 +42,22 @@ const CheckInPage = () => {
       setSelectedVisitor(location.state.visitor);
     }
   }, [location.state, selectedVisitor]);
+
+  // Load active events for dropdown
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoadingEvents(true);
+      try {
+        const res = await eventService.getActive();
+        setActiveEvents(res.data?.data || []);
+      } catch (err) {
+        console.error('Failed to load active events', err);
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   const handleManualSearch = async (e) => {
     e.preventDefault();
@@ -75,21 +89,39 @@ const CheckInPage = () => {
       toast.error('Pilih tamu terlebih dahulu');
       return;
     }
-    if (!purpose.trim() || !meetTo.trim()) {
-      toast.error('Tujuan dan Orang yang Ditemui wajib diisi');
+
+    if (!purpose.trim()) {
+      toast.error('Keperluan kunjungan wajib diisi');
+      return;
+    }
+
+    if (visitType === 'regular' && !meetTo.trim()) {
+      toast.error('Pihak yang ditemui wajib diisi untuk kunjungan biasa');
+      return;
+    }
+
+    if (visitType === 'event' && !eventId) {
+      toast.error('Pilih event yang diikuti');
       return;
     }
 
     setSubmittingCheckIn(true);
     try {
-      await visitService.checkIn({
+      const payload = {
         visitor_id: selectedVisitor.id,
         purpose,
-        meet_to: meetTo,
-      });
+        meet_to: visitType === 'event' ? (meetTo.trim() || '-') : meetTo,
+        event_id: visitType === 'event' ? eventId : null,
+      };
+
+      await visitService.checkIn(payload);
 
       setSplashType('checkin');
-      setSplashMeta({ meetTo, purpose });
+      setSplashMeta({
+        meetTo: payload.meet_to,
+        purpose: payload.purpose,
+        eventName: visitType === 'event' ? activeEvents.find(e => e.id == eventId)?.name : null
+      });
       setSplashOpen(true);
 
       toast.success(`Check-In Berhasil! ${selectedVisitor.name}`, {
@@ -101,6 +133,8 @@ const CheckInPage = () => {
         setSelectedVisitor(null);
         setPurpose('');
         setMeetTo('');
+        setVisitType('regular');
+        setEventId('');
         setShowRegisterForm(false);
       }, 5000);
     } catch (err) {
@@ -124,7 +158,7 @@ const CheckInPage = () => {
             <Badge variant="navy">Kiosk Portal</Badge>
           </div>
           <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
-            Daftarkan tamu baru atau cari data tamu terdaftar untuk konfirmasi kunjungan.
+            Daftarkan tamu baru atau cari data tamu terdaftar untuk konfirmasi kunjungan biasa maupun event.
           </p>
         </div>
 
@@ -169,7 +203,7 @@ const CheckInPage = () => {
                       setSelectedVisitor(null);
                       setSearchResults([]);
                     }}
-                    className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-1 text-xs font-semibold"
+                    className="p-2 text-slate-400 hover:text-slate-600 rounded-xl hover:bg-slate-100 transition-colors flex items-center gap-1 text-xs font-semibold cursor-pointer"
                   >
                     <X className="w-4 h-4" /> Batal
                   </button>
@@ -193,20 +227,96 @@ const CheckInPage = () => {
 
                 {/* Form Check-In Details */}
                 <form onSubmit={handleCheckInSubmit} className="space-y-5">
+                  {/* Pilihan Jenis Kunjungan */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-                      Bertemu Dengan Siapa? <span className="text-rose-500">*</span>
+                      Jenis Kunjungan <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setVisitType('regular')}
+                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                          visitType === 'regular'
+                            ? 'border-brand-navy bg-blue-50/60 ring-2 ring-brand-navy/20 font-bold text-brand-navy'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <p className="text-sm font-extrabold">Kunjungan Biasa</p>
+                        <p className="text-xs text-slate-400 font-normal mt-0.5">Bertemu karyawan / keperluan umum</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setVisitType('event')}
+                        className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                          visitType === 'event'
+                            ? 'border-brand-cyan bg-cyan-50/60 ring-2 ring-brand-cyan/20 font-bold text-brand-cyan-dark'
+                            : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <CalendarRange className="w-4 h-4 text-brand-cyan" />
+                          <p className="text-sm font-extrabold">Kunjungan Event</p>
+                        </div>
+                        <p className="text-xs text-slate-400 font-normal mt-0.5">Mengikuti meeting / seminar / training</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dropdown Event jika Jenis = Event */}
+                  {visitType === 'event' && (
+                    <div className="p-4 rounded-2xl bg-cyan-50/40 border border-cyan-100 space-y-3 animate-fadeIn">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                        Pilih Event Yang Diikuti <span className="text-rose-500">*</span>
+                      </label>
+                      {loadingEvents ? (
+                        <div className="p-3 text-xs text-slate-500 font-medium">Memuat event aktif...</div>
+                      ) : activeEvents.length === 0 ? (
+                        <div className="p-3 text-xs text-amber-700 bg-amber-50 rounded-xl border border-amber-200">
+                          Tidak ada event aktif yang terjadwal hari ini. Anda dapat membuat event di menu <strong>Event</strong> atau pilih <strong>Kunjungan Biasa</strong>.
+                        </div>
+                      ) : (
+                        <select
+                          value={eventId}
+                          onChange={(e) => {
+                            setEventId(e.target.value);
+                            const ev = activeEvents.find(x => x.id == e.target.value);
+                            if (ev && !purpose) {
+                              setPurpose(`Mengikuti event: ${ev.name}`);
+                            }
+                          }}
+                          required
+                          className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-brand-cyan bg-white"
+                        >
+                          <option value="">-- Pilih Event Hari Ini --</option>
+                          {activeEvents.map((ev) => (
+                            <option key={ev.id} value={ev.id}>
+                              {ev.name} ({ev.start_time?.slice(0,5)} - {ev.end_time?.slice(0,5)} {ev.location ? `| ${ev.location}` : ''})
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bertemu Dengan */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+                      Bertemu Dengan Siapa? {visitType === 'regular' && <span className="text-rose-500">*</span>}
+                      {visitType === 'event' && <span className="text-xs text-slate-400 font-normal ml-1">(Opsional untuk Event)</span>}
                     </label>
                     <input
                       type="text"
-                      required
+                      required={visitType === 'regular'}
                       value={meetTo}
                       onChange={(e) => setMeetTo(e.target.value)}
-                      placeholder="Contoh: Bpk. Budi - Manager HRD"
+                      placeholder={visitType === 'event' ? 'Opsional / Penanggung Jawab Event' : 'Contoh: Bpk. Budi - Manager HRD'}
                       className="w-full px-4 py-3.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan transition-all bg-slate-50/50"
                     />
                   </div>
 
+                  {/* Keperluan Kunjungan */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
                       Keperluan Kunjungan <span className="text-rose-500">*</span>
@@ -362,7 +472,7 @@ const CheckInPage = () => {
                 <span className="w-6 h-6 rounded-full bg-brand-navy text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
                   3
                 </span>
-                <span><strong>Isi Keperluan:</strong> Masukkan nama pihak yang ditemui dan keperluan kunjungan.</span>
+                <span><strong>Pilih Jenis Kunjungan:</strong> Tentukan kunjungan biasa atau kunjungan terkait event perusahaan.</span>
               </li>
             </ol>
           </Card>

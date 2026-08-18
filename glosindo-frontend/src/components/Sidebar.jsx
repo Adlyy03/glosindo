@@ -71,6 +71,25 @@ const navSections = [
     ]
   },
   {
+    title: 'EVENT',
+    items: [
+      {
+        label: 'Manajemen Event',
+        to: '/events',
+        roles: ['admin', 'receptionist', 'supervisor'],
+        icon: FileText,
+        badge: null,
+      },
+      {
+        label: 'Laporan Event',
+        to: '/events/reports',
+        roles: ['admin', 'receptionist', 'supervisor'],
+        icon: FileText,
+        badge: null,
+      },
+    ]
+  },
+  {
     title: 'SISTEM & PETUGAS',
     items: [
       {
