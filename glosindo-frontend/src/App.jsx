@@ -20,7 +20,6 @@ import ReceptionistCheckInPage from './pages/receptionist/ReceptionistCheckInPag
 import ReceptionistActivePage from './pages/receptionist/ReceptionistActivePage';
 import ReceptionistHistoryPage from './pages/receptionist/ReceptionistHistoryPage';
 import ReceptionistVisitorPage from './pages/receptionist/ReceptionistVisitorPage';
-import ReportsPage from './pages/ReportsPage';
 import PublicGuestRegisterPage from './pages/PublicGuestRegisterPage';
 
 function App() {
@@ -141,7 +140,6 @@ function App() {
                       <Route path="/active-visitors" element={<ActiveVisitorPage />} />
                       <Route path="/visit-history" element={<VisitHistoryPage />} />
                       <Route path="/visitors" element={<VisitorListPage />} />
-                      <Route path="/reports" element={<ReportsPage />} />
                       <Route element={<ProtectedRoute allowedRoles={['receptionist']} />}>
                         <Route path="/receptionist/check-in" element={<ReceptionistCheckInPage />} />
                         <Route path="/receptionist/active" element={<ReceptionistActivePage />} />

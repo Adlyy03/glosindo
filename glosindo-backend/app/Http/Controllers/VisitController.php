@@ -21,7 +21,7 @@ class VisitController extends Controller
         $user = auth()->user();
         $query = Visit::with(['visitor', 'receptionist:id,name,email']);
 
-        // Receptionist only see their own visits
+        // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
             $query->where('receptionist_id', $user->id);
         }
@@ -113,7 +113,7 @@ class VisitController extends Controller
             ->with(['visitor', 'receptionist:id,name,email'])
             ->where('status', 'IN');
 
-        // Receptionist only see their own visits
+        // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
             $query->where('receptionist_id', $user->id);
         }
@@ -137,7 +137,7 @@ class VisitController extends Controller
         $user = auth()->user();
         $query = Visit::with(['visitor', 'receptionist:id,name,email']);
 
-        // Receptionist only see their own visits
+        // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
             $query->where('receptionist_id', $user->id);
         }
@@ -178,7 +178,7 @@ class VisitController extends Controller
         $user = auth()->user();
         $query = Visit::with(['visitor', 'receptionist:id,name,email']);
 
-        // Receptionist only see their own visits
+        // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
             $query->where('receptionist_id', $user->id);
         }

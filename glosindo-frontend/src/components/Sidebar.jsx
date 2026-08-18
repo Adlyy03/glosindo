@@ -24,7 +24,7 @@ const navSections = [
       {
         label: 'Dashboard',
         to: '/dashboard',
-        roles: ['admin', 'receptionist'],
+        roles: ['admin', 'receptionist', 'supervisor'],
         icon: LayoutDashboard,
         badge: null,
       },
@@ -50,30 +50,23 @@ const navSections = [
       {
         label: 'Tamu Aktif',
         to: '/active-visitors',
-        roles: ['admin', 'receptionist'],
+        roles: ['admin', 'receptionist', 'supervisor'],
         icon: UserCheck,
         badge: null,
       },
       {
         label: 'Riwayat Kunjungan',
         to: '/visit-history',
-        roles: ['admin', 'receptionist'],
+        roles: ['admin', 'receptionist', 'supervisor'],
         icon: History,
         badge: null,
       },
       {
         label: 'Data Tamu',
         to: '/visitors',
-        roles: ['admin', 'receptionist'],
+        roles: ['admin', 'receptionist', 'supervisor'],
         icon: Users,
         badge: null,
-      },
-      {
-        label: 'Laporan & Statistik',
-        to: '/reports',
-        roles: ['admin', 'receptionist'],
-        icon: FileText,
-        badge: 'New',
       },
     ]
   },

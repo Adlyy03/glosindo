@@ -7,6 +7,7 @@ import { UserCheck, RefreshCw, LogOut, Camera, ShieldCheck, Clock, User, X } fro
 import FaceScanner from '../components/FaceScanner';
 import SuccessScreen from '../components/SplashOverlay';
 import visitService from '../services/visitService';
+import useAuthStore from '../store/authStore';
 import Card, { CardHeader } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -16,6 +17,9 @@ dayjs.extend(timezone);
 dayjs.tz.setDefault('Asia/Jakarta');
 
 const ActiveVisitorPage = () => {
+  const { user } = useAuthStore();
+  const isSupervisor = user?.role === 'supervisor';
+
   const [activeVisits, setActiveVisits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [checkingOutId, setCheckingOutId] = useState(null);
@@ -247,15 +251,17 @@ const ActiveVisitorPage = () => {
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          loading={checkingOutId === visit.id}
-                          onClick={() => handleCheckout(visit)}
-                          icon={LogOut}
-                        >
-                          Check-Out
-                        </Button>
+                        {!isSupervisor && (
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            loading={checkingOutId === visit.id}
+                            onClick={() => handleCheckout(visit)}
+                            icon={LogOut}
+                          >
+                            Check-Out
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -295,16 +301,18 @@ const ActiveVisitorPage = () => {
                     </div>
                   </div>
 
-                  <Button
-                    variant="danger"
-                    size="md"
-                    fullWidth
-                    loading={checkingOutId === visit.id}
-                    onClick={() => handleCheckout(visit)}
-                    icon={LogOut}
-                  >
-                    Check-Out (OUT)
-                  </Button>
+                  {!isSupervisor && (
+                    <Button
+                      variant="danger"
+                      size="md"
+                      fullWidth
+                      loading={checkingOutId === visit.id}
+                      onClick={() => handleCheckout(visit)}
+                      icon={LogOut}
+                    >
+                      Check-Out (OUT)
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>

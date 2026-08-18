@@ -45,7 +45,7 @@ class ReportController extends Controller
 
         $query = Visit::whereBetween('check_in', [$startDate, $endDate]);
 
-        // Receptionist only see their own data
+        // Receptionist only see their own data, supervisor & admin see all
         if ($user->role === 'receptionist') {
             $query->where('receptionist_id', $user->id);
         }
@@ -61,7 +61,7 @@ class ReportController extends Controller
         ->orderBy('date', 'asc')
         ->get();
 
-        // Total statistics
+        // Total statistics - supervisor & admin see all
         $totalQuery = Visit::whereBetween('check_in', [$startDate, $endDate]);
         if ($user->role === 'receptionist') {
             $totalQuery->where('receptionist_id', $user->id);

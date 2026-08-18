@@ -5,6 +5,7 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { History, Search, Calendar, RefreshCw, FileText, ChevronLeft, ChevronRight, Trash2, AlertTriangle } from 'lucide-react';
 import visitService from '../services/visitService';
+import useAuthStore from '../store/authStore';
 import Card, { CardHeader } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -15,6 +16,9 @@ dayjs.extend(timezone);
 dayjs.tz.setDefault('Asia/Jakarta');
 
 const VisitHistoryPage = () => {
+  const { user } = useAuthStore();
+  const isSupervisor = user?.role === 'supervisor';
+
   const [visits, setVisits] = useState([]);
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -222,13 +226,15 @@ const VisitHistoryPage = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={() => openDeleteModal(visit)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                          title="Hapus riwayat"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!isSupervisor && (
+                          <button
+                            onClick={() => openDeleteModal(visit)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                            title="Hapus riwayat"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -251,12 +257,14 @@ const VisitHistoryPage = () => {
                       ) : (
                         <Badge variant="neutral">OUT</Badge>
                       )}
-                      <button
-                        onClick={() => openDeleteModal(visit)}
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {!isSupervisor && (
+                        <button
+                          onClick={() => openDeleteModal(visit)}
+                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
 
