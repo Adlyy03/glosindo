@@ -63,12 +63,12 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
         $router->delete('users/{id}', 'UserController@destroy');
     });
 
-    // Visitors
-    $router->get('visitors', 'VisitorController@index');
-    $router->post('visitors', 'VisitorController@store');
-    $router->get('visitors/{id}', 'VisitorController@show');
-    $router->put('visitors/{id}', 'VisitorController@update');
-    $router->post('visitors/{id}', 'VisitorController@update');
+    // Visitors - Supervisor get read-only access
+    $router->get('visitors', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitorController@index']);
+    $router->post('visitors', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitorController@store']);
+    $router->get('visitors/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitorController@show']);
+    $router->put('visitors/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitorController@update']);
+    $router->post('visitors/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitorController@update']);
     $router->delete('visitors/{id}', ['middleware' => 'role:admin', 'uses' => 'VisitorController@destroy']);
 
     // Face Embeddings
@@ -77,17 +77,17 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->post('visitors/{visitorId}/face-embedding', 'FaceEmbeddingController@store');
     $router->delete('visitors/{visitorId}/face-embedding', ['middleware' => 'role:admin', 'uses' => 'FaceEmbeddingController@destroy']);
 
-    // Visits (ownership handled in controller)
-    $router->get('visits', 'VisitController@index');
-    $router->get('visits/active', 'VisitController@active');
-    $router->get('visits/history', 'VisitController@history');
-    $router->post('visits', 'VisitController@store');
-    $router->get('visits/{id}', 'VisitController@show');
-    $router->put('visits/{id}/checkout', 'VisitController@checkout');
-    $router->delete('visits/{id}', 'VisitController@destroy');
+    // Visits (ownership handled in controller) - Supervisor get read-only access
+    $router->get('visits', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@index']);
+    $router->get('visits/active', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@active']);
+    $router->get('visits/history', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@history']);
+    $router->post('visits', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitController@store']);
+    $router->get('visits/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@show']);
+    $router->put('visits/{id}/checkout', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitController@checkout']);
+    $router->delete('visits/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitController@destroy']);
 
-    // Dashboard - Admin
-    $router->group(['middleware' => 'role:admin'], function () use ($router) {
+    // Dashboard - Admin & Supervisor
+    $router->group(['middleware' => 'role:admin,supervisor'], function () use ($router) {
         $router->get('dashboard/stats', 'DashboardController@stats');
         $router->get('dashboard/visit-trends', 'DashboardController@visitTrends');
         $router->get('dashboard/monthly-trends', 'DashboardController@monthlyTrends');
@@ -101,10 +101,10 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->post('public-registration/toggle', ['middleware' => 'role:admin,receptionist', 'uses' => 'PublicRegistrationController@toggleStatus']);
     $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
 
-    // Reports
-    $router->get('reports/statistics', 'ReportController@statistics');
-    $router->get('reports/export-excel', 'ReportController@exportExcel');
-    $router->get('reports/export-pdf', 'ReportController@exportPdf');
+    // Reports - Admin, Receptionist, Supervisor
+    $router->get('reports/statistics', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReportController@statistics']);
+    $router->get('reports/export-excel', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReportController@exportExcel']);
+    $router->get('reports/export-pdf', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReportController@exportPdf']);
 });
 
 // Swagger UI route

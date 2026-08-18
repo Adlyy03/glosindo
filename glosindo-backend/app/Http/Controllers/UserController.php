@@ -19,7 +19,7 @@ class UserController extends Controller
         $query = User::query();
 
         // Filter by role
-        if ($request->has('role') && in_array($request->role, ['admin', 'receptionist'])) {
+        if ($request->has('role') && in_array($request->role, ['admin', 'receptionist', 'supervisor'])) {
             $query->where('role', $request->role);
         }
 
@@ -52,7 +52,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,receptionist',
+            'role' => 'required|in:admin,receptionist,supervisor',
         ]);
 
         $user = User::create([
@@ -125,7 +125,7 @@ class UserController extends Controller
             'name' => 'sometimes|string|max:255',
             'email' => 'sometimes|email|max:255|unique:users,email,' . $id,
             'password' => 'sometimes|string|min:6',
-            'role' => 'sometimes|in:admin,receptionist',
+            'role' => 'sometimes|in:admin,receptionist,supervisor',
         ]);
 
         $oldValues = $user->toArray();

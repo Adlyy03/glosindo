@@ -25,7 +25,8 @@ const VisitorListPage = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [visitorToDelete, setVisitorToDelete] = useState(null);
 
-  const { isAdmin } = useAuthStore();
+  const { isAdmin, user } = useAuthStore();
+  const isSupervisor = user?.role === 'supervisor';
 
   const loadVisitors = useCallback(async () => {
     setLoading(true);
@@ -96,14 +97,16 @@ const VisitorListPage = () => {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          size="lg"
-          onClick={handleCreateNew}
-          icon={UserPlus}
-        >
-          Daftar Tamu Baru
-        </Button>
+        {!isSupervisor && (
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleCreateNew}
+            icon={UserPlus}
+          >
+            Daftar Tamu Baru
+          </Button>
+        )}
       </div>
 
       {/* Search Input Card */}
@@ -127,8 +130,8 @@ const VisitorListPage = () => {
         <VisitorTable
           visitors={visitors}
           loading={loading}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+          onEdit={!isSupervisor ? handleEdit : null}
+          onDelete={!isSupervisor ? handleDelete : null}
           isAdmin={isAdmin()}
         />
 

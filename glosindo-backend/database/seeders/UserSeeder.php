@@ -28,6 +28,12 @@ class UserSeeder extends Seeder
                 'password' => Hash::make('Recep123!'),
                 'role' => 'receptionist',
             ],
+            [
+                'name' => 'Supervisor GLOSINDO',
+                'email' => 'supervisor@glosindo.com',
+                'password' => Hash::make('Super123!'),
+                'role' => 'supervisor',
+            ],
         ];
 
         foreach ($users as $user) {
@@ -44,5 +50,6 @@ class UserSeeder extends Seeder
         echo "Users seeded successfully!\n";
         echo "Admin: admin@glosindo.com / Admin123!\n";
         echo "Receptionist: receptionist@glosindo.com / Recep123!\n";
+        echo "Supervisor: supervisor@glosindo.com / Super123!\n";
     }
 }
