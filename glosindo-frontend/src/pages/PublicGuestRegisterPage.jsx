@@ -1,27 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  User,
-  Phone,
-  Mail,
-  Building,
-  FileText,
-  UserCheck,
   Camera,
   CheckCircle2,
-  AlertCircle,
-  Clock,
-  ShieldCheck,
-  RefreshCw,
-  Sparkles,
   Lock,
-  ChevronRight,
-  ArrowRight,
+  RefreshCw,
   Upload,
-  Calendar,
-  XCircle,
-  HelpCircle,
-  Copy,
-  Printer
+  XCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Webcam from 'react-webcam';
@@ -233,135 +217,106 @@ const PublicGuestRegisterPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col justify-between">
-      {/* Subtle gradient overlay */}
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 pointer-events-none z-0" />
-
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header Bar */}
-      <header className="relative z-10 w-full border-b border-slate-700 bg-slate-800 px-4 py-4 sm:px-8">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1">
-              <img src={LOGO} alt={APP_NAME} className="w-full h-full object-contain" />
-            </div>
-            <div>
-              <span className="font-bold text-white text-lg">GLOSINDO</span>
-              <p className="text-xs text-slate-400">Pendaftaran Kunjungan Mandiri</p>
-            </div>
+      <header className="w-full border-b border-gray-200 bg-white px-6 py-4">
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
+          <div className="w-10 h-10 bg-white rounded flex items-center justify-center p-1 border border-gray-200">
+            <img src={LOGO} alt={APP_NAME} className="w-full h-full object-contain" />
           </div>
-
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="hidden sm:inline">Portal Resmi</span>
+          <div>
+            <span className="font-semibold text-gray-900 text-base">PT GLOSINDO</span>
+            <p className="text-xs text-gray-500">Pendaftaran Tamu</p>
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="relative z-10 flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 md:p-8 flex flex-col justify-center">
+      <main className="flex-1 max-w-2xl w-full mx-auto p-6 py-12">
         {checkingStatus ? (
-          <div className="bg-slate-800 border border-slate-700 rounded-xl p-8 text-center max-w-md mx-auto">
-            <div className="w-12 h-12 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center mx-auto mb-4">
-              <RefreshCw className="w-6 h-6 animate-spin" />
-            </div>
-            <h2 className="text-lg font-bold text-white mb-1">Memeriksa Status...</h2>
-            <p className="text-sm text-slate-400">Menghubungkan ke sistem</p>
+          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+            <RefreshCw className="w-8 h-8 text-gray-400 animate-spin mx-auto mb-3" />
+            <p className="text-sm text-gray-600">Memuat...</p>
           </div>
         ) : !isEnabled ? (
           /* When Registration is DISABLED */
-          <div className="bg-slate-800 border border-rose-500/30 rounded-xl p-8 text-center max-w-lg mx-auto">
-            <div className="w-14 h-14 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-7 h-7" />
-            </div>
-
-            <h2 className="text-xl font-bold text-white mb-2">
+          <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
+            <Lock className="w-10 h-10 text-gray-400 mx-auto mb-3" />
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Pendaftaran Sedang Nonaktif
             </h2>
-
-            <p className="text-sm text-slate-300 mb-6">
-              Fitur registrasi mandiri sedang dinonaktifkan. Silakan datang langsung ke kantor untuk pendaftaran di meja resepsionis.
+            <p className="text-sm text-gray-600 mb-6">
+              Fitur registrasi mandiri sedang dinonaktifkan. Silakan datang langsung ke resepsionis.
             </p>
-
             <Button
               variant="outline"
               size="md"
               onClick={fetchStatus}
               icon={RefreshCw}
-              className="border-slate-600 hover:bg-slate-700 text-slate-200"
+              className="text-gray-700"
             >
-              Muat Ulang Status
+              Muat Ulang
             </Button>
           </div>
         ) : isSuccess && successData ? (
           /* SUCCESS CONFIRMATION */
-          <div className="bg-slate-800 border border-emerald-500/30 rounded-xl p-8 max-w-xl mx-auto">
-            <div className="text-center pb-6 border-b border-slate-700">
-              <div className="w-14 h-14 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto mb-3">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-bold text-white">
+          <div className="bg-white border border-gray-200 rounded-lg p-8">
+            <div className="text-center pb-6 border-b border-gray-100">
+              <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
+              <h2 className="text-xl font-semibold text-gray-900">
                 Pendaftaran Berhasil
               </h2>
-              <p className="text-sm text-slate-300 mt-1">
-                Data kunjungan Anda telah disimpan.
+              <p className="text-sm text-gray-600 mt-1">
+                Data kunjungan Anda telah disimpan
               </p>
             </div>
 
             {/* Visitor Card */}
-            <div className="my-6 p-5 rounded-lg bg-slate-900 border border-slate-700">
+            <div className="my-6 p-5 rounded-lg bg-gray-50 border border-gray-200">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <span className="text-xs text-cyan-400 uppercase">Pengunjung</span>
-                  <h3 className="text-xl font-bold text-white">
+                  <h3 className="text-lg font-semibold text-gray-900">
                     {successData.visitor.name}
                   </h3>
-                  <p className="text-xs text-slate-400">
-                    {successData.visitor.company || 'Pribadi'} • {successData.visitor.phone}
+                  <p className="text-sm text-gray-600">
+                    {successData.visitor.company || 'Pribadi'}
                   </p>
+                  <p className="text-sm text-gray-500">{successData.visitor.phone}</p>
                 </div>
 
                 {photoPreview && (
                   <img
                     src={photoPreview}
                     alt="Foto"
-                    className="w-12 h-12 rounded-lg object-cover border border-cyan-400"
+                    className="w-16 h-16 rounded object-cover border border-gray-300"
                   />
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
+              <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-200 text-sm">
                 <div>
-                  <span className="text-slate-500">Bertemu:</span>
-                  <span className="text-white font-medium block">{successData.visit.meet_to}</span>
+                  <span className="text-gray-500">Bertemu:</span>
+                  <span className="text-gray-900 font-medium block">{successData.visit.meet_to}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Keperluan:</span>
-                  <span className="text-white font-medium block">{successData.visit.purpose}</span>
+                  <span className="text-gray-500">Keperluan:</span>
+                  <span className="text-gray-900 font-medium block">{successData.visit.purpose}</span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-slate-500">Waktu:</span>
-                  <span className="text-cyan-300 block">{successData.registeredAt}</span>
+                  <span className="text-gray-500">Waktu:</span>
+                  <span className="text-gray-900 block">{successData.registeredAt}</span>
                 </div>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button
-                variant="primary"
-                size="lg"
-                fullWidth
-                onClick={() => window.print()}
-                icon={Printer}
-              >
-                Cetak Bukti
-              </Button>
+            <div className="flex gap-3">
               <Button
                 variant="outline"
-                size="lg"
+                size="md"
                 fullWidth
                 onClick={handleReset}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                className="text-gray-700"
               >
                 Daftar Lagi
               </Button>
@@ -369,227 +324,176 @@ const PublicGuestRegisterPage = () => {
           </div>
         ) : (
           /* REGISTRATION FORM (Enabled State) */
-          <div className="bg-slate-800/85 backdrop-blur-xl border border-slate-700/80 rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl">
+          <div className="bg-white border border-gray-200 rounded-lg p-8">
             {/* Form Title */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Self Registration Online
-                </span>
-                <span className="px-3 py-1 rounded-full text-[11px] font-bold tracking-wider uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                  Pendaftaran Dibuka
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Formulir Pendaftaran Kunjungan Tamu
+            <div className="mb-6">
+              <h1 className="text-2xl font-semibold text-gray-900">
+                Formulir Pendaftaran Tamu
               </h1>
-              <p className="text-xs sm:text-sm text-slate-400 mt-1">
-                Silakan isi formulir di bawah ini dari rumah atau ponsel Anda sebelum berkunjung ke PT GLOSINDO.
+              <p className="text-sm text-gray-600 mt-1">
+                Silakan isi formulir di bawah ini sebelum berkunjung
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Personal Data Section */}
               <div className="space-y-4">
-                <h3 className="text-xs font-extrabold uppercase tracking-widest text-cyan-400 pb-1 border-b border-slate-700/80 flex items-center gap-2">
-                  <User className="w-4 h-4" /> 1. Data Identitas Tamu
+                <h3 className="text-sm font-semibold text-gray-900 pb-2 border-b border-gray-200">
+                  Data Identitas
                 </h3>
 
                 {/* Name */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Nama Lengkap <span className="text-rose-400">*</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nama Lengkap <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                      <User className="w-5 h-5" />
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Masukkan nama lengkap Anda..."
-                      className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 text-sm font-medium focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Masukkan nama lengkap"
+                    className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
 
                 {/* Phone & Email Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                      Nomor WhatsApp / HP <span className="text-rose-400">*</span>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Nomor WhatsApp / HP <span className="text-red-500">*</span>
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                        <Phone className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="tel"
-                        required
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="Contoh: 081234567890"
-                        className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 text-sm font-medium focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
-                      />
-                    </div>
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="081234567890"
+                      className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                      Alamat Email (Opsional)
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email (Opsional)
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                        <Mail className="w-5 h-5" />
-                      </div>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="email@domain.com"
-                        className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 text-sm font-medium focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
-                      />
-                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@domain.com"
+                      className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                 </div>
 
                 {/* Company */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Instansi / Perusahaan / Asal (Opsional)
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Instansi / Perusahaan (Opsional)
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                      <Building className="w-5 h-5" />
-                    </div>
-                    <input
-                      type="text"
-                      value={company}
-                      onChange={(e) => setCompany(e.target.value)}
-                      placeholder="Contoh: PT Mitra Sejahtera / Pribadi"
-                      className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 text-sm font-medium focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    placeholder="PT Mitra Sejahtera / Pribadi"
+                    className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
               </div>
 
               {/* Visit Details Section */}
-              <div className="space-y-4 pt-4 border-t border-slate-700/80">
-                <h3 className="text-xs font-extrabold uppercase tracking-widest text-cyan-400 pb-1 border-b border-slate-700/80 flex items-center gap-2">
-                  <FileText className="w-4 h-4" /> 2. Rincian Kunjungan
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-900 pb-2 border-b border-gray-200">
+                  Rincian Kunjungan
                 </h3>
 
                 {/* Meet To */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Bertemu Dengan Siapa (Staf / Divisi) <span className="text-rose-400">*</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Bertemu Dengan <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-                      <UserCheck className="w-5 h-5" />
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      value={meetTo}
-                      onChange={(e) => setMeetTo(e.target.value)}
-                      placeholder="Contoh: Ibu Rina (HRD) / Bpk. Budi (Operasional)"
-                      className="w-full pl-12 pr-4 py-3.5 rounded-2xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 text-sm font-medium focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={meetTo}
+                    onChange={(e) => setMeetTo(e.target.value)}
+                    placeholder="Nama staf / divisi"
+                    className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
 
                 {/* Purpose */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                    Keperluan / Tujuan Kunjungan <span className="text-rose-400">*</span>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Tujuan Kunjungan <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     required
                     rows={3}
                     value={purpose}
                     onChange={(e) => setPurpose(e.target.value)}
-                    placeholder="Contoh: Interview kerja / Meeting koordinasi vendor / Pengantaran dokumen resmi"
-                    className="w-full px-4 py-3.5 rounded-2xl bg-slate-900/80 border border-slate-700 text-white placeholder-slate-500 text-sm font-medium focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 transition-all"
+                    placeholder="Interview, meeting, pengantaran dokumen, dll"
+                    className="w-full px-4 py-2.5 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
               </div>
 
-              {/* Photo & Face Biometrics (Optional) */}
-              <div className="space-y-4 pt-4 border-t border-slate-700/80">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-extrabold uppercase tracking-widest text-cyan-400 flex items-center gap-2">
-                    <Camera className="w-4 h-4" /> 3. Foto Tamu / Wajah (Opsional)
-                  </h3>
-                  <span className="text-[11px] text-slate-400 font-medium">Bisa unggah atau selfie</span>
-                </div>
+              {/* Photo Section */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-gray-900 pb-2 border-b border-gray-200">
+                  Foto (Opsional)
+                </h3>
 
-                <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/60 border border-slate-700/80 space-y-4">
-                  <div className="flex flex-col sm:flex-row items-center gap-4">
-                    {photoPreview ? (
-                      <div className="relative group">
-                        <img
-                          src={photoPreview}
-                          alt="Foto Tamu"
-                          className="w-20 h-20 rounded-2xl object-cover border-2 border-cyan-400 shadow-md"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setPhotoFile(null);
-                            setPhotoPreview(null);
-                            setFaceVector(null);
-                            setFaceScanSuccess(false);
-                          }}
-                          className="absolute -top-2 -right-2 bg-rose-600 text-white rounded-full p-1 shadow-md hover:bg-rose-700 transition-colors"
-                          title="Hapus foto"
-                        >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="w-20 h-20 rounded-2xl bg-slate-800 border-2 border-dashed border-slate-600 flex flex-col items-center justify-center text-slate-400 text-[10px] font-bold">
-                        <Camera className="w-6 h-6 mb-1 text-slate-500" />
-                        Tanpa Foto
-                      </div>
-                    )}
-
-                    <div className="flex-1 space-y-2 text-center sm:text-left">
-                      <p className="text-xs text-slate-300 font-medium">
-                        Melampirkan foto wajah memudahkan verifikasi identitas di resepsionis.
-                      </p>
-                      <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                        <label className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-600 cursor-pointer transition-colors shadow-xs">
-                          <Upload className="w-4 h-4 text-cyan-400" />
-                          Unggah Foto
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleFileChange}
-                            className="hidden"
-                          />
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={() => setShowCamera(!showCamera)}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-cyan-600/20 hover:bg-cyan-600/30 text-xs font-bold text-cyan-300 border border-cyan-500/40 transition-colors"
-                        >
-                          <Camera className="w-4 h-4 text-cyan-400" />
-                          {showCamera ? 'Tutup Kamera' : 'Ambil Selfie'}
-                        </button>
-                      </div>
+                <div className="p-4 rounded-lg bg-gray-50 border border-gray-200 space-y-3">
+                  {photoPreview && (
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={photoPreview}
+                        alt="Foto"
+                        className="w-16 h-16 rounded object-cover border border-gray-300"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(null);
+                          setFaceVector(null);
+                          setFaceScanSuccess(false);
+                        }}
+                        className="text-sm text-red-600 hover:text-red-700"
+                      >
+                        Hapus
+                      </button>
                     </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    <label className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-700 cursor-pointer hover:bg-gray-50">
+                      <Upload className="w-4 h-4" />
+                      Unggah Foto
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowCamera(!showCamera)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
+                    >
+                      <Camera className="w-4 h-4" />
+                      {showCamera ? 'Tutup Kamera' : 'Ambil Selfie'}
+                    </button>
                   </div>
 
                   {/* Live Camera Feed */}
                   {showCamera && (
-                    <div className="pt-4 border-t border-slate-800 text-center space-y-3">
-                      <div className="relative max-w-sm mx-auto rounded-2xl overflow-hidden border-2 border-cyan-500/60 aspect-4/3 bg-black shadow-lg">
+                    <div className="space-y-3">
+                      <div className="relative max-w-sm mx-auto rounded-lg overflow-hidden border border-gray-300 aspect-4/3 bg-black">
                         <Webcam
                           ref={webcamRef}
                           audio={false}
@@ -605,8 +509,9 @@ const PublicGuestRegisterPage = () => {
                         onClick={handleCaptureSnapshot}
                         loading={scanningFace}
                         icon={Camera}
+                        className="mx-auto"
                       >
-                        {scanningFace ? 'Memproses...' : 'Ambil Jepretan Wajah'}
+                        {scanningFace ? 'Memproses...' : 'Ambil Foto'}
                       </Button>
                     </div>
                   )}
@@ -614,22 +519,18 @@ const PublicGuestRegisterPage = () => {
               </div>
 
               {/* Submit Button */}
-              <div className="pt-4">
+              <div className="pt-2">
                 <Button
                   type="submit"
                   variant="primary"
-                  size="kiosk"
+                  size="lg"
                   fullWidth
                   loading={submitting}
                   icon={CheckCircle2}
-                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 shadow-xl shadow-cyan-500/20 font-bold py-4 text-base rounded-2xl"
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
-                  {submitting ? 'Mengirim Pendaftaran...' : 'Kirim Pendaftaran Kunjungan'}
+                  {submitting ? 'Mengirim...' : 'Kirim Pendaftaran'}
                 </Button>
-
-                <p className="text-center text-[11px] text-slate-500 mt-3 font-medium">
-                  Dengan mengirim formulir ini, Anda menyetujui data kunjungan Anda dicatat sesuai SOP keamanan PT GLOSINDO.
-                </p>
               </div>
             </form>
           </div>
@@ -637,10 +538,9 @@ const PublicGuestRegisterPage = () => {
       </main>
 
       {/* Footer Bar */}
-      <footer className="relative z-10 w-full border-t border-slate-800/80 bg-slate-900/60 backdrop-blur-md px-4 py-3 text-center text-xs text-slate-500">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
-          <span>&copy; {new Date().getFullYear()} PT GLOSINDO Jaya • Digital Guestbook System</span>
-          <span className="text-[11px] text-slate-600">Secure Guest Self-Service Portal</span>
+      <footer className="w-full border-t border-gray-200 bg-white px-6 py-3 text-center text-xs text-gray-500">
+        <div className="max-w-3xl mx-auto">
+          &copy; {new Date().getFullYear()} PT GLOSINDO
         </div>
       </footer>
     </div>
