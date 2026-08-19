@@ -6,10 +6,19 @@ const authService = {
    * @param {Object} credentials - { email, password }
    * @returns {Promise}
    */
-  login: async (credentials) => {
-    const response = await api.post('/login', credentials);
-    return response.data;
-  },
+    login: async (credentials) => {
+        const response = await api.post('/login', credentials);
+        const data = response.data;
+        
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+        }
+        if (data.user) {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
+        
+        return data;
+      },
 
   /**
    * Get current user

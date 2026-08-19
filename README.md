@@ -52,8 +52,8 @@ php artisan key:generate
 php artisan jwt:secret
 
 # Setup database di .env
-# DB_DATABASE=glosindo_db
-# DB_USERNAME=root
+# DB_DATABASE=
+# DB_USERNAME=
 # DB_PASSWORD=
 
 # Run migration
@@ -296,9 +296,3 @@ php artisan migrate:fresh --seed
 - Photo visitor: `storage/app/public/visitors/`
 - Export report: Excel & PDF via controller backend
 - Admin bisa on/off fitur per user via Kelola Petugas
-
----
-
-## 📄 License
-
-MIT

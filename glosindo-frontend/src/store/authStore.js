@@ -17,17 +17,11 @@ const useAuthStore = create(
         set({ isLoading: true });
         try {
           const data = await authService.login(credentials);
-          if (data.token) {
-            localStorage.setItem('token', data.token);
-            if (data.user) {
-              localStorage.setItem('user', JSON.stringify(data.user));
-            }
-          }
-
+          
           set({
-            token: data.token,
-            user: data.user,
-            isAuthenticated: true,
+            token: data.token || null,
+            user: data.user || null,
+            isAuthenticated: !!data.token,
             isLoading: false,
           });
           return { success: true };
@@ -57,16 +51,17 @@ const useAuthStore = create(
        * Restore session on app load — verify token still valid
        */
       restoreSession: async () => {
-        const { token } = get();
-        const storedToken = token || localStorage.getItem('token');
+        const storedToken = localStorage.getItem('token');
 
-        if (!storedToken) return;
+        if (!storedToken) {
+          set({ token: null, user: null, isAuthenticated: false });
+          return;
+        }
 
         try {
           const data = await authService.me();
           set({ token: storedToken, user: data.user, isAuthenticated: true });
         } catch (_) {
-          // Token invalid/expired — clear state
           localStorage.removeItem('token');
           localStorage.removeItem('user');
           set({ token: null, user: null, isAuthenticated: false });

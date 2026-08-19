@@ -67,23 +67,29 @@ const LoginPage = () => {
   }, []);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
 
-    const result = await login({
-      email,
-      password,
-    });
+  console.log('🔥 HANDLE SUBMIT');
+  console.log('🔥 LOGIN FUNCTION:', login);
 
-    if (result.success) {
-      toast.success('Login berhasil!');
-      navigate('/dashboard');
-    } else {
-      toast.error(result.message || 'Login gagal');
-    }
+  setLoading(true);
 
-    setLoading(false);
-  };
+  const result = await login({
+    email,
+    password,
+  });
+
+  console.log('🔥 LOGIN RESULT:', result);
+
+  if (result.success) {
+    toast.success('Login berhasil!');
+    navigate('/dashboard');
+  } else {
+    toast.error(result.message || 'Login gagal');
+  }
+
+  setLoading(false);
+};
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-[#4c65e8] relative overflow-hidden select-none">
@@ -272,7 +278,11 @@ const LoginPage = () => {
                 LOGIN FORM
             ========================== */}
             <form
-              onSubmit={handleSubmit}
+              onSubmit={(e) => {
+                e.preventDefault();
+                console.log('🔥 FORM SUBMIT KEPIJIT');
+                handleSubmit(e);
+              }}
               className="space-y-4"
             >
 

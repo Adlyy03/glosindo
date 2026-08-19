@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Guestbook-Glosindo</string>
+    <string name="title_activity_main">Guestbook-Glosindo</string>
+    <string name="package_name">com.glosindo.app</string>
+    <string name="custom_url_scheme">com.glosindo.app</string>
+</resources>
