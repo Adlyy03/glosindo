@@ -67,6 +67,9 @@ $app->configure('auth');
 // Configure JWT
 $app->configure('jwt');
 
+// Configure DomPDF
+$app->configure('dompdf');
+
 /*
 |--------------------------------------------------------------------------
 | Register Middleware

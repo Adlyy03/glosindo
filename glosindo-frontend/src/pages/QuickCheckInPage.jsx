@@ -20,6 +20,7 @@ const QuickCheckInPage = () => {
   const [earlyCheckoutModal, setEarlyCheckoutModal] = useState(false);
   const [pendingCheckout, setPendingCheckout] = useState(null);
   const noMatchShown = useRef(false);
+  const noMatchCooldown = useRef(false);
 
   const handleMatchFound = async (visitor) => {
     if (processing) return;
@@ -89,13 +90,14 @@ const QuickCheckInPage = () => {
   };
 
   const handleNoMatch = () => {
-    if (noMatchShown.current) return;
+    if (noMatchShown.current || noMatchCooldown.current) return;
     noMatchShown.current = true;
     setNoMatchModal(true);
   };
 
   const handleRegisterChoice = () => {
     noMatchShown.current = false;
+    noMatchCooldown.current = false;
     setNoMatchModal(false);
     toast.success('Menuju halaman registrasi tamu...', { icon: '📝' });
     navigate('/check-in/manual');
@@ -104,10 +106,15 @@ const QuickCheckInPage = () => {
   const handleStayChoice = () => {
     noMatchShown.current = false;
     setNoMatchModal(false);
+    // Cooldown 8 detik biar scanner reload dulu sebelum bisa trigger modal lagi
+    noMatchCooldown.current = true;
     toast('Scanner akan dimuat ulang...', { icon: '🔄' });
     setTimeout(() => {
       setReloadSignal(prev => prev + 1);
     }, 500);
+    setTimeout(() => {
+      noMatchCooldown.current = false;
+    }, 8000);
   };
 
   const handleConfirmEarlyCheckout = async () => {
