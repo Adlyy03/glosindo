@@ -49,6 +49,7 @@ class AuthController extends Controller
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->role,
+                'disabled_features' => $user->disabled_features ?? [],
             ],
         ]);
     }
@@ -77,6 +78,7 @@ class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $user->role,
+                    'disabled_features' => $user->disabled_features ?? [],
                 ],
             ]);
         } catch (JWTException $e) {

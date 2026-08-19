@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import * as faceapi from 'face-api.js';
 import useAuthStore from './store/authStore';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
+import FeatureGate from './components/FeatureGate';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CheckInCameraPage from './pages/CheckInCameraPage';
@@ -26,6 +27,33 @@ import EventListPage from './pages/events/EventListPage';
 import EventFormPage from './pages/events/EventFormPage';
 import EventDetailPage from './pages/events/EventDetailPage';
 import EventReportPage from './pages/events/EventReportPage';
+
+const ROUTE_PRIORITY = [
+  { path: '/dashboard', featureId: 'dashboard' },
+  { path: '/check-in', featureId: 'checkin' },
+  { path: '/active-visitors', featureId: 'active_visitors' },
+  { path: '/visit-history', featureId: 'visit_history' },
+  { path: '/visitors', featureId: 'visitors' },
+  { path: '/events', featureId: 'events' },
+  { path: '/users', featureId: null, roles: ['admin'] },
+  { path: '/settings', featureId: null, roles: ['admin'] },
+];
+
+const DefaultRedirect = () => {
+  const navigate = useNavigate();
+  const { user, isFeatureDisabled } = useAuthStore();
+
+  useEffect(() => {
+    const firstAvailable = ROUTE_PRIORITY.find((route) => {
+      if (route.roles && !route.roles.includes(user?.role)) return false;
+      if (route.featureId && isFeatureDisabled(route.featureId)) return false;
+      return true;
+    });
+    navigate(firstAvailable?.path || '/dashboard', { replace: true });
+  }, [navigate, user, isFeatureDisabled]);
+
+  return null;
+};
 
 function App() {
   const { isAuthenticated, restoreSession } = useAuthStore();
@@ -120,7 +148,7 @@ function App() {
         {/* Public routes */}
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />}
+          element={isAuthenticated ? <DefaultRedirect /> : <LoginPage />}
         />
         <Route path="/register" element={<PublicGuestRegisterPage />} />
         <Route path="/guest-register" element={<PublicGuestRegisterPage />} />
@@ -138,19 +166,18 @@ function App() {
                   <Navbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
                   <main className="flex-1">
                     <Routes>
-                      <Route path="/dashboard" element={<DashboardPage />} />
-                      <Route path="/quick-check-in" element={<QuickCheckInPage />} />
-                      <Route path="/check-in" element={<CheckInCameraPage />} />
-                      <Route path="/check-in/manual" element={<CheckInPage />} />
-                      <Route path="/active-visitors" element={<ActiveVisitorPage />} />
-                      <Route path="/visit-history" element={<VisitHistoryPage />} />
-                      <Route path="/visitors" element={<VisitorListPage />} />
+                      <Route path="/dashboard" element={<FeatureGate featureId="dashboard"><DashboardPage /></FeatureGate>} />
+                      <Route path="/check-in" element={<FeatureGate featureId="checkin"><CheckInCameraPage /></FeatureGate>} />
+                      <Route path="/check-in/manual" element={<FeatureGate featureId="checkin"><CheckInPage /></FeatureGate>} />
+                      <Route path="/active-visitors" element={<FeatureGate featureId="active_visitors"><ActiveVisitorPage /></FeatureGate>} />
+                      <Route path="/visit-history" element={<FeatureGate featureId="visit_history"><VisitHistoryPage /></FeatureGate>} />
+                      <Route path="/visitors" element={<FeatureGate featureId="visitors"><VisitorListPage /></FeatureGate>} />
                       {/* Events */}
-                      <Route path="/events" element={<EventListPage />} />
-                      <Route path="/events/new" element={<EventFormPage />} />
-                      <Route path="/events/reports" element={<EventReportPage />} />
-                      <Route path="/events/:id" element={<EventDetailPage />} />
-                      <Route path="/events/:id/edit" element={<EventFormPage />} />
+                      <Route path="/events" element={<FeatureGate featureId="events"><EventListPage /></FeatureGate>} />
+                      <Route path="/events/new" element={<FeatureGate featureId="events"><EventFormPage /></FeatureGate>} />
+                      <Route path="/events/reports" element={<FeatureGate featureId="events"><EventReportPage /></FeatureGate>} />
+                      <Route path="/events/:id" element={<FeatureGate featureId="events"><EventDetailPage /></FeatureGate>} />
+                      <Route path="/events/:id/edit" element={<FeatureGate featureId="events"><EventFormPage /></FeatureGate>} />
                       <Route element={<ProtectedRoute allowedRoles={['receptionist']} />}>
                         <Route path="/receptionist/check-in" element={<ReceptionistCheckInPage />} />
                         <Route path="/receptionist/active" element={<ReceptionistActivePage />} />
@@ -161,8 +188,8 @@ function App() {
                         <Route path="/users" element={<AdminUsersPage />} />
                         <Route path="/settings" element={<AdminSettingsPage />} />
                       </Route>
-                      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                      <Route path="/" element={<DefaultRedirect />} />
+                      <Route path="*" element={<DefaultRedirect />} />
                     </Routes>
                   </main>
                 </div>

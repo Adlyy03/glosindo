@@ -27,13 +27,7 @@ const navSections = [
         roles: ['admin', 'receptionist', 'supervisor'],
         icon: LayoutDashboard,
         badge: null,
-      },
-      {
-        label: 'Quick Check-In/Out',
-        to: '/quick-check-in',
-        roles: ['admin', 'receptionist'],
-        icon: Zap,
-        badge: 'Auto',
+        featureId: 'dashboard',
       },
     ]
   },
@@ -46,6 +40,7 @@ const navSections = [
         roles: ['admin', 'receptionist'],
         icon: Camera,
         badge: null,
+        featureId: 'checkin',
       },
       {
         label: 'Tamu Aktif',
@@ -53,6 +48,7 @@ const navSections = [
         roles: ['admin', 'receptionist', 'supervisor'],
         icon: UserCheck,
         badge: null,
+        featureId: 'active_visitors',
       },
       {
         label: 'Riwayat Kunjungan',
@@ -60,6 +56,7 @@ const navSections = [
         roles: ['admin', 'receptionist', 'supervisor'],
         icon: History,
         badge: null,
+        featureId: 'visit_history',
       },
       {
         label: 'Data Tamu',
@@ -67,6 +64,7 @@ const navSections = [
         roles: ['admin', 'receptionist', 'supervisor'],
         icon: Users,
         badge: null,
+        featureId: 'visitors',
       },
     ]
   },
@@ -79,13 +77,7 @@ const navSections = [
         roles: ['admin', 'receptionist', 'supervisor'],
         icon: FileText,
         badge: null,
-      },
-      {
-        label: 'Laporan Event',
-        to: '/events/reports',
-        roles: ['admin', 'receptionist', 'supervisor'],
-        icon: FileText,
-        badge: null,
+        featureId: 'events',
       },
     ]
   },
@@ -111,7 +103,7 @@ const navSections = [
 ];
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isFeatureDisabled } = useAuthStore();
   const navigate = useNavigate();
   const role = user?.role;
 
@@ -176,7 +168,9 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* Navigation Items (Categorized with SIMONIK Lavender Active Theme) */}
           <div className="flex-1 px-4 py-4 space-y-5 overflow-y-auto">
             {navSections.map((section) => {
-              const visibleItems = section.items.filter((item) => item.roles.includes(role));
+              const visibleItems = section.items.filter(
+                (item) => item.roles.includes(role) && !isFeatureDisabled(item.featureId)
+              );
               if (visibleItems.length === 0) return null;
 
               return (

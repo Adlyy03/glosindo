@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import {
   CalendarRange, Plus, Search, RefreshCw, Trash2, Eye, Pencil,
-  MapPin, Clock, Users, AlertTriangle, ChevronLeft, ChevronRight
+  MapPin, Clock, Users, AlertTriangle, ChevronLeft, ChevronRight, FileSpreadsheet, FileText
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 import useAuthStore from '../../store/authStore';
@@ -35,6 +35,12 @@ const EventListPage = () => {
   const [deleteModal, setDeleteModal] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  
+  // Report exports
+  const [exportingExcel, setExportingExcel] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [reportStartDate, setReportStartDate] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
+  const [reportEndDate, setReportEndDate] = useState(dayjs().endOf('month').format('YYYY-MM-DD'));
 
   const loadEvents = useCallback(async () => {
     setLoading(true);
@@ -73,6 +79,44 @@ const EventListPage = () => {
       toast.error(err.response?.data?.message || 'Gagal menghapus event');
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExportingExcel(true);
+    try {
+      const res = await eventService.exportExcel({ start_date: reportStartDate, end_date: reportEndDate });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Laporan_Event_${reportStartDate}_${reportEndDate}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Export Excel berhasil');
+    } catch {
+      toast.error('Gagal export Excel');
+    } finally {
+      setExportingExcel(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      const res = await eventService.exportPdf({ start_date: reportStartDate, end_date: reportEndDate });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Laporan_Event_${reportStartDate}_${reportEndDate}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Export PDF berhasil');
+    } catch {
+      toast.error('Gagal export PDF');
+    } finally {
+      setExportingPdf(false);
     }
   };
 
@@ -132,6 +176,60 @@ const EventListPage = () => {
           <div className="lg:col-span-3">
             <Button variant="outline" size="md" fullWidth onClick={() => { setSearch(''); setStatusFilter(''); setPage(1); }}>
               Reset Filter
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Export Laporan Event */}
+      <Card padding="p-5 md:p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Laporan Event</h3>
+          <Badge variant="cyan">Export</Badge>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
+          <div className="lg:col-span-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Dari Tanggal</label>
+            <input
+              type="date"
+              value={reportStartDate}
+              onChange={(e) => setReportStartDate(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+            />
+          </div>
+          <div className="lg:col-span-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Sampai Tanggal</label>
+            <input
+              type="date"
+              value={reportEndDate}
+              onChange={(e) => setReportEndDate(e.target.value)}
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              icon={FileSpreadsheet}
+              loading={exportingExcel}
+              onClick={handleExportExcel}
+              className="text-emerald-700 border-emerald-200 hover:bg-emerald-50"
+            >
+              Excel
+            </Button>
+          </div>
+          <div className="lg:col-span-2">
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              icon={FileText}
+              loading={exportingPdf}
+              onClick={handleExportPdf}
+              className="text-rose-700 border-rose-200 hover:bg-rose-50"
+            >
+              PDF
             </Button>
           </div>
         </div>

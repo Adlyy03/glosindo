@@ -293,18 +293,20 @@ const EventDetailPage = () => {
           <Users className="w-4 h-4" />
           Daftar Peserta
         </button>
-        <button
-          onClick={() => setActiveTab('quickscan')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-            activeTab === 'quickscan'
-              ? 'bg-brand-cyan text-white shadow-sm'
-              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
-          }`}
-        >
-          <Camera className="w-4 h-4" />
-          Quick Scan
-          <Badge variant="cyan" className="text-[10px] px-1.5 py-0.5">Express</Badge>
-        </button>
+        {!useAuthStore.getState().isFeatureDisabled('quick_checkin') && (
+          <button
+            onClick={() => setActiveTab('quickscan')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              activeTab === 'quickscan'
+                ? 'bg-brand-cyan text-white shadow-sm'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+            }`}
+          >
+            <Camera className="w-4 h-4" />
+            Quick Scan
+            <Badge variant="cyan" className="text-[10px] px-1.5 py-0.5">Express</Badge>
+          </button>
+        )}
       </div>
 
       {/* ── Tab: Daftar Peserta ── */}
@@ -375,7 +377,7 @@ const EventDetailPage = () => {
       )}
 
       {/* ── Tab: Quick Scan ── */}
-      {activeTab === 'quickscan' && (
+      {activeTab === 'quickscan' && !useAuthStore.getState().isFeatureDisabled('quick_checkin') && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Scanner Card */}
           <Card className="lg:col-span-7 xl:col-span-8 p-6 md:p-8">

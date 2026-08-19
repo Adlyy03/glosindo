@@ -353,47 +353,53 @@ class EventController extends Controller
         ];
 
         $sheet->setCellValue('A1', 'LAPORAN EVENT');
-        $sheet->mergeCells('A1:H1');
+        $sheet->mergeCells('A1:K1');
         $sheet->getStyle('A1')->applyFromArray([
             'font'      => ['bold' => true, 'size' => 16],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ]);
 
         $sheet->setCellValue('A2', 'Periode: ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'));
-        $sheet->mergeCells('A2:H2');
+        $sheet->mergeCells('A2:K2');
         $sheet->getStyle('A2')->applyFromArray([
             'font'      => ['size' => 11],
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
         ]);
 
-        $headers = ['No', 'Nama Event', 'Tanggal', 'Waktu', 'Lokasi', 'Status', 'Total Peserta', 'Dibuat Oleh'];
+        $headers = ['No', 'Nama Event', 'Tanggal Event', 'Waktu Mulai', 'Waktu Selesai', 'Lokasi', 'Status', 'Total Peserta', 'Peserta Check-Out', 'Peserta Aktif', 'Dibuat Oleh'];
         $sheet->fromArray($headers, null, 'A4');
-        $sheet->getStyle('A4:H4')->applyFromArray($headerStyle);
+        $sheet->getStyle('A4:K4')->applyFromArray($headerStyle);
 
         $row = 5;
         foreach ($events as $index => $event) {
+            $checkedOut = $event->visits()->whereNotNull('check_out')->count();
+            $active = $event->visits()->whereNull('check_out')->count();
+            
             $sheet->setCellValue('A' . $row, $index + 1);
             $sheet->setCellValue('B' . $row, $event->name);
             $sheet->setCellValue('C' . $row, Carbon::parse($event->event_date)->format('d/m/Y'));
-            $sheet->setCellValue('D' . $row, $event->start_time . ' - ' . $event->end_time);
-            $sheet->setCellValue('E' . $row, $event->location ?? '-');
-            $sheet->setCellValue('F' . $row, ucfirst($event->status));
-            $sheet->setCellValue('G' . $row, $event->visits_count);
-            $sheet->setCellValue('H' . $row, $event->creator->name ?? '-');
+            $sheet->setCellValue('D' . $row, substr($event->start_time, 0, 5));
+            $sheet->setCellValue('E' . $row, substr($event->end_time, 0, 5));
+            $sheet->setCellValue('F' . $row, $event->location ?? '-');
+            $sheet->setCellValue('G' . $row, ucfirst($event->status));
+            $sheet->setCellValue('H' . $row, $event->visits_count);
+            $sheet->setCellValue('I' . $row, $checkedOut);
+            $sheet->setCellValue('J' . $row, $active);
+            $sheet->setCellValue('K' . $row, $event->creator->name ?? '-');
 
             if ($index % 2 === 0) {
-                $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray([
+                $sheet->getStyle('A' . $row . ':K' . $row)->applyFromArray([
                     'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F3F4F6']],
                 ]);
             }
             $row++;
         }
 
-        $sheet->getStyle('A4:H' . ($row - 1))->applyFromArray([
+        $sheet->getStyle('A4:K' . ($row - 1))->applyFromArray([
             'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
         ]);
 
-        foreach (range('A', 'H') as $col) {
+        foreach (range('A', 'K') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

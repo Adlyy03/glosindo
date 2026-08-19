@@ -88,6 +88,15 @@ const useAuthStore = create(
         const { user } = get();
         return user?.role === 'admin';
       },
+
+      /**
+       * Check if feature disabled for current user
+       */
+      isFeatureDisabled: (featureId) => {
+        const { user } = get();
+        const disabled = user?.disabled_features || [];
+        return disabled.includes(featureId);
+      },
     }),
     {
       name: 'glosindo-auth',

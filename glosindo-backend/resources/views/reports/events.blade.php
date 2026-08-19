@@ -45,33 +45,43 @@
     <table>
         <thead>
             <tr>
-                <th style="width:4%">No</th>
-                <th style="width:22%">Nama Event</th>
-                <th style="width:12%">Tanggal</th>
-                <th style="width:13%">Waktu</th>
-                <th style="width:15%">Lokasi</th>
-                <th style="width:10%">Status</th>
-                <th style="width:10%">Peserta</th>
-                <th style="width:14%">Dibuat Oleh</th>
+                <th style="width:3%">No</th>
+                <th style="width:18%">Nama Event</th>
+                <th style="width:8%">Tanggal</th>
+                <th style="width:7%">Mulai</th>
+                <th style="width:7%">Selesai</th>
+                <th style="width:12%">Lokasi</th>
+                <th style="width:8%">Status</th>
+                <th style="width:7%">Peserta</th>
+                <th style="width:7%">Checkout</th>
+                <th style="width:7%">Aktif</th>
+                <th style="width:13%">Dibuat Oleh</th>
             </tr>
         </thead>
         <tbody>
             @forelse($events as $index => $event)
+            @php
+                $checkedOut = $event->visits()->whereNotNull('check_out')->count();
+                $active = $event->visits()->whereNull('check_out')->count();
+            @endphp
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td><strong>{{ $event->name }}</strong></td>
                 <td>{{ \Carbon\Carbon::parse($event->event_date)->format('d/m/Y') }}</td>
-                <td>{{ $event->start_time }} - {{ $event->end_time }}</td>
+                <td>{{ substr($event->start_time, 0, 5) }}</td>
+                <td>{{ substr($event->end_time, 0, 5) }}</td>
                 <td>{{ $event->location ?? '-' }}</td>
                 <td>
                     <span class="badge badge-{{ $event->status }}">{{ ucfirst($event->status) }}</span>
                 </td>
                 <td style="text-align:center; font-weight:700;">{{ $event->visits_count }}</td>
+                <td style="text-align:center; font-weight:700;">{{ $checkedOut }}</td>
+                <td style="text-align:center; font-weight:700;">{{ $active }}</td>
                 <td>{{ $event->creator->name ?? '-' }}</td>
             </tr>
             @empty
             <tr>
-                <td colspan="8" style="text-align:center; padding: 20px; color:#9ca3af;">Tidak ada data event.</td>
+                <td colspan="11" style="text-align:center; padding: 20px; color:#9ca3af;">Tidak ada data event.</td>
             </tr>
             @endforelse
         </tbody>

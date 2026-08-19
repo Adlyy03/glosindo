@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { UserPlus, Edit2, Trash2, Shield, Search } from 'lucide-react';
+import { UserPlus, Edit2, Trash2, Shield, Search, Settings, Lock, Unlock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import userService from '../../services/userService';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+
+const AVAILABLE_FEATURES = [
+  { id: 'dashboard', label: 'Dashboard', description: 'Akses halaman dashboard' },
+  { id: 'checkin', label: 'Check-In Tamu', description: 'Check-in tamu baru' },
+  { id: 'active_visitors', label: 'Tamu Aktif', description: 'Lihat tamu yang sedang di lokasi' },
+  { id: 'visit_history', label: 'Riwayat Kunjungan', description: 'Lihat log kunjungan' },
+  { id: 'visitors', label: 'Data Tamu', description: 'Kelola database tamu' },
+  { id: 'events', label: 'Manajemen Event', description: 'Kelola event perusahaan' },
+  { id: 'quick_checkin', label: 'Quick Check-In Event', description: 'Quick scan di halaman event' },
+];
 
 const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
@@ -12,6 +22,8 @@ const AdminUsersPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFeaturesModal, setShowFeaturesModal] = useState(false);
+  const [currentUserFeatures, setCurrentUserFeatures] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -117,6 +129,48 @@ const AdminUsersPage = () => {
     }
   };
 
+  const handleOpenFeaturesModal = (user) => {
+    setCurrentUserFeatures({
+      userId: user.id,
+      userName: user.name,
+      role: user.role,
+      disabled: user.disabled_features || [],
+    });
+    setShowFeaturesModal(true);
+  };
+
+  const handleCloseFeaturesModal = () => {
+    setShowFeaturesModal(false);
+    setCurrentUserFeatures(null);
+  };
+
+  const handleToggleFeature = (featureId) => {
+    setCurrentUserFeatures((prev) => {
+      const disabled = prev.disabled || [];
+      const isDisabled = disabled.includes(featureId);
+      return {
+        ...prev,
+        disabled: isDisabled
+          ? disabled.filter((id) => id !== featureId)
+          : [...disabled, featureId],
+      };
+    });
+  };
+
+  const handleSaveFeatures = async () => {
+    try {
+      await userService.updateUser(currentUserFeatures.userId, {
+        disabled_features: currentUserFeatures.disabled,
+      });
+      toast.success('Akses fitur berhasil diperbarui');
+      handleCloseFeaturesModal();
+      loadUsers();
+    } catch (err) {
+      toast.error('Gagal memperbarui akses fitur');
+      console.error(err);
+    }
+  };
+
   const getRoleBadge = (role) => {
     const roleConfig = {
       admin: { color: 'red', label: 'Admin' },
@@ -209,6 +263,13 @@ const AdminUsersPage = () => {
                     <td className="px-4 py-3 text-sm">{getRoleBadge(user.role)}</td>
                     <td className="px-4 py-3 text-sm text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleOpenFeaturesModal(user)}
+                          className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition"
+                          title="Kelola Akses Fitur"
+                        >
+                          <Settings className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleOpenModal(user)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
@@ -313,6 +374,86 @@ const AdminUsersPage = () => {
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Kelola Akses Fitur */}
+      {showFeaturesModal && currentUserFeatures && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-200">
+              <div className="p-2 bg-purple-100 text-purple-600 rounded-xl">
+                <Settings className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">Kelola Akses Fitur</h3>
+                <p className="text-sm text-slate-500">
+                  {currentUserFeatures.userName} ({currentUserFeatures.role})
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3 mb-6">
+              {AVAILABLE_FEATURES.map((feature) => {
+                const isDisabled = currentUserFeatures.disabled.includes(feature.id);
+                return (
+                  <div
+                    key={feature.id}
+                    className={`flex items-center justify-between p-4 rounded-xl border-2 transition ${
+                      isDisabled
+                        ? 'border-red-200 bg-red-50'
+                        : 'border-emerald-200 bg-emerald-50'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`p-2 rounded-lg ${
+                          isDisabled
+                            ? 'bg-red-100 text-red-600'
+                            : 'bg-emerald-100 text-emerald-600'
+                        }`}
+                      >
+                        {isDisabled ? (
+                          <Lock className="w-4 h-4" />
+                        ) : (
+                          <Unlock className="w-4 h-4" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-slate-900 text-sm">{feature.label}</p>
+                        <p className="text-xs text-slate-600 mt-0.5">{feature.description}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleToggleFeature(feature.id)}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold transition ${
+                        isDisabled
+                          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                          : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
+                    >
+                      {isDisabled ? 'Aktifkan' : 'Nonaktifkan'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex gap-3 pt-4 border-t border-slate-200">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCloseFeaturesModal}
+                className="flex-1"
+              >
+                Batal
+              </Button>
+              <Button type="button" onClick={handleSaveFeatures} className="flex-1">
+                Simpan Perubahan
+              </Button>
+            </div>
           </div>
         </div>
       )}

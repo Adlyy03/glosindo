@@ -126,10 +126,11 @@ class UserController extends Controller
             'email' => 'sometimes|email|max:255|unique:users,email,' . $id,
             'password' => 'sometimes|string|min:6',
             'role' => 'sometimes|in:admin,receptionist,supervisor',
+            'disabled_features' => 'sometimes|array',
         ]);
 
         $oldValues = $user->toArray();
-        $data = $request->only(['name', 'email', 'role']);
+        $data = $request->only(['name', 'email', 'role', 'disabled_features']);
 
         if ($request->has('password')) {
             $data['password'] = Hash::make($request->password);
