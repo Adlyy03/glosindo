@@ -103,7 +103,12 @@ $app->register(App\Providers\AppServiceProvider::class);
 $app->register(App\Providers\AuthServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
 $app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
-// $app->register(Barryvdh\DomPDF\ServiceProvider::class);
+$app->register(Barryvdh\DomPDF\ServiceProvider::class);
+
+// Register DomPDF Facade alias
+if (!class_exists('Pdf')) {
+    class_alias('Barryvdh\DomPDF\Facade\Pdf', 'Pdf');
+}
 
 /*
 |--------------------------------------------------------------------------

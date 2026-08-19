@@ -210,7 +210,14 @@ const VisitHistoryPage = () => {
                     <tr key={visit.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-6 py-4">
                         <p className="font-bold text-slate-900">{visit.visitor?.name}</p>
-                        <p className="text-xs text-slate-400 font-medium">{visit.visitor?.company || 'Pribadi'}</p>
+                        <p className="text-xs text-slate-400 font-medium">
+                          {visit.visitor?.company || 'Pribadi'}
+                          {visit.visitor?.deleted && (
+                            <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200">
+                              DELETED
+                            </span>
+                          )}
+                        </p>
                       </td>
                       <td className="px-6 py-4 font-bold text-slate-800">{visit.meet_to || '-'}</td>
                       <td className="px-6 py-4">
@@ -263,7 +270,14 @@ const VisitHistoryPage = () => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-bold text-slate-900 truncate">{visit.visitor?.name}</p>
-                      <p className="text-xs text-slate-400 font-medium">{visit.visitor?.company || 'Pribadi'}</p>
+                      <p className="text-xs text-slate-400 font-medium">
+                        {visit.visitor?.company || 'Pribadi'}
+                        {visit.visitor?.deleted && (
+                          <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200">
+                            DELETED
+                          </span>
+                        )}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       {visit.status === 'IN' ? (

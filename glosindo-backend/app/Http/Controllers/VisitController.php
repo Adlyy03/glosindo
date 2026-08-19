@@ -40,15 +40,31 @@ class VisitController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Search by visitor name
+        // Search by visitor name (search both relation and snapshot)
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
-            $query->whereHas('visitor', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('visitor', function ($subQ) use ($search) {
+                    $subQ->where('name', 'like', "%{$search}%");
+                })->orWhere('visitor_name', 'like', "%{$search}%");
             });
         }
 
         $visits = $query->orderBy('check_in', 'desc')->paginate(15);
+        
+        // Transform data: use snapshot if visitor deleted
+        $visits->getCollection()->transform(function ($visit) {
+            if (!$visit->visitor && $visit->visitor_name) {
+                $visit->visitor = (object) [
+                    'id' => null,
+                    'name' => $visit->visitor_name,
+                    'company' => $visit->visitor_company,
+                    'phone' => $visit->visitor_phone,
+                    'deleted' => true,
+                ];
+            }
+            return $visit;
+        });
 
         return response()->json([
             'success' => true,
@@ -166,15 +182,31 @@ class VisitController extends Controller
             $query->whereDate('check_in', '<=', $request->end_date);
         }
 
-        // Search by visitor name
+        // Search by visitor name (search both relation and snapshot)
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
-            $query->whereHas('visitor', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('visitor', function ($subQ) use ($search) {
+                    $subQ->where('name', 'like', "%{$search}%");
+                })->orWhere('visitor_name', 'like', "%{$search}%");
             });
         }
 
         $visits = $query->orderBy('check_in', 'desc')->paginate(15);
+        
+        // Transform data: use snapshot if visitor deleted
+        $visits->getCollection()->transform(function ($visit) {
+            if (!$visit->visitor && $visit->visitor_name) {
+                $visit->visitor = (object) [
+                    'id' => null,
+                    'name' => $visit->visitor_name,
+                    'company' => $visit->visitor_company,
+                    'phone' => $visit->visitor_phone,
+                    'deleted' => true,
+                ];
+            }
+            return $visit;
+        });
 
         return response()->json([
             'success' => true,

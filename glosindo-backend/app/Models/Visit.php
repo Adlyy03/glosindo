@@ -18,6 +18,9 @@ class Visit extends Model
      */
     protected $fillable = [
         'visitor_id',
+        'visitor_name',
+        'visitor_company',
+        'visitor_phone',
         'receptionist_id',
         'event_id',
         'purpose',
@@ -45,6 +48,16 @@ class Visit extends Model
         static::creating(function ($visit) {
             if (!$visit->check_in) {
                 $visit->check_in = \Illuminate\Support\Carbon::now();
+            }
+            
+            // Auto-snapshot visitor data
+            if ($visit->visitor_id && !$visit->visitor_name) {
+                $visitor = Visitor::find($visit->visitor_id);
+                if ($visitor) {
+                    $visit->visitor_name = $visitor->name;
+                    $visit->visitor_company = $visitor->company;
+                    $visit->visitor_phone = $visitor->phone;
+                }
             }
         });
     }

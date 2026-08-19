@@ -106,109 +106,125 @@ class ReportController extends Controller
      */
     public function exportExcel(Request $request)
     {
-        $user = auth()->user();
-        $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
-        $endDate = $request->input('end_date', Carbon::now()->endOfMonth());
+        try {
+            $user = auth()->user();
+            $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
+            $endDate = $request->input('end_date', Carbon::now()->endOfMonth());
 
-        $startDate = Carbon::parse($startDate);
-        $endDate = Carbon::parse($endDate);
+            $startDate = Carbon::parse($startDate);
+            $endDate = Carbon::parse($endDate);
 
-        $query = Visit::with(['visitor:id,name,company,phone', 'receptionist:id,name'])
-            ->whereBetween('check_in', [$startDate, $endDate]);
+            $query = Visit::with(['visitor:id,name,company,phone', 'receptionist:id,name'])
+                ->whereBetween('check_in', [$startDate, $endDate]);
 
-        if ($user->role === 'receptionist') {
-            $query->where('receptionist_id', $user->id);
-        }
-
-        $visits = $query->orderBy('check_in', 'desc')->get();
-
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
-
-        // Header styling
-        $headerStyle = [
-            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 12],
-            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E3A8A']],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-        ];
-
-        // Set title
-        $sheet->setCellValue('A1', 'LAPORAN KUNJUNGAN TAMU');
-        $sheet->mergeCells('A1:H1');
-        $sheet->getStyle('A1')->applyFromArray([
-            'font' => ['bold' => true, 'size' => 16],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-        ]);
-
-        $sheet->setCellValue('A2', 'Periode: ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'));
-        $sheet->mergeCells('A2:H2');
-        $sheet->getStyle('A2')->applyFromArray([
-            'font' => ['size' => 11],
-            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
-        ]);
-
-        // Headers
-        $headers = ['No', 'Nama Tamu', 'Perusahaan', 'Telepon', 'Keperluan', 'Check-In', 'Check-Out', 'Status'];
-        $sheet->fromArray($headers, null, 'A4');
-        $sheet->getStyle('A4:H4')->applyFromArray($headerStyle);
-
-        // Data rows
-        $row = 5;
-        foreach ($visits as $index => $visit) {
-            $sheet->setCellValue('A' . $row, $index + 1);
-            $sheet->setCellValue('B' . $row, $visit->visitor->name ?? '-');
-            $sheet->setCellValue('C' . $row, $visit->visitor->company ?? '-');
-            $sheet->setCellValue('D' . $row, $visit->visitor->phone ?? '-');
-            $sheet->setCellValue('E' . $row, $visit->purpose);
-            $sheet->setCellValue('F' . $row, Carbon::parse($visit->check_in)->format('d/m/Y H:i'));
-            $sheet->setCellValue('G' . $row, $visit->check_out ? Carbon::parse($visit->check_out)->format('d/m/Y H:i') : '-');
-            $sheet->setCellValue('H' . $row, $visit->status === 'IN' ? 'Aktif' : 'Selesai');
-
-            // Alternating row colors
-            if ($index % 2 === 0) {
-                $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray([
-                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F3F4F6']],
-                ]);
+            if ($user->role === 'receptionist') {
+                $query->where('receptionist_id', $user->id);
             }
 
+            $visits = $query->orderBy('check_in', 'desc')->get();
+
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // Header styling
+            $headerStyle = [
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 12],
+                'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E3A8A']],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER, 'vertical' => Alignment::VERTICAL_CENTER],
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ];
+
+            // Set title
+            $sheet->setCellValue('A1', 'LAPORAN KUNJUNGAN TAMU');
+            $sheet->mergeCells('A1:H1');
+            $sheet->getStyle('A1')->applyFromArray([
+                'font' => ['bold' => true, 'size' => 16],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ]);
+
+            $sheet->setCellValue('A2', 'Periode: ' . $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y'));
+            $sheet->mergeCells('A2:H2');
+            $sheet->getStyle('A2')->applyFromArray([
+                'font' => ['size' => 11],
+                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            ]);
+
+            // Headers
+            $headers = ['No', 'Nama Tamu', 'Perusahaan', 'Telepon', 'Keperluan', 'Check-In', 'Check-Out', 'Status'];
+            $sheet->fromArray($headers, null, 'A4');
+            $sheet->getStyle('A4:H4')->applyFromArray($headerStyle);
+
+            // Data rows
+            $row = 5;
+            foreach ($visits as $index => $visit) {
+                $sheet->setCellValue('A' . $row, $index + 1);
+                $sheet->setCellValue('B' . $row, $visit->visitor->name ?? '-');
+                $sheet->setCellValue('C' . $row, $visit->visitor->company ?? '-');
+                $sheet->setCellValue('D' . $row, $visit->visitor->phone ?? '-');
+                $sheet->setCellValue('E' . $row, $visit->purpose);
+                $sheet->setCellValue('F' . $row, Carbon::parse($visit->check_in)->format('d/m/Y H:i'));
+                $sheet->setCellValue('G' . $row, $visit->check_out ? Carbon::parse($visit->check_out)->format('d/m/Y H:i') : '-');
+                $sheet->setCellValue('H' . $row, $visit->status === 'IN' ? 'Aktif' : 'Selesai');
+
+                // Alternating row colors
+                if ($index % 2 === 0) {
+                    $sheet->getStyle('A' . $row . ':H' . $row)->applyFromArray([
+                        'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F3F4F6']],
+                    ]);
+                }
+
+                $row++;
+            }
+
+            // Apply borders to data
+            $sheet->getStyle('A4:H' . ($row - 1))->applyFromArray([
+                'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+            ]);
+
+            // Auto-size columns
+            foreach (range('A', 'H') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            // Summary
+            $row += 2;
+            $sheet->setCellValue('A' . $row, 'Total Kunjungan:');
+            $sheet->setCellValue('B' . $row, $visits->count());
+            $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray([
+                'font' => ['bold' => true],
+            ]);
+
             $row++;
+            $sheet->setCellValue('A' . $row, 'Kunjungan Aktif:');
+            $sheet->setCellValue('B' . $row, $visits->where('status', 'IN')->count());
+
+            $row++;
+            $sheet->setCellValue('A' . $row, 'Kunjungan Selesai:');
+            $sheet->setCellValue('B' . $row, $visits->where('status', 'OUT')->count());
+
+            // Generate file to string
+            $fileName = 'Laporan_Kunjungan_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '.xlsx';
+            
+            $writer = new Xlsx($spreadsheet);
+            
+            // Write to output buffer
+            ob_start();
+            $writer->save('php://output');
+            $content = ob_get_clean();
+
+            return response($content, 200, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Expose-Headers' => 'Content-Disposition',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Excel export error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal export Excel: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // Apply borders to data
-        $sheet->getStyle('A4:H' . ($row - 1))->applyFromArray([
-            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
-        ]);
-
-        // Auto-size columns
-        foreach (range('A', 'H') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        // Summary
-        $row += 2;
-        $sheet->setCellValue('A' . $row, 'Total Kunjungan:');
-        $sheet->setCellValue('B' . $row, $visits->count());
-        $sheet->getStyle('A' . $row . ':B' . $row)->applyFromArray([
-            'font' => ['bold' => true],
-        ]);
-
-        $row++;
-        $sheet->setCellValue('A' . $row, 'Kunjungan Aktif:');
-        $sheet->setCellValue('B' . $row, $visits->where('status', 'IN')->count());
-
-        $row++;
-        $sheet->setCellValue('A' . $row, 'Kunjungan Selesai:');
-        $sheet->setCellValue('B' . $row, $visits->where('status', 'OUT')->count());
-
-        // Save file
-        $fileName = 'Laporan_Kunjungan_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '.xlsx';
-        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
-
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($tempFile);
-
-        return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
     }
 
     /**
@@ -219,38 +235,53 @@ class ReportController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $user = auth()->user();
-        $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
-        $endDate = $request->input('end_date', Carbon::now()->endOfMonth());
+        try {
+            $user = auth()->user();
+            $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
+            $endDate = $request->input('end_date', Carbon::now()->endOfMonth());
 
-        $startDate = Carbon::parse($startDate);
-        $endDate = Carbon::parse($endDate);
+            $startDate = Carbon::parse($startDate);
+            $endDate = Carbon::parse($endDate);
 
-        $query = Visit::with(['visitor:id,name,company,phone', 'receptionist:id,name'])
-            ->whereBetween('check_in', [$startDate, $endDate]);
+            $query = Visit::with(['visitor:id,name,company,phone', 'receptionist:id,name'])
+                ->whereBetween('check_in', [$startDate, $endDate]);
 
-        if ($user->role === 'receptionist') {
-            $query->where('receptionist_id', $user->id);
+            if ($user->role === 'receptionist') {
+                $query->where('receptionist_id', $user->id);
+            }
+
+            $visits = $query->orderBy('check_in', 'desc')->get();
+
+            $data = [
+                'visits' => $visits,
+                'start_date' => $startDate->format('d M Y'),
+                'end_date' => $endDate->format('d M Y'),
+                'total_visits' => $visits->count(),
+                'active_visits' => $visits->where('status', 'IN')->count(),
+                'completed_visits' => $visits->where('status', 'OUT')->count(),
+                'generated_by' => $user->name,
+                'generated_at' => Carbon::now()->format('d M Y H:i'),
+            ];
+
+            $pdf = Pdf::loadView('reports.visits', $data)
+                ->setPaper('a4', 'landscape');
+
+            $fileName = 'Laporan_Kunjungan_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '.pdf';
+
+            $content = $pdf->output();
+
+            return response($content, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+                'Access-Control-Allow-Origin' => '*',
+                'Access-Control-Expose-Headers' => 'Content-Disposition',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('PDF export error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal export PDF: ' . $e->getMessage(),
+            ], 500);
         }
-
-        $visits = $query->orderBy('check_in', 'desc')->get();
-
-        $data = [
-            'visits' => $visits,
-            'start_date' => $startDate->format('d M Y'),
-            'end_date' => $endDate->format('d M Y'),
-            'total_visits' => $visits->count(),
-            'active_visits' => $visits->where('status', 'IN')->count(),
-            'completed_visits' => $visits->where('status', 'OUT')->count(),
-            'generated_by' => $user->name,
-            'generated_at' => Carbon::now()->format('d M Y H:i'),
-        ];
-
-        $pdf = Pdf::loadView('reports.visits', $data)
-            ->setPaper('a4', 'landscape');
-
-        $fileName = 'Laporan_Kunjungan_' . $startDate->format('Ymd') . '_' . $endDate->format('Ymd') . '.pdf';
-
-        return $pdf->download($fileName);
     }
 }

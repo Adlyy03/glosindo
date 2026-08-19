@@ -99,11 +99,34 @@ const ReportsPage = () => {
 
     setDownloading({ ...downloading, excel: true });
     try {
-      await reportService.downloadExcel(startDate, endDate);
+      console.log('Requesting Excel export...', { startDate, endDate });
+      const res = await reportService.exportExcel(startDate, endDate);
+      console.log('Excel response:', res);
+      console.log('Response data type:', res.data.constructor.name);
+      console.log('Response data size:', res.data.size);
+      
+      // Check if response is actually a blob
+      if (!(res.data instanceof Blob)) {
+        console.error('Response is not a Blob:', res.data);
+        toast.error('Format respons tidak valid');
+        return;
+      }
+
+      const url = window.URL.createObjectURL(new Blob([res.data], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Laporan_Kunjungan_${startDate}_${endDate}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
       toast.success('File Excel berhasil diunduh!', { icon: '📥' });
     } catch (err) {
       console.error('Download Excel error:', err);
-      toast.error('Gagal mengunduh file Excel');
+      console.error('Error response:', err.response);
+      toast.error(err.response?.data?.message || 'Gagal mengunduh file Excel');
     } finally {
       setDownloading({ ...downloading, excel: false });
     }
@@ -117,7 +140,15 @@ const ReportsPage = () => {
 
     setDownloading({ ...downloading, pdf: true });
     try {
-      await reportService.downloadPdf(startDate, endDate);
+      const res = await reportService.exportPdf(startDate, endDate);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Laporan_Kunjungan_${startDate}_${endDate}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
       toast.success('File PDF berhasil diunduh!', { icon: '📥' });
     } catch (err) {
       console.error('Download PDF error:', err);

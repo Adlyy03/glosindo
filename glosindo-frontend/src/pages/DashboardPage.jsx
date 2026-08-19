@@ -147,10 +147,25 @@ const DashboardPage = () => {
 
     setDownloading({ ...downloading, excel: true });
     try {
-      await reportService.downloadExcel(startDate, endDate);
+      console.log('[DashboardPage] Downloading Excel:', { startDate, endDate });
+      const res = await reportService.exportExcel(startDate, endDate);
+      console.log('[DashboardPage] Excel response:', res);
+
+      const blob = new Blob([res.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laporan-kunjungan-${startDate}-${endDate}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       toast.success('File Excel berhasil diunduh!', { icon: '📥' });
     } catch (err) {
-      console.error('Download Excel error:', err);
+      console.error('[DashboardPage] Download Excel error:', err);
       toast.error('Gagal mengunduh file Excel');
     } finally {
       setDownloading({ ...downloading, excel: false });
@@ -165,10 +180,25 @@ const DashboardPage = () => {
 
     setDownloading({ ...downloading, pdf: true });
     try {
-      await reportService.downloadPdf(startDate, endDate);
+      console.log('[DashboardPage] Downloading PDF:', { startDate, endDate });
+      const res = await reportService.exportPdf(startDate, endDate);
+      console.log('[DashboardPage] PDF response:', res);
+
+      const blob = new Blob([res.data], {
+        type: 'application/pdf',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `laporan-kunjungan-${startDate}-${endDate}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
       toast.success('File PDF berhasil diunduh!', { icon: '📥' });
     } catch (err) {
-      console.error('Download PDF error:', err);
+      console.error('[DashboardPage] Download PDF error:', err);
       toast.error('Gagal mengunduh file PDF');
     } finally {
       setDownloading({ ...downloading, pdf: false });
