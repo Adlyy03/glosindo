@@ -29,6 +29,19 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $exception)
     {
+        $response = $this->prepareJsonResponse($request, $exception);
+
+        $origin = $request->header('Origin') ?: '*';
+        $response->header('Access-Control-Allow-Origin', $origin);
+        $response->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE, PATCH');
+        $response->header('Access-Control-Allow-Credentials', 'true');
+        $response->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+
+        return $response;
+    }
+
+    protected function prepareJsonResponse($request, Throwable $exception)
+    {
         // JWT token errors
         if ($exception instanceof TokenExpiredException) {
             return response()->json(['success' => false, 'message' => 'Token expired'], 401);
