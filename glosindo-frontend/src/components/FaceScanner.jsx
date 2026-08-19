@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Cpu, AlertCircle, CheckCircle2, UserX, Scan, RefreshCw } from 'lucide-react';
 import WebcamCapture from './WebcamCapture';
 import useFaceModels from '../hooks/useFaceModels';
@@ -20,6 +20,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
   const { loading: embeddingsLoading, matchFace, reload } = useFaceMatcher();
   const [result, setResult] = useState(null); // { type: 'match'|'no_match', data }
   const [scanning, setScanning] = useState(false);
+  const scanInProgress = useRef(false);
 
   useEffect(() => {
     if (typeof reloadSignal === 'number' && reloadSignal > 0) {
@@ -27,21 +28,27 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
     }
   }, [reloadSignal, reload]);
 
-  const handleScan = async () => {
+  const handleScan = useCallback(async () => {
+    if (scanInProgress.current) return;
+    scanInProgress.current = true;
     setResult(null);
-    const descriptor = await webcamRef.current?.captureDescriptor();
-    if (!descriptor) return;
+    try {
+      const descriptor = await webcamRef.current?.captureDescriptor();
+      if (!descriptor) return;
 
-    const matched = matchFace(descriptor);
+      const matched = matchFace(descriptor);
 
-    if (matched) {
-      setResult({ type: 'match', data: matched });
-      onMatchFound?.(matched);
-    } else {
-      setResult({ type: 'no_match' });
-      onNoMatch?.(descriptorToArray(descriptor));
+      if (matched) {
+        setResult({ type: 'match', data: matched });
+        onMatchFound?.(matched);
+      } else {
+        setResult({ type: 'no_match' });
+        onNoMatch?.(descriptorToArray(descriptor));
+      }
+    } finally {
+      scanInProgress.current = false;
     }
-  };
+  }, [matchFace, onMatchFound, onNoMatch]);
 
   // Auto-scan every 5 seconds — STOP when paused
   useEffect(() => {
@@ -62,7 +69,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
       clearInterval(interval);
       setScanning(false);
     };
-  }, [modelsLoaded, embeddingsLoading, paused]);
+  }, [modelsLoaded, embeddingsLoading, paused, handleScan]);
 
   // Models loading state
   if (modelsLoading) {

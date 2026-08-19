@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, Camera, CheckCircle2, LogOut, LogIn, AlertCircle, ArrowRight } from 'lucide-react';
 import FaceScanner from '../components/FaceScanner';
@@ -19,6 +19,7 @@ const QuickCheckInPage = () => {
   const [noMatchModal, setNoMatchModal] = useState(false);
   const [earlyCheckoutModal, setEarlyCheckoutModal] = useState(false);
   const [pendingCheckout, setPendingCheckout] = useState(null);
+  const noMatchShown = useRef(false);
 
   const handleMatchFound = async (visitor) => {
     if (processing) return;
@@ -88,16 +89,20 @@ const QuickCheckInPage = () => {
   };
 
   const handleNoMatch = () => {
+    if (noMatchShown.current) return;
+    noMatchShown.current = true;
     setNoMatchModal(true);
   };
 
   const handleRegisterChoice = () => {
+    noMatchShown.current = false;
     setNoMatchModal(false);
     toast.success('Menuju halaman registrasi tamu...', { icon: '📝' });
     navigate('/check-in/manual');
   };
 
   const handleStayChoice = () => {
+    noMatchShown.current = false;
     setNoMatchModal(false);
     toast('Scanner akan dimuat ulang...', { icon: '🔄' });
     setTimeout(() => {
@@ -190,7 +195,8 @@ const QuickCheckInPage = () => {
             <Badge variant="cyan">Auto Mode</Badge>
           </div>
           
-          {!splashOpen && (
+          {/* FaceScanner selalu mounted — paused saat splashOpen untuk cegah stream release/re-acquire */}
+          <div className={splashOpen ? 'hidden' : ''}>
             <FaceScanner
               onMatchFound={handleMatchFound}
               onNoMatch={handleNoMatch}
@@ -198,7 +204,7 @@ const QuickCheckInPage = () => {
               silentMode={true}
               paused={processing || splashOpen || noMatchModal || earlyCheckoutModal}
             />
-          )}
+          </div>
           
           {splashOpen && (
             <div className="flex items-center justify-center min-h-[380px] bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center">

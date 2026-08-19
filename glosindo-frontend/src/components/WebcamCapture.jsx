@@ -27,10 +27,22 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
       const video = webcamRef.current?.video;
       if (!video) throw new Error('Kamera tidak siap / belum aktif');
 
-      const detections = await faceapi
-        .detectAllFaces(video)
-        .withFaceLandmarks()
+      // Guard: video harus ready sebelum deteksi
+      if (video.readyState < 2) {
+        return null;
+      }
+
+      // Timeout 8 detik — cegah spinner hang selamanya
+      const detectionPromise = faceapi
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+        .withFaceLandmarks(true)
         .withFaceDescriptors();
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Detection timeout')), 8000)
+      );
+
+      const detections = await Promise.race([detectionPromise, timeoutPromise]);
 
       if (!detections || detections.length === 0) {
         if (!silentMode) {

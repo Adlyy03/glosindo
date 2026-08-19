@@ -29,6 +29,7 @@ const ActiveVisitorPage = () => {
   const [splashOpen, setSplashOpen] = useState(false);
   const [splashVisitorName, setSplashVisitorName] = useState('');
   const [splashMeta, setSplashMeta] = useState({});
+  const [manualConfirmVisit, setManualConfirmVisit] = useState(null);
 
   const fetchActive = useCallback(async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -98,6 +99,30 @@ const ActiveVisitorPage = () => {
     setVerificationVisit(visit);
     setVerificationMessage(`Scan wajah ${visit.visitor?.name || 'tamu'} untuk verifikasi checkout.`);
     setVerificationError('');
+  };
+
+  const handleManualCheckout = async () => {
+    if (!manualConfirmVisit) return;
+    const visit = manualConfirmVisit;
+    setManualConfirmVisit(null);
+    setCheckingOutId(visit.id);
+    try {
+      await visitService.checkOut(visit.id);
+      toast.success(`Check-Out Manual Berhasil! ${visit.visitor?.name} telah keluar.`, {
+        icon: '👋',
+        id: 'visit-checkout-toast',
+      });
+      setSplashVisitorName(visit.visitor?.name || 'Tamu');
+      setSplashMeta({ checkOutTime: new Date() });
+      setSplashOpen(true);
+      fetchActive();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal melakukan check-out', {
+        id: 'visit-checkout-toast',
+      });
+    } finally {
+      setCheckingOutId(null);
+    }
   };
 
   return (
@@ -252,15 +277,26 @@ const ActiveVisitorPage = () => {
 
                       <td className="px-6 py-4 text-right">
                         {!isSupervisor && (
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            loading={checkingOutId === visit.id}
-                            onClick={() => handleCheckout(visit)}
-                            icon={LogOut}
-                          >
-                            Check-Out
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              loading={checkingOutId === visit.id}
+                              onClick={() => handleCheckout(visit)}
+                              icon={LogOut}
+                            >
+                              Scan Wajah
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              loading={checkingOutId === visit.id}
+                              onClick={() => setManualConfirmVisit(visit)}
+                              icon={UserCheck}
+                            >
+                              Manual
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -302,16 +338,28 @@ const ActiveVisitorPage = () => {
                   </div>
 
                   {!isSupervisor && (
-                    <Button
-                      variant="danger"
-                      size="md"
-                      fullWidth
-                      loading={checkingOutId === visit.id}
-                      onClick={() => handleCheckout(visit)}
-                      icon={LogOut}
-                    >
-                      Check-Out (OUT)
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="danger"
+                        size="md"
+                        fullWidth
+                        loading={checkingOutId === visit.id}
+                        onClick={() => handleCheckout(visit)}
+                        icon={LogOut}
+                      >
+                        Scan Wajah
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="md"
+                        fullWidth
+                        loading={checkingOutId === visit.id}
+                        onClick={() => setManualConfirmVisit(visit)}
+                        icon={UserCheck}
+                      >
+                        Manual
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -319,6 +367,32 @@ const ActiveVisitorPage = () => {
           </>
         )}
       </Card>
+
+      {/* Modal Konfirmasi Check-Out Manual */}
+      {manualConfirmVisit && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-sm w-full mx-4 overflow-hidden">
+            <div className="bg-gradient-to-br from-slate-700 to-slate-900 p-6 text-center">
+              <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center ring-4 ring-white/30">
+                <LogOut className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-xl font-extrabold text-white">Check-Out Manual</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-center mb-1 text-sm">
+                Check-out <strong className="text-slate-900">{manualConfirmVisit.visitor?.name}</strong> tanpa verifikasi wajah?
+              </p>
+              <p className="text-slate-400 text-xs text-center mb-6">Pastikan identitas tamu sudah dikonfirmasi secara manual.</p>
+              <div className="flex gap-3">
+                <Button variant="outline" fullWidth onClick={() => setManualConfirmVisit(null)}>Batal</Button>
+                <Button variant="danger" fullWidth icon={LogOut} onClick={handleManualCheckout}>
+                  Ya, Check-Out
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

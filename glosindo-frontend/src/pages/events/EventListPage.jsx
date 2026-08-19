@@ -43,8 +43,9 @@ const EventListPage = () => {
       if (search) params.search = search;
       if (statusFilter) params.status = statusFilter;
       const res = await eventService.getAll(params);
-      setEvents(res.data?.data || []);
-      setMeta(res.data);
+      const pagination = res.data?.data;
+      setEvents(Array.isArray(pagination?.data) ? pagination.data : []);
+      setMeta(pagination ?? null);
     } catch {
       toast.error('Gagal memuat daftar event');
     } finally {

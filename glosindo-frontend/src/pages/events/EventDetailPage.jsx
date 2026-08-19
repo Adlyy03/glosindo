@@ -1,16 +1,20 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import {
   CalendarRange, Clock, MapPin, User, Users, CheckCircle2,
-  LogOut, Hourglass, Building2, ArrowLeft, Pencil, RefreshCw
+  LogOut, LogIn, Hourglass, Building2, ArrowLeft, Pencil, RefreshCw,
+  Camera, Zap, AlertCircle, ArrowRight
 } from 'lucide-react';
 import eventService from '../../services/eventService';
+import visitService from '../../services/visitService';
 import useAuthStore from '../../store/authStore';
 import Card, { CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import FaceScanner from '../../components/FaceScanner';
+import SplashOverlay from '../../components/SplashOverlay';
 
 const STATUS_CONFIG = {
   draft:     { label: 'Draft',      variant: 'neutral' },
@@ -28,6 +32,18 @@ const EventDetailPage = () => {
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('participants');
+
+  // Quick scan state
+  const [processing, setProcessing] = useState(false);
+  const [splashOpen, setSplashOpen] = useState(false);
+  const [splashType, setSplashType] = useState('checkin');
+  const [visitorName, setVisitorName] = useState('');
+  const [reloadSignal, setReloadSignal] = useState(0);
+  const [noMatchModal, setNoMatchModal] = useState(false);
+  const [earlyCheckoutModal, setEarlyCheckoutModal] = useState(false);
+  const [pendingCheckout, setPendingCheckout] = useState(null);
+  const noMatchShown = useRef(false);
 
   const loadDetail = useCallback(async () => {
     setLoading(true);
@@ -42,6 +58,89 @@ const EventDetailPage = () => {
   }, [id]);
 
   useEffect(() => { loadDetail(); }, [loadDetail]);
+
+  // ─── Quick Scan handlers ────────────────────────────────────────────────
+  const handleMatchFound = useCallback(async (visitor) => {
+    if (processing) return;
+    setProcessing(true);
+    try {
+      const activeVisitsRes = await visitService.getActive();
+      const visitorId = visitor.id || visitor.visitor_id;
+      const activeVisit = activeVisitsRes.data?.find(v => v.visitor_id === visitorId);
+
+      if (activeVisit) {
+        const durationMinutes = (Date.now() - new Date(activeVisit.check_in)) / 60000;
+        if (durationMinutes < 60) {
+          setPendingCheckout({ visitor, visitId: activeVisit.id, durationMinutes });
+          setEarlyCheckoutModal(true);
+          setProcessing(false);
+          return;
+        }
+        await visitService.checkOut(activeVisit.id);
+        setVisitorName(visitor.name);
+        setSplashType('checkout');
+        setSplashOpen(true);
+        toast.success(`Check-Out Berhasil! ${visitor.name}`, { icon: '👋', id: 'quick-toast' });
+      } else {
+        await visitService.checkIn({
+          visitor_id: visitorId,
+          purpose: `Check-In Event: ${data?.event?.name || id}`,
+          meet_to: '-',
+          event_id: Number(id),
+        });
+        setVisitorName(visitor.name);
+        setSplashType('checkin');
+        setSplashOpen(true);
+        toast.success(`Check-In Berhasil! ${visitor.name}`, { icon: '✅', id: 'quick-toast' });
+      }
+      setTimeout(() => {
+        setReloadSignal(prev => prev + 1);
+        loadDetail();
+      }, 3000);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal memproses', { duration: 5000, id: 'quick-toast' });
+    } finally {
+      setProcessing(false);
+    }
+  }, [processing, id, data]);
+
+  const handleNoMatch = useCallback(() => {
+    if (noMatchShown.current) return;
+    noMatchShown.current = true;
+    setNoMatchModal(true);
+  }, []);
+
+  const handleStayChoice = () => {
+    noMatchShown.current = false;
+    setNoMatchModal(false);
+    setTimeout(() => setReloadSignal(prev => prev + 1), 500);
+  };
+
+  const handleConfirmEarlyCheckout = async () => {
+    if (!pendingCheckout) return;
+    setEarlyCheckoutModal(false);
+    setProcessing(true);
+    try {
+      await visitService.checkOut(pendingCheckout.visitId);
+      setVisitorName(pendingCheckout.visitor.name);
+      setSplashType('checkout');
+      setSplashOpen(true);
+      toast.success(`Check-Out Berhasil! ${pendingCheckout.visitor.name}`, { icon: '👋', id: 'quick-toast' });
+      setTimeout(() => { setReloadSignal(prev => prev + 1); loadDetail(); }, 3000);
+    } catch (err) {
+      toast.error('Gagal check-out', { duration: 5000 });
+    } finally {
+      setPendingCheckout(null);
+      setProcessing(false);
+    }
+  };
+
+  const handleCancelEarlyCheckout = () => {
+    setEarlyCheckoutModal(false);
+    setPendingCheckout(null);
+    setProcessing(false);
+    setTimeout(() => setReloadSignal(prev => prev + 1), 500);
+  };
 
   if (loading) {
     return (
@@ -173,7 +272,43 @@ const EventDetailPage = () => {
         </Card>
       </div>
 
-      {/* Participants List */}
+      {/* Splash overlay untuk quick scan */}
+      <SplashOverlay
+        open={splashOpen}
+        type={splashType}
+        visitorName={visitorName}
+        onClose={() => setSplashOpen(false)}
+      />
+
+      {/* Tab Switcher */}
+      <div className="flex gap-2 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs w-fit">
+        <button
+          onClick={() => setActiveTab('participants')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+            activeTab === 'participants'
+              ? 'bg-brand-navy text-white shadow-sm'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          Daftar Peserta
+        </button>
+        <button
+          onClick={() => setActiveTab('quickscan')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+            activeTab === 'quickscan'
+              ? 'bg-brand-cyan text-white shadow-sm'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+          }`}
+        >
+          <Camera className="w-4 h-4" />
+          Quick Scan
+          <Badge variant="cyan" className="text-[10px] px-1.5 py-0.5">Express</Badge>
+        </button>
+      </div>
+
+      {/* ── Tab: Daftar Peserta ── */}
+      {activeTab === 'participants' && (
       <Card padding="p-0" className="overflow-hidden">
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -187,7 +322,7 @@ const EventDetailPage = () => {
           <div className="p-12 text-center text-slate-400">
             <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
             <p className="text-sm font-semibold text-slate-600">Belum ada tamu yang check-in untuk event ini.</p>
-            <p className="text-xs mt-1">Gunakan menu Check-In Tamu dan pilih event ini saat tamu hadir.</p>
+            <p className="text-xs mt-1">Gunakan Quick Scan atau menu Check-In Tamu dan pilih event ini saat tamu hadir.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -237,6 +372,163 @@ const EventDetailPage = () => {
           </div>
         )}
       </Card>
+      )}
+
+      {/* ── Tab: Quick Scan ── */}
+      {activeTab === 'quickscan' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Scanner Card */}
+          <Card className="lg:col-span-7 xl:col-span-8 p-6 md:p-8">
+            <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-brand-cyan text-white shadow-xs">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 leading-tight">Camera Express Scan</h2>
+                  <p className="text-xs text-slate-500 font-medium">Check-in/out tamu event via wajah</p>
+                </div>
+              </div>
+              <Badge variant="cyan">Event: {event.name}</Badge>
+            </div>
+
+            <div className={splashOpen ? 'hidden' : ''}>
+              <FaceScanner
+                onMatchFound={handleMatchFound}
+                onNoMatch={handleNoMatch}
+                reloadSignal={reloadSignal}
+                silentMode={true}
+                paused={processing || splashOpen || noMatchModal || earlyCheckoutModal || activeTab !== 'quickscan'}
+              />
+            </div>
+
+            {splashOpen && (
+              <div className="flex items-center justify-center min-h-[380px] bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center">
+                <div>
+                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-3 shadow-md">
+                    <CheckCircle2 className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-slate-900 font-bold text-base">Proses Berhasil</h3>
+                  <p className="text-slate-500 text-xs mt-1">Memuat ulang data event...</p>
+                </div>
+              </div>
+            )}
+
+            {processing && (
+              <div className="mt-4 text-center">
+                <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-brand-navy text-white text-xs font-bold shadow-lg animate-pulse">
+                  <div className="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  <span>Memproses Data Kunjungan...</span>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Info Panel */}
+          <div className="lg:col-span-5 xl:col-span-4 space-y-5">
+            <Card padding="p-6">
+              <div className="flex items-center gap-2 pb-3 mb-4 border-b border-slate-100">
+                <Zap className="w-5 h-5 text-brand-cyan" />
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Alur Quick Scan</h3>
+              </div>
+              <div className="space-y-4 text-xs text-slate-600 font-medium">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-slate-100 flex-shrink-0"><Camera className="w-4 h-4" /></div>
+                  <div>
+                    <p className="font-bold text-slate-900">1. Arahkan Wajah</p>
+                    <p className="text-slate-500 mt-0.5">Berdiri di depan kamera.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800 flex-shrink-0"><LogIn className="w-4 h-4" /></div>
+                  <div>
+                    <p className="font-bold text-slate-900">2. Belum Check-In → Auto IN</p>
+                    <p className="text-slate-500 mt-0.5">Check-in otomatis ke event ini.</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-xl bg-blue-100 text-blue-800 flex-shrink-0"><LogOut className="w-4 h-4" /></div>
+                  <div>
+                    <p className="font-bold text-slate-900">3. Sudah Check-In → Auto OUT</p>
+                    <p className="text-slate-500 mt-0.5">Check-out otomatis.</p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            <Card padding="p-5" className="bg-brand-navy/5 border-brand-navy/20">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertCircle className="w-4 h-4 text-brand-navy" />
+                <p className="text-xs font-bold text-brand-navy">Event Aktif</p>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Semua check-in via scanner ini akan otomatis tercatat ke event <strong>{event.name}</strong>.
+              </p>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Wajah tidak terdaftar */}
+      {noMatchModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-6 text-center">
+              <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center ring-4 ring-white/30">
+                <AlertCircle className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-white">Wajah Belum Terdaftar</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-center mb-6">Wajah tidak ditemukan dalam sistem.</p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => { noMatchShown.current = false; setNoMatchModal(false); navigate('/check-in/manual'); }}
+                  className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-xl bg-gradient-to-r from-brand-navy to-blue-700 text-white font-bold"
+                >
+                  <ArrowRight className="w-5 h-5" />
+                  <span>Daftar Jadi Tamu</span>
+                </button>
+                <button onClick={handleStayChoice} className="w-full px-6 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200">
+                  Tetap di Sini
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Early checkout */}
+      {earlyCheckoutModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="bg-gradient-to-br from-red-500 to-rose-600 p-6 text-center">
+              <div className="w-20 h-20 mx-auto mb-3 rounded-full bg-white/20 flex items-center justify-center ring-4 ring-white/30">
+                <AlertCircle className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-extrabold text-white">Durasi Kunjungan Singkat</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-center mb-2">Baru saja check-in <strong className="text-red-600">kurang dari 1 jam</strong>.</p>
+              {pendingCheckout?.durationMinutes !== undefined && (
+                <p className="text-slate-500 text-sm text-center mb-4">
+                  Durasi: <strong>{Math.floor(pendingCheckout.durationMinutes)} menit</strong>
+                </p>
+              )}
+              <p className="text-slate-700 text-center mb-6 font-semibold">Yakin ingin check-out sekarang?</p>
+              <div className="flex flex-col gap-3">
+                <button onClick={handleConfirmEarlyCheckout} className="flex items-center justify-center gap-2 w-full px-6 py-3.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 text-white font-bold">
+                  <LogOut className="w-5 h-5" />
+                  <span>Ya, Check-Out Sekarang</span>
+                </button>
+                <button onClick={handleCancelEarlyCheckout} className="w-full px-6 py-3.5 rounded-xl bg-slate-100 text-slate-700 font-bold hover:bg-slate-200">
+                  Tetap di Sini
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -22,8 +22,8 @@ return new class extends Migration
         DB::table('system_settings')->insert([
             'key' => 'public_registration_enabled',
             'value' => '1',
-            'created_at' => now(),
-            'updated_at' => now()
+            'created_at' => \Carbon\Carbon::now(),
+            'updated_at' => \Carbon\Carbon::now()
         ]);
     }
 

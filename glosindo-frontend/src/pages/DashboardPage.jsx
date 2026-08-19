@@ -18,9 +18,6 @@ import {
   CheckCircle,
   Calendar
 } from 'lucide-react';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-} from 'recharts';
 import { Line, Bar as BarChart2 } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -99,14 +96,18 @@ const DashboardPage = () => {
           dashboardService.getVisitTrends(),
           dashboardService.getTopVisitors(5),
         ]);
-        setStats(statsRes.data);
+        // dashboardService already returns response.data, so use directly
+        const statsData = statsRes?.data ?? statsRes;
+        const trendsData = trendsRes?.data ?? trendsRes;
+        const topData = topRes?.data ?? topRes;
+        setStats(statsData);
         setTrends(
-          (trendsRes.data || []).map((d) => ({
+          (Array.isArray(trendsData) ? trendsData : []).map((d) => ({
             ...d,
             label: dayjs(d.date).format('DD/MM'),
           }))
         );
-        setTopVisitors(topRes.data || []);
+        setTopVisitors(Array.isArray(topData) ? topData : []);
       } catch (err) {
         console.error('Failed loading dashboard data:', err);
       } finally {

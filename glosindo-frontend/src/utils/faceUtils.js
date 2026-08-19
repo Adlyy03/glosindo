@@ -27,7 +27,14 @@ export function findBestMatch(liveDescriptor, storedEmbeddings, threshold = 0.5)
 
   for (const entry of storedEmbeddings) {
     try {
-      const dist = euclideanDistance(liveDescriptor, entry.face_vector);
+      // face_vector may be stored as JSON string — parse if needed
+      const faceVector = typeof entry.face_vector === 'string'
+        ? JSON.parse(entry.face_vector)
+        : entry.face_vector;
+
+      if (!Array.isArray(faceVector) || faceVector.length !== liveDescriptor.length) continue;
+
+      const dist = euclideanDistance(liveDescriptor, faceVector);
       if (dist < best.distance) {
         best = { visitor: entry, distance: dist };
       }

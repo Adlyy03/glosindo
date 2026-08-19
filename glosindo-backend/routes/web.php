@@ -72,7 +72,7 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->delete('visitors/{id}', ['middleware' => 'role:admin', 'uses' => 'VisitorController@destroy']);
 
     // Face Embeddings
-    $router->get('face-embeddings', ['middleware' => 'role:admin', 'uses' => 'FaceEmbeddingController@index']);
+    $router->get('face-embeddings', ['middleware' => 'role:admin,receptionist', 'uses' => 'FaceEmbeddingController@index']);
     $router->post('face-embeddings/check-duplicate', 'FaceEmbeddingController@checkDuplicate');
     $router->post('visitors/{visitorId}/face-embedding', 'FaceEmbeddingController@store');
     $router->delete('visitors/{visitorId}/face-embedding', ['middleware' => 'role:admin', 'uses' => 'FaceEmbeddingController@destroy']);
