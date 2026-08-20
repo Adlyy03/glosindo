@@ -130,6 +130,10 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->post('events/{id}/participants/{participantId}/check-in', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@checkInParticipant']);
     $router->post('events/{id}/participants/{participantId}/check-out', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@checkOutParticipant']);
     $router->delete('events/{id}/participants/{participantId}', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@destroyParticipant']);
+
+    // Single event export
+    $router->get('events/{id}/export-excel', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@exportEventExcel']);
+    $router->get('events/{id}/export-pdf', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@exportEventPdf']);
 });
 
 // Swagger UI route

@@ -91,10 +91,10 @@ const PublicEventRegisterPage = () => {
         throw new Error('Kamera belum siap. Mohon tunggu sebentar.');
       }
 
-      // Retry up to 3 times with 500ms delay if video not ready
-      let retries = 3;
+      // Retry up to 2 times with 300ms delay if video not ready
+      let retries = 2;
       while (video.readyState !== 4 && retries > 0) {
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 300));
         retries--;
       }
 
@@ -107,7 +107,7 @@ const PublicEventRegisterPage = () => {
       }
 
       // Add small delay to ensure frame capture
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       const imageSrc = webcamRef.current.getScreenshot();
       if (!imageSrc) {
@@ -116,10 +116,13 @@ const PublicEventRegisterPage = () => {
 
       setPhotoPreview(imageSrc);
 
-      // Detect Face & compute 128-d descriptor
+      // Detect Face & compute 128-d descriptor (use tiny model for speed)
       const detection = await faceapi
-        .detectSingleFace(video)
-        .withFaceLandmarks()
+        .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ 
+          inputSize: 224, 
+          scoreThreshold: 0.5 
+        }))
+        .withFaceLandmarks(true)
         .withFaceDescriptor();
 
       if (!detection || !detection.descriptor) {
@@ -368,8 +371,8 @@ const PublicEventRegisterPage = () => {
                     screenshotFormat="image/jpeg"
                     videoConstraints={{
                       facingMode: 'user',
-                      width: 640,
-                      height: 480,
+                      width: 480,
+                      height: 360,
                     }}
                     onUserMedia={() => setVideoReady(true)}
                     onUserMediaError={() => setVideoReady(false)}

@@ -6,7 +6,8 @@ import {
   CalendarRange, Clock, MapPin, User, Users, CheckCircle2,
   LogOut, LogIn, Hourglass, Building2, ArrowLeft, Pencil, RefreshCw,
   Camera, Zap, AlertCircle, ArrowRight, Copy, Check, ExternalLink,
-  Search, UserPlus, Filter, ShieldCheck, Tag, Trash2, Mail, Phone, Briefcase
+  Search, UserPlus, Filter, ShieldCheck, Tag, Trash2, Mail, Phone, Briefcase,
+  FileSpreadsheet, FileText
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 import visitService from '../../services/visitService';
@@ -313,6 +314,46 @@ const EventDetailPage = () => {
         </div>
 
         <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
+          <Button 
+            variant="outline" 
+            size="md" 
+            icon={FileSpreadsheet} 
+            onClick={async () => {
+              try {
+                const res = await eventService.exportEventExcel(event.id);
+                const url = window.URL.createObjectURL(new Blob([res.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Peserta_${event.name.replace(/\s+/g, '_')}_${Date.now()}.xlsx`;
+                link.click();
+                toast.success('Export Excel berhasil');
+              } catch {
+                toast.error('Gagal export Excel');
+              }
+            }}
+          >
+            Export Excel
+          </Button>
+          <Button 
+            variant="outline" 
+            size="md" 
+            icon={FileText} 
+            onClick={async () => {
+              try {
+                const res = await eventService.exportEventPdf(event.id);
+                const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `Peserta_${event.name.replace(/\s+/g, '_')}_${Date.now()}.pdf`;
+                link.click();
+                toast.success('Export PDF berhasil');
+              } catch {
+                toast.error('Gagal export PDF');
+              }
+            }}
+          >
+            Export PDF
+          </Button>
           <Button variant="outline" size="md" icon={RefreshCw} onClick={loadDetail}>
             Refresh
           </Button>

@@ -97,6 +97,22 @@ const eventService = {
       params,
       responseType: 'blob',
     }),
+
+  /**
+   * Export single event participants to Excel.
+   */
+  exportEventExcel: (id) =>
+    api.get(`/events/${id}/export-excel`, {
+      responseType: 'blob',
+    }),
+
+  /**
+   * Export single event participants to PDF.
+   */
+  exportEventPdf: (id) =>
+    api.get(`/events/${id}/export-pdf`, {
+      responseType: 'blob',
+    }),
 };
 
 export default eventService;

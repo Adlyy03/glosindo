@@ -1294,4 +1294,123 @@ class EventController extends Controller
 
         return $pdf->download($fileName);
     }
+
+    /**
+     * Export single event participants to Excel.
+     */
+    public function exportEventExcel($id)
+    {
+        $event = Event::find($id);
+        if (!$event) {
+            return response()->json(['success' => false, 'message' => 'Event tidak ditemukan'], 404);
+        }
+
+        $participants = EventParticipant::where('event_id', $id)
+            ->with('visitor:id,name,company,phone,email,position')
+            ->orderBy('registered_at', 'desc')
+            ->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        $headerStyle = [
+            'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF'], 'size' => 12],
+            'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => '1E3A8A']],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]],
+        ];
+
+        $sheet->setCellValue('A1', 'LAPORAN PESERTA EVENT');
+        $sheet->mergeCells('A1:I1');
+        $sheet->getStyle('A1')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 16],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        ]);
+
+        $sheet->setCellValue('A2', 'Event: ' . $event->name);
+        $sheet->mergeCells('A2:I2');
+        $sheet->getStyle('A2')->applyFromArray([
+            'font' => ['bold' => true, 'size' => 12],
+            'alignment' => ['horizontal' => Alignment::HORIZONTAL_LEFT],
+        ]);
+
+        $dateRange = Carbon::parse($event->start_date ?: $event->event_date)->format('d M Y');
+        if ($event->end_date && $event->end_date != ($event->start_date ?: $event->event_date)) {
+            $dateRange .= ' - ' . Carbon::parse($event->end_date)->format('d M Y');
+        }
+        $sheet->setCellValue('A3', 'Tanggal: ' . $dateRange);
+        $sheet->mergeCells('A3:I3');
+
+        $headers = ['No', 'Nama', 'No. HP', 'Email', 'Perusahaan', 'Posisi', 'Status', 'Tgl Daftar', 'Check-In'];
+        $sheet->fromArray($headers, null, 'A5');
+        $sheet->getStyle('A5:I5')->applyFromArray($headerStyle);
+
+        $row = 6;
+        foreach ($participants as $index => $p) {
+            $sheet->setCellValue('A' . $row, $index + 1);
+            $sheet->setCellValue('B' . $row, $p->name);
+            $sheet->setCellValue('C' . $row, $p->phone ?? '-');
+            $sheet->setCellValue('D' . $row, $p->email ?? '-');
+            $sheet->setCellValue('E' . $row, $p->company ?? '-');
+            $sheet->setCellValue('F' . $row, $p->position ?? '-');
+            $sheet->setCellValue('G' . $row, ucfirst($p->status));
+            $sheet->setCellValue('H' . $row, $p->registered_at ? Carbon::parse($p->registered_at)->format('d/m/Y H:i') : '-');
+            $sheet->setCellValue('I' . $row, $p->checked_in_at ? Carbon::parse($p->checked_in_at)->format('d/m/Y H:i') : '-');
+
+            if ($index % 2 === 0) {
+                $sheet->getStyle('A' . $row . ':I' . $row)->applyFromArray([
+                    'fill' => ['fillType' => Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F3F4F6']],
+                ]);
+            }
+            $row++;
+        }
+
+        foreach (range('A', 'I') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Peserta_Event_' . Str::slug($event->name) . '_' . date('YmdHis') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), 'event_participants_');
+
+        $writer->save($tempFile);
+        return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Export single event participants to PDF.
+     */
+    public function exportEventPdf($id)
+    {
+        $event = Event::find($id);
+        if (!$event) {
+            return response()->json(['success' => false, 'message' => 'Event tidak ditemukan'], 404);
+        }
+
+        $participants = EventParticipant::where('event_id', $id)
+            ->with('visitor:id,name,company,phone,email,position')
+            ->orderBy('registered_at', 'desc')
+            ->get();
+
+        $dateRange = Carbon::parse($event->start_date ?: $event->event_date)->format('d M Y');
+        if ($event->end_date && $event->end_date != ($event->start_date ?: $event->event_date)) {
+            $dateRange .= ' - ' . Carbon::parse($event->end_date)->format('d M Y');
+        }
+
+        $totalRegistered = $participants->where('status', 'registered')->count();
+        $totalCheckedIn = $participants->where('status', 'checked_in')->count();
+        $totalCheckedOut = $participants->where('status', 'checked_out')->count();
+
+        $pdf = Pdf::loadView('reports.event_participants', [
+            'event' => $event,
+            'dateRange' => $dateRange,
+            'participants' => $participants,
+            'totalRegistered' => $totalRegistered,
+            'totalCheckedIn' => $totalCheckedIn,
+            'totalCheckedOut' => $totalCheckedOut,
+        ])->setPaper('a4', 'landscape');
+
+        $fileName = 'Peserta_Event_' . Str::slug($event->name) . '_' . date('YmdHis') . '.pdf';
+        return $pdf->download($fileName);
+    }
 }
