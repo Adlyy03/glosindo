@@ -37,6 +37,12 @@ const eventService = {
   getPublicEvent: (code) => api.get(`/public/events/${code}`),
 
   /**
+   * Public: Check face scan against database and check if already participant.
+   */
+  checkFace: (code, faceVector) =>
+    api.post(`/public/events/${code}/check-face`, { face_vector: faceVector }),
+
+  /**
    * Public: Submit public registration for event.
    */
   registerPublic: (code, data) => api.post(`/public/events/${code}/register`, data),

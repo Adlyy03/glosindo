@@ -31,6 +31,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
 
     // Public event registration
     $router->get('public/events/{code}', 'EventController@publicShow');
+    $router->post('public/events/{code}/check-face', 'EventController@publicCheckFace');
     $router->post('public/events/{code}/register', 'EventController@publicRegister');
     
     // Temp debug route - check users
