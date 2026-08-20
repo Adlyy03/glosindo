@@ -55,7 +55,7 @@ const VisitorTable = ({ visitors, loading, onEdit, onDelete, isAdmin }) => {
                   <div className="flex items-center gap-3">
                     {visitor.photo ? (
                       <img
-                        src={`${import.meta.env.VITE_API_BASE_URL.replace('/api', '')}/storage/${visitor.photo}`}
+                        src={`${(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace('/api', '')}/storage/${visitor.photo}`}
                         alt={visitor.name}
                         className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-xs flex-shrink-0"
                         onError={(e) => {
