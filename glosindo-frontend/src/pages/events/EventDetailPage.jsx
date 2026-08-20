@@ -1,11 +1,12 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
 import {
   CalendarRange, Clock, MapPin, User, Users, CheckCircle2,
   LogOut, LogIn, Hourglass, Building2, ArrowLeft, Pencil, RefreshCw,
-  Camera, Zap, AlertCircle, ArrowRight
+  Camera, Zap, AlertCircle, ArrowRight, Copy, Check, ExternalLink,
+  Search, UserPlus, Filter, ShieldCheck, Tag, Trash2, Mail, Phone, Briefcase
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 import visitService from '../../services/visitService';
@@ -13,15 +14,17 @@ import useAuthStore from '../../store/authStore';
 import Card, { CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import Modal from '../../components/ui/Modal';
 import FaceScanner from '../../components/FaceScanner';
 import SplashOverlay from '../../components/SplashOverlay';
 
 const STATUS_CONFIG = {
-  draft:     { label: 'Draft',      variant: 'neutral' },
-  scheduled: { label: 'Terjadwal',  variant: 'navy' },
-  ongoing:   { label: 'Berlangsung',variant: 'emerald', dot: true },
-  finished:  { label: 'Selesai',    variant: 'neutral' },
-  cancelled: { label: 'Dibatalkan', variant: 'danger' },
+  draft:     { label: 'Draft',       variant: 'neutral' },
+  scheduled: { label: 'Terjadwal',   variant: 'navy' },
+  ongoing:   { label: 'Berlangsung', variant: 'emerald', dot: true },
+  active:    { label: 'Aktif',       variant: 'emerald', dot: true },
+  finished:  { label: 'Selesai',     variant: 'neutral' },
+  cancelled: { label: 'Dibatalkan',  variant: 'danger' },
 };
 
 const EventDetailPage = () => {
@@ -33,6 +36,27 @@ const EventDetailPage = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('participants');
+
+  // Search & filter participants
+  const [participantSearch, setParticipantSearch] = useState('');
+  const [participantStatusFilter, setParticipantStatusFilter] = useState('');
+
+  // Copy link state
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  // Manual participant add modal
+  const [addModal, setAddModal] = useState(false);
+  const [addingParticipant, setAddingParticipant] = useState(false);
+  const [partForm, setPartForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    company: '',
+    position: '',
+  });
+
+  // Action loading for specific participant check-in/out
+  const [actionLoadingId, setActionLoadingId] = useState(null);
 
   // Quick scan state
   const [processing, setProcessing] = useState(false);
@@ -57,7 +81,81 @@ const EventDetailPage = () => {
     }
   }, [id]);
 
-  useEffect(() => { loadDetail(); }, [loadDetail]);
+  useEffect(() => {
+    loadDetail();
+  }, [loadDetail]);
+
+  const handleCopyLink = () => {
+    if (!data?.event) return;
+    const code = data.event.code || data.event.id;
+    const url = `${window.location.origin}/event/${code}/register`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedLink(true);
+      toast.success('Link registrasi publik disalin!', { icon: '🔗' });
+      setTimeout(() => setCopiedLink(false), 2500);
+    }).catch(() => {
+      toast.error('Gagal menyalin link');
+    });
+  };
+
+  // ─── Participant Actions (Check-In & Check-Out) ──────────────────────────
+  const handleCheckInParticipant = async (participantId) => {
+    setActionLoadingId(participantId);
+    try {
+      await eventService.checkInParticipant(id, participantId);
+      toast.success('Peserta berhasil check-in!', { icon: '✅' });
+      loadDetail();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal check-in peserta');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleCheckOutParticipant = async (participantId) => {
+    setActionLoadingId(participantId);
+    try {
+      await eventService.checkOutParticipant(id, participantId);
+      toast.success('Peserta berhasil check-out!', { icon: '👋' });
+      loadDetail();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal check-out peserta');
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleDeleteParticipant = async (participantId) => {
+    if (!window.confirm('Yakin ingin menghapus peserta ini dari event?')) return;
+    try {
+      await eventService.deleteParticipant(id, participantId);
+      toast.success('Peserta berhasil dihapus dari event');
+      loadDetail();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal menghapus peserta');
+    }
+  };
+
+  const handleAddParticipantSubmit = async (e) => {
+    e.preventDefault();
+    if (!partForm.name.trim() || !partForm.phone.trim()) {
+      toast.error('Nama dan nomor HP wajib diisi');
+      return;
+    }
+
+    setAddingParticipant(true);
+    try {
+      await eventService.storeParticipant(id, partForm);
+      toast.success('Peserta berhasil ditambahkan');
+      setAddModal(false);
+      setPartForm({ name: '', phone: '', email: '', company: '', position: '' });
+      loadDetail();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal menambahkan peserta');
+    } finally {
+      setAddingParticipant(false);
+    }
+  };
 
   // ─── Quick Scan handlers ────────────────────────────────────────────────
   const handleMatchFound = useCallback(async (visitor) => {
@@ -66,7 +164,7 @@ const EventDetailPage = () => {
     try {
       const activeVisitsRes = await visitService.getActive();
       const visitorId = visitor.id || visitor.visitor_id;
-      const activeVisit = activeVisitsRes.data?.find(v => v.visitor_id === visitorId);
+      const activeVisit = activeVisitsRes.data?.find((v) => v.visitor_id === visitorId);
 
       if (activeVisit) {
         const durationMinutes = (Date.now() - new Date(activeVisit.check_in)) / 60000;
@@ -84,9 +182,9 @@ const EventDetailPage = () => {
       } else {
         await visitService.checkIn({
           visitor_id: visitorId,
-          purpose: `Check-In Event: ${data?.event?.name || id}`,
-          meet_to: '-',
-          event_id: Number(id),
+          purpose: `Event: ${data?.event?.name || id}`,
+          meet_to: `Event: ${data?.event?.name || id}`,
+          event_id: Number(data?.event?.id || id),
         });
         setVisitorName(visitor.name);
         setSplashType('checkin');
@@ -94,7 +192,7 @@ const EventDetailPage = () => {
         toast.success(`Check-In Berhasil! ${visitor.name}`, { icon: '✅', id: 'quick-toast' });
       }
       setTimeout(() => {
-        setReloadSignal(prev => prev + 1);
+        setReloadSignal((prev) => prev + 1);
         loadDetail();
       }, 3000);
     } catch (err) {
@@ -102,7 +200,7 @@ const EventDetailPage = () => {
     } finally {
       setProcessing(false);
     }
-  }, [processing, id, data]);
+  }, [processing, id, data, loadDetail]);
 
   const handleNoMatch = useCallback(() => {
     if (noMatchShown.current) return;
@@ -113,7 +211,7 @@ const EventDetailPage = () => {
   const handleStayChoice = () => {
     noMatchShown.current = false;
     setNoMatchModal(false);
-    setTimeout(() => setReloadSignal(prev => prev + 1), 500);
+    setTimeout(() => setReloadSignal((prev) => prev + 1), 500);
   };
 
   const handleConfirmEarlyCheckout = async () => {
@@ -126,8 +224,11 @@ const EventDetailPage = () => {
       setSplashType('checkout');
       setSplashOpen(true);
       toast.success(`Check-Out Berhasil! ${pendingCheckout.visitor.name}`, { icon: '👋', id: 'quick-toast' });
-      setTimeout(() => { setReloadSignal(prev => prev + 1); loadDetail(); }, 3000);
-    } catch (err) {
+      setTimeout(() => {
+        setReloadSignal((prev) => prev + 1);
+        loadDetail();
+      }, 3000);
+    } catch {
       toast.error('Gagal check-out', { duration: 5000 });
     } finally {
       setPendingCheckout(null);
@@ -139,7 +240,7 @@ const EventDetailPage = () => {
     setEarlyCheckoutModal(false);
     setPendingCheckout(null);
     setProcessing(false);
-    setTimeout(() => setReloadSignal(prev => prev + 1), 500);
+    setTimeout(() => setReloadSignal((prev) => prev + 1), 500);
   };
 
   if (loading) {
@@ -164,6 +265,25 @@ const EventDetailPage = () => {
 
   const { event, statistics, participants = [] } = data;
   const statusCfg = STATUS_CONFIG[event.status] || STATUS_CONFIG.draft;
+  const startDate = event.start_date || event.event_date;
+  const endDate = event.end_date || startDate;
+  const publicRegUrl = `${window.location.origin}/event/${event.code || event.id}/register`;
+
+  // Filter participants in frontend
+  const filteredParticipants = participants.filter((p) => {
+    const matchesSearch =
+      !participantSearch ||
+      p.name?.toLowerCase().includes(participantSearch.toLowerCase()) ||
+      p.phone?.includes(participantSearch) ||
+      p.email?.toLowerCase().includes(participantSearch.toLowerCase()) ||
+      p.company?.toLowerCase().includes(participantSearch.toLowerCase()) ||
+      p.position?.toLowerCase().includes(participantSearch.toLowerCase());
+
+    const matchesStatus =
+      !participantStatusFilter || p.status === participantStatusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-fadeIn">
@@ -177,9 +297,14 @@ const EventDetailPage = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">{event.name}</h1>
               <Badge variant={statusCfg.variant} dot={statusCfg.dot}>{statusCfg.label}</Badge>
+              {event.code && (
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                  {event.code}
+                </span>
+              )}
             </div>
             <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
               {event.description || 'Tidak ada deskripsi event.'}
@@ -187,7 +312,7 @@ const EventDetailPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-center">
+        <div className="flex items-center gap-2 self-start md:self-center flex-wrap">
           <Button variant="outline" size="md" icon={RefreshCw} onClick={loadDetail}>
             Refresh
           </Button>
@@ -199,15 +324,55 @@ const EventDetailPage = () => {
         </div>
       </div>
 
-      {/* Info Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Public Registration Link Banner Card */}
+      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-brand-navy rounded-3xl p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 text-cyan-300 text-xs font-bold uppercase tracking-wider">
+            <Tag className="w-4 h-4" />
+            <span>Tautan Registrasi Publik Mandiri</span>
+          </div>
+          <p className="text-sm font-semibold text-slate-200">
+            Bagikan tautan ini kepada calon tamu/peserta untuk melakukan pra-pendaftaran mandiri secara online.
+          </p>
+          <p className="text-xs text-cyan-200 font-mono break-all pt-1 select-all">
+            {publicRegUrl}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2.5 flex-shrink-0">
+          <Button
+            variant="outline"
+            size="md"
+            icon={copiedLink ? Check : Copy}
+            onClick={handleCopyLink}
+            className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+          >
+            {copiedLink ? 'Link Tersalin!' : 'Copy Link Registrasi'}
+          </Button>
+          <a
+            href={publicRegUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors"
+            title="Buka Halaman Registrasi"
+          >
+            <ExternalLink className="w-5 h-5" />
+          </a>
+        </div>
+      </div>
+
+      {/* Info Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <Card padding="p-4" className="flex items-center gap-3.5">
           <div className="p-3 rounded-2xl bg-blue-50 text-brand-navy">
             <CalendarRange className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-semibold uppercase">Tanggal</p>
-            <p className="text-sm font-bold text-slate-800">{dayjs(event.event_date).format('DD MMMM YYYY')}</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase">Tanggal Pelaksanaan</p>
+            <p className="text-sm font-bold text-slate-800">
+              {dayjs(startDate).format('DD MMM YYYY')}
+              {endDate && endDate !== startDate && ` - ${dayjs(endDate).format('DD MMM YYYY')}`}
+            </p>
           </div>
         </Card>
 
@@ -216,8 +381,10 @@ const EventDetailPage = () => {
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-semibold uppercase">Waktu</p>
-            <p className="text-sm font-bold text-slate-800">{event.start_time?.slice(0,5)} - {event.end_time?.slice(0,5)} WIB</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase">Waktu Kegiatan</p>
+            <p className="text-sm font-bold text-slate-800">
+              {event.start_time?.slice(0, 5)} - {event.end_time?.slice(0, 5)} WIB
+            </p>
           </div>
         </Card>
 
@@ -226,8 +393,10 @@ const EventDetailPage = () => {
             <MapPin className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-semibold uppercase">Lokasi</p>
-            <p className="text-sm font-bold text-slate-800">{event.location || '-'}</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase">Lokasi Ruangan</p>
+            <p className="text-sm font-bold text-slate-800 truncate max-w-[150px]">
+              {event.location || '-'}
+            </p>
           </div>
         </Card>
 
@@ -236,8 +405,8 @@ const EventDetailPage = () => {
             <User className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-semibold uppercase">Pembuat Event</p>
-            <p className="text-sm font-bold text-slate-800">{event.creator?.name || '-'}</p>
+            <p className="text-xs text-slate-400 font-semibold uppercase">Dibuat Oleh</p>
+            <p className="text-sm font-bold text-slate-800">{event.creator?.name || 'Admin'}</p>
           </div>
         </Card>
       </div>
@@ -245,20 +414,24 @@ const EventDetailPage = () => {
       {/* Statistics Section */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
         <Card padding="p-4" className="text-center">
-          <p className="text-[11px] font-bold text-slate-400 uppercase">Total Peserta</p>
-          <p className="text-2xl font-extrabold text-slate-900 mt-1">{statistics?.total_visitors || 0}</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase">Total Terdaftar</p>
+          <p className="text-2xl font-extrabold text-slate-900 mt-1">
+            {statistics?.total_participants || participants.length || 0}
+          </p>
         </Card>
         <Card padding="p-4" className="text-center bg-emerald-50/50 border-emerald-100">
-          <p className="text-[11px] font-bold text-emerald-600 uppercase">Check-In</p>
+          <p className="text-[11px] font-bold text-emerald-600 uppercase">Sudah Check-In</p>
           <p className="text-2xl font-extrabold text-emerald-700 mt-1">{statistics?.checked_in || 0}</p>
+        </Card>
+        <Card padding="p-4" className="text-center bg-amber-50/50 border-amber-100">
+          <p className="text-[11px] font-bold text-amber-600 uppercase">Belum Check-In</p>
+          <p className="text-2xl font-extrabold text-amber-700 mt-1">
+            {statistics?.registered_only !== undefined ? statistics.registered_only : Math.max(0, (statistics?.total_participants || 0) - (statistics?.checked_in || 0))}
+          </p>
         </Card>
         <Card padding="p-4" className="text-center">
           <p className="text-[11px] font-bold text-slate-400 uppercase">Check-Out</p>
           <p className="text-2xl font-extrabold text-slate-700 mt-1">{statistics?.checked_out || 0}</p>
-        </Card>
-        <Card padding="p-4" className="text-center bg-blue-50/50 border-blue-100">
-          <p className="text-[11px] font-bold text-brand-navy uppercase">Masih di Lokasi</p>
-          <p className="text-2xl font-extrabold text-brand-navy mt-1">{statistics?.still_inside || 0}</p>
         </Card>
         <Card padding="p-4" className="text-center">
           <p className="text-[11px] font-bold text-slate-400 uppercase">Rata-rata Durasi</p>
@@ -291,7 +464,7 @@ const EventDetailPage = () => {
           }`}
         >
           <Users className="w-4 h-4" />
-          Daftar Peserta
+          Daftar Peserta Event ({participants.length})
         </button>
         {!useAuthStore.getState().isFeatureDisabled('quick_checkin') && (
           <button
@@ -303,7 +476,7 @@ const EventDetailPage = () => {
             }`}
           >
             <Camera className="w-4 h-4" />
-            Quick Scan
+            Express Face Scan
             <Badge variant="cyan" className="text-[10px] px-1.5 py-0.5">Express</Badge>
           </button>
         )}
@@ -311,75 +484,188 @@ const EventDetailPage = () => {
 
       {/* ── Tab: Daftar Peserta ── */}
       {activeTab === 'participants' && (
-      <Card padding="p-0" className="overflow-hidden">
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-brand-navy" />
-            <h2 className="text-base font-bold text-slate-900">Daftar Tamu / Peserta Event</h2>
-          </div>
-          <Badge variant="neutral">{participants.length} Tamu Terdaftar</Badge>
-        </div>
+        <div className="space-y-4">
+          {/* Search & Action Bar */}
+          <Card padding="p-4 md:p-5">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto flex-1">
+                <div className="relative w-full sm:w-80">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Search className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={participantSearch}
+                    onChange={(e) => setParticipantSearch(e.target.value)}
+                    placeholder="Cari peserta, HP, email, instansi..."
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+                  />
+                </div>
 
-        {participants.length === 0 ? (
-          <div className="p-12 text-center text-slate-400">
-            <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
-            <p className="text-sm font-semibold text-slate-600">Belum ada tamu yang check-in untuk event ini.</p>
-            <p className="text-xs mt-1">Gunakan Quick Scan atau menu Check-In Tamu dan pilih event ini saat tamu hadir.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead>
-                <tr className="border-b border-slate-200/80 bg-slate-50/80 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
-                  <th className="px-6 py-4">No</th>
-                  <th className="px-6 py-4">Nama Tamu</th>
-                  <th className="px-6 py-4">Perusahaan</th>
-                  <th className="px-6 py-4">Check-In</th>
-                  <th className="px-6 py-4">Check-Out</th>
-                  <th className="px-6 py-4 text-center">Durasi</th>
-                  <th className="px-6 py-4 text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {participants.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-6 py-4 text-xs text-slate-400 font-bold">{idx + 1}</td>
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-slate-900">{item.visitor?.name || '-'}</p>
-                      {item.visitor?.phone && <p className="text-xs text-slate-400">{item.visitor.phone}</p>}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-slate-700">
-                      {item.visitor?.company || 'Pribadi'}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-slate-700 whitespace-nowrap">
-                      {dayjs(item.check_in).format('DD/MM/YY HH:mm')}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-semibold text-slate-700 whitespace-nowrap">
-                      {item.check_out ? dayjs(item.check_out).format('DD/MM/YY HH:mm') : '—'}
-                    </td>
-                    <td className="px-6 py-4 text-center text-xs font-bold text-slate-700">
-                      {item.duration !== null ? `${item.duration} mnt` : '—'}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {item.status === 'IN' ? (
-                        <Badge variant="emerald" dot>Di Lokasi</Badge>
-                      ) : (
-                        <Badge variant="neutral">Selesai</Badge>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </Card>
+                <select
+                  value={participantStatusFilter}
+                  onChange={(e) => setParticipantStatusFilter(e.target.value)}
+                  className="w-full sm:w-48 px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+                >
+                  <option value="">Semua Status</option>
+                  <option value="registered">Belum Check-In (Terdaftar)</option>
+                  <option value="checked_in">Sudah Check-In (Di Lokasi)</option>
+                  <option value="checked_out">Selesai (Check-Out)</option>
+                </select>
+              </div>
+
+              {!isSupervisor && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  icon={UserPlus}
+                  onClick={() => setAddModal(true)}
+                  className="w-full md:w-auto"
+                >
+                  Tambah Peserta Manual
+                </Button>
+              )}
+            </div>
+          </Card>
+
+          {/* Participants Table */}
+          <Card padding="p-0" className="overflow-hidden">
+            {filteredParticipants.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 space-y-2">
+                <Users className="w-10 h-10 mx-auto opacity-50 text-slate-400" />
+                <p className="text-sm font-semibold text-slate-600">Belum ada peserta yang sesuai filter.</p>
+                <p className="text-xs">
+                  Bagikan tautan pendaftaran atau gunakan tombol &quot;Tambah Peserta Manual&quot;.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead>
+                    <tr className="border-b border-slate-200/80 bg-slate-50/80 text-slate-500 font-bold text-[11px] uppercase tracking-wider">
+                      <th className="px-6 py-4">No</th>
+                      <th className="px-6 py-4">Nama Peserta</th>
+                      <th className="px-6 py-4">Kontak</th>
+                      <th className="px-6 py-4">Instansi & Jabatan</th>
+                      <th className="px-6 py-4 text-center">Waktu Pendaftaran</th>
+                      <th className="px-6 py-4 text-center">Status Kehadiran</th>
+                      {!isSupervisor && <th className="px-6 py-4 text-center">Aksi Kehadiran</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredParticipants.map((item, idx) => (
+                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="px-6 py-4 text-xs text-slate-400 font-bold">{idx + 1}</td>
+
+                        <td className="px-6 py-4">
+                          <p className="font-bold text-slate-900">{item.name}</p>
+                          {item.visitor?.photo && (
+                            <span className="text-[10px] text-brand-navy font-semibold">Foto terdaftar</span>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4 text-xs text-slate-600 space-y-0.5">
+                          <div className="flex items-center gap-1.5 font-medium">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            {item.phone}
+                          </div>
+                          {item.email && (
+                            <div className="flex items-center gap-1.5 text-slate-400">
+                              <Mail className="w-3 h-3 text-slate-400" />
+                              {item.email}
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4 text-xs font-semibold text-slate-700">
+                          <p className="text-slate-800">{item.company || 'Pribadi / Umum'}</p>
+                          {item.position && (
+                            <p className="text-[11px] text-slate-400 font-normal">{item.position}</p>
+                          )}
+                        </td>
+
+                        <td className="px-6 py-4 text-center text-xs text-slate-500 whitespace-nowrap">
+                          {item.registered_at ? dayjs(item.registered_at).format('DD/MM/YY HH:mm') : '-'}
+                        </td>
+
+                        <td className="px-6 py-4 text-center whitespace-nowrap">
+                          {item.status === 'checked_in' && (
+                            <Badge variant="emerald" dot>Di Lokasi</Badge>
+                          )}
+                          {item.status === 'checked_out' && (
+                            <Badge variant="neutral">Selesai</Badge>
+                          )}
+                          {item.status === 'registered' && (
+                            <Badge variant="amber">Belum Hadir</Badge>
+                          )}
+                        </td>
+
+                        {!isSupervisor && (
+                          <td className="px-6 py-4 text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1.5">
+                              {item.status === 'registered' && (
+                                <Button
+                                  variant="primary"
+                                  size="sm"
+                                  icon={LogIn}
+                                  loading={actionLoadingId === item.id}
+                                  onClick={() => handleCheckInParticipant(item.id)}
+                                  className="text-xs py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700"
+                                >
+                                  Check-In
+                                </Button>
+                              )}
+
+                              {item.status === 'checked_in' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  icon={LogOut}
+                                  loading={actionLoadingId === item.id}
+                                  onClick={() => handleCheckOutParticipant(item.id)}
+                                  className="text-xs py-1.5 px-3 text-blue-700 border-blue-200 hover:bg-blue-50"
+                                >
+                                  Check-Out
+                                </Button>
+                              )}
+
+                              {item.status === 'checked_out' && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  icon={LogIn}
+                                  loading={actionLoadingId === item.id}
+                                  onClick={() => handleCheckInParticipant(item.id)}
+                                  className="text-xs py-1 px-2.5 text-slate-600 border-slate-200"
+                                  title="Check-in Ulang"
+                                >
+                                  Re-In
+                                </Button>
+                              )}
+
+                              <button
+                                onClick={() => handleDeleteParticipant(item.id)}
+                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                title="Hapus Peserta"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
       )}
 
       {/* ── Tab: Quick Scan ── */}
       {activeTab === 'quickscan' && !useAuthStore.getState().isFeatureDisabled('quick_checkin') && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Scanner Card */}
           <Card className="lg:col-span-7 xl:col-span-8 p-6 md:p-8">
             <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
@@ -388,7 +674,7 @@ const EventDetailPage = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 leading-tight">Camera Express Scan</h2>
-                  <p className="text-xs text-slate-500 font-medium">Check-in/out tamu event via wajah</p>
+                  <p className="text-xs text-slate-500 font-medium">Check-in / Check-out otomatis via wajah</p>
                 </div>
               </div>
               <Badge variant="cyan">Event: {event.name}</Badge>
@@ -426,33 +712,32 @@ const EventDetailPage = () => {
             )}
           </Card>
 
-          {/* Info Panel */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-5">
             <Card padding="p-6">
               <div className="flex items-center gap-2 pb-3 mb-4 border-b border-slate-100">
                 <Zap className="w-5 h-5 text-brand-cyan" />
-                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Alur Quick Scan</h3>
+                <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Alur Quick Scan Event</h3>
               </div>
               <div className="space-y-4 text-xs text-slate-600 font-medium">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-slate-100 flex-shrink-0"><Camera className="w-4 h-4" /></div>
                   <div>
                     <p className="font-bold text-slate-900">1. Arahkan Wajah</p>
-                    <p className="text-slate-500 mt-0.5">Berdiri di depan kamera.</p>
+                    <p className="text-slate-500 mt-0.5">Tamu/peserta berdiri di depan kamera.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800 flex-shrink-0"><LogIn className="w-4 h-4" /></div>
                   <div>
                     <p className="font-bold text-slate-900">2. Belum Check-In → Auto IN</p>
-                    <p className="text-slate-500 mt-0.5">Check-in otomatis ke event ini.</p>
+                    <p className="text-slate-500 mt-0.5">Tercatat hadir pada event ini.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-xl bg-blue-100 text-blue-800 flex-shrink-0"><LogOut className="w-4 h-4" /></div>
                   <div>
                     <p className="font-bold text-slate-900">3. Sudah Check-In → Auto OUT</p>
-                    <p className="text-slate-500 mt-0.5">Check-out otomatis.</p>
+                    <p className="text-slate-500 mt-0.5">Check-out kepulangan otomatis.</p>
                   </div>
                 </div>
               </div>
@@ -464,12 +749,94 @@ const EventDetailPage = () => {
                 <p className="text-xs font-bold text-brand-navy">Event Aktif</p>
               </div>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Semua check-in via scanner ini akan otomatis tercatat ke event <strong>{event.name}</strong>.
+                Semua check-in via scanner ini akan otomatis tercatat ke event <strong>{event.name}</strong> dengan format &quot;Event: {event.name}&quot;.
               </p>
             </Card>
           </div>
         </div>
       )}
+
+      {/* Modal: Tambah Peserta Manual */}
+      <Modal isOpen={addModal} onClose={() => setAddModal(false)} title="Tambah Peserta Manual">
+        <form onSubmit={handleAddParticipantSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Nama Lengkap <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={partForm.name}
+              onChange={(e) => setPartForm({ ...partForm, name: e.target.value })}
+              placeholder="Contoh: Budi Santoso"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Nomor WhatsApp / HP <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              value={partForm.phone}
+              onChange={(e) => setPartForm({ ...partForm, phone: e.target.value })}
+              placeholder="Contoh: 08123456789"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+              Email (Opsional)
+            </label>
+            <input
+              type="email"
+              value={partForm.email}
+              onChange={(e) => setPartForm({ ...partForm, email: e.target.value })}
+              placeholder="Contoh: budi@company.com"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Perusahaan / Instansi
+              </label>
+              <input
+                type="text"
+                value={partForm.company}
+                onChange={(e) => setPartForm({ ...partForm, company: e.target.value })}
+                placeholder="Contoh: PT ABC"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                Jabatan / Posisi
+              </label>
+              <input
+                type="text"
+                value={partForm.position}
+                onChange={(e) => setPartForm({ ...partForm, position: e.target.value })}
+                placeholder="Contoh: Staff IT"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-3 border-t border-slate-100">
+            <Button type="button" variant="outline" fullWidth onClick={() => setAddModal(false)} disabled={addingParticipant}>
+              Batal
+            </Button>
+            <Button type="submit" variant="primary" fullWidth loading={addingParticipant}>
+              Simpan Peserta
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       {/* Modal: Wajah tidak terdaftar */}
       {noMatchModal && (

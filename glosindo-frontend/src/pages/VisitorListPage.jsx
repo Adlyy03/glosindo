@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { Users, UserPlus, Search, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, UserPlus, Search, RefreshCw, ChevronLeft, ChevronRight, CalendarRange, UserCheck } from 'lucide-react';
 import visitorService from '../services/visitorService';
 import useAuthStore from '../store/authStore';
 import VisitorTable from '../components/VisitorTable';
@@ -15,6 +15,7 @@ const VisitorListPage = () => {
   const [meta, setMeta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState(''); // '' | 'regular' | 'event'
   const [page, setPage] = useState(1);
 
   // Form Modal state
@@ -31,15 +32,17 @@ const VisitorListPage = () => {
   const loadVisitors = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await visitorService.getAll({ search, page });
+      const params = { search, page };
+      if (typeFilter) params.type = typeFilter;
+      const res = await visitorService.getAll(params);
       setVisitors(res.data?.data || []);
       setMeta(res.data);
-    } catch (err) {
+    } catch {
       toast.error('Gagal memuat data tamu');
     } finally {
       setLoading(false);
     }
-  }, [search, page]);
+  }, [search, typeFilter, page]);
 
   useEffect(() => {
     loadVisitors();
@@ -93,7 +96,7 @@ const VisitorListPage = () => {
             <Badge variant="navy">Master Database</Badge>
           </div>
           <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
-            Kelola profil lengkap seluruh tamu terdaftar dan rekaman biometrik wajah.
+            Kelola profil lengkap seluruh tamu terdaftar, tamu biasa kantor, dan tamu/peserta event.
           </p>
         </div>
 
@@ -109,8 +112,48 @@ const VisitorListPage = () => {
         )}
       </div>
 
-      {/* Search Input Card */}
-      <Card padding="p-4 md:p-5">
+      {/* Tabs Filter & Search Input Card */}
+      <Card padding="p-4 md:p-5" className="space-y-4">
+        {/* Category Tabs */}
+        <div className="flex items-center gap-2 border-b border-slate-100 pb-3 flex-wrap">
+          <button
+            onClick={() => { setTypeFilter(''); setPage(1); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              typeFilter === ''
+                ? 'bg-brand-navy text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Semua Tamu
+          </button>
+
+          <button
+            onClick={() => { setTypeFilter('regular'); setPage(1); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              typeFilter === 'regular'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <UserCheck className="w-4 h-4" />
+            Tamu Biasa (Kantor)
+          </button>
+
+          <button
+            onClick={() => { setTypeFilter('event'); setPage(1); }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              typeFilter === 'event'
+                ? 'bg-brand-cyan text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <CalendarRange className="w-4 h-4" />
+            Tamu Event
+          </button>
+        </div>
+
+        {/* Search input */}
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
             <Search className="w-5 h-5" />
@@ -119,7 +162,7 @@ const VisitorListPage = () => {
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="Cari berdasarkan nama, email, nomor HP, atau perusahaan instansi..."
+            placeholder="Cari berdasarkan nama, email, nomor HP, jabatan, atau perusahaan instansi..."
             className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan bg-slate-50/50"
           />
         </div>

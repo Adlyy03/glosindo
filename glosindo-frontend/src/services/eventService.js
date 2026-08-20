@@ -1,4 +1,4 @@
-﻿import api from './api';
+import api from './api';
 
 const eventService = {
   /**
@@ -7,12 +7,12 @@ const eventService = {
   getAll: (params = {}) => api.get('/events', { params }),
 
   /**
-   * Get events available for check-in (today, status scheduled/ongoing).
+   * Get events available for check-in.
    */
   getActive: () => api.get('/events/active'),
 
   /**
-   * Get event by ID (includes statistics and participants).
+   * Get event by ID or code (includes statistics and participants).
    */
   getById: (id) => api.get(`/events/${id}`),
 
@@ -30,6 +30,44 @@ const eventService = {
    * Delete an event (soft delete).
    */
   delete: (id) => api.delete(`/events/${id}`),
+
+  /**
+   * Public: Get public event details for registration.
+   */
+  getPublicEvent: (code) => api.get(`/public/events/${code}`),
+
+  /**
+   * Public: Submit public registration for event.
+   */
+  registerPublic: (code, data) => api.post(`/public/events/${code}/register`, data),
+
+  /**
+   * Get event participants.
+   */
+  getParticipants: (id, params = {}) => api.get(`/events/${id}/participants`, { params }),
+
+  /**
+   * Add participant manually to event.
+   */
+  storeParticipant: (id, data) => api.post(`/events/${id}/participants`, data),
+
+  /**
+   * Check in a participant.
+   */
+  checkInParticipant: (id, participantId) =>
+    api.post(`/events/${id}/participants/${participantId}/check-in`),
+
+  /**
+   * Check out a participant.
+   */
+  checkOutParticipant: (id, participantId) =>
+    api.post(`/events/${id}/participants/${participantId}/check-out`),
+
+  /**
+   * Remove a participant from event.
+   */
+  deleteParticipant: (id, participantId) =>
+    api.delete(`/events/${id}/participants/${participantId}`),
 
   /**
    * Get event report statistics.

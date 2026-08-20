@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Event;
+use App\Models\EventParticipant;
 use App\Models\Visit;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
@@ -19,11 +21,25 @@ class VisitController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name']);
+        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name,code']);
 
         // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
             $query->where('receptionist_id', $user->id);
+        }
+
+        // Filter by type: regular / event
+        if ($request->has('type') && !empty($request->type)) {
+            if ($request->type === 'event') {
+                $query->whereNotNull('event_id');
+            } elseif ($request->type === 'regular') {
+                $query->whereNull('event_id');
+            }
+        }
+
+        // Filter by specific event
+        if ($request->has('event_id') && !empty($request->event_id)) {
+            $query->where('event_id', $request->event_id);
         }
 
         // Filter by date range
@@ -40,13 +56,21 @@ class VisitController extends Controller
             $query->where('status', $request->status);
         }
 
-        // Search by visitor name (search both relation and snapshot)
+        // Search by visitor name, meet_to, or event name
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->whereHas('visitor', function ($subQ) use ($search) {
-                    $subQ->where('name', 'like', "%{$search}%");
-                })->orWhere('visitor_name', 'like', "%{$search}%");
+                    $subQ->where('name', 'like', "%{$search}%")
+                         ->orWhere('company', 'like', "%{$search}%");
+                })
+                ->orWhere('visitor_name', 'like', "%{$search}%")
+                ->orWhere('visitor_company', 'like', "%{$search}%")
+                ->orWhere('meet_to', 'like', "%{$search}%")
+                ->orWhere('purpose', 'like', "%{$search}%")
+                ->orWhereHas('event', function ($evtQ) use ($search) {
+                    $evtQ->where('name', 'like', "%{$search}%");
+                });
             });
         }
 
@@ -87,9 +111,11 @@ class VisitController extends Controller
             'event_id'   => 'nullable|exists:events,id',
         ]);
 
+        $meetTo = $request->meet_to ?? '-';
+
         // Validate event if provided
         if ($request->event_id) {
-            $event = \App\Models\Event::find($request->event_id);
+            $event = Event::find($request->event_id);
             if (!$event) {
                 return response()->json([
                     'success' => false,
@@ -102,6 +128,8 @@ class VisitController extends Controller
                     'message' => 'Event sudah ' . ($event->status === 'cancelled' ? 'dibatalkan' : 'selesai') . ' dan tidak dapat digunakan untuk check-in.',
                 ], 422);
             }
+            // For event participants, set meet_to format: "Event: {Nama Event}"
+            $meetTo = 'Event: ' . $event->name;
         }
 
         // Check if visitor already has an active visit
@@ -121,18 +149,48 @@ class VisitController extends Controller
             'receptionist_id'  => auth()->id(),
             'event_id'         => $request->event_id ?? null,
             'purpose'          => $request->purpose,
-            'meet_to'          => $request->meet_to ?? '-',
+            'meet_to'          => $meetTo,
             'check_in'         => Carbon::now(),
             'status'           => 'IN',
         ]);
 
+        // Sync with EventParticipant if event_id is present
+        if ($request->event_id) {
+            $participant = EventParticipant::where('event_id', $request->event_id)
+                ->where('visitor_id', $request->visitor_id)
+                ->first();
+
+            if ($participant) {
+                $participant->update([
+                    'status'        => 'checked_in',
+                    'checked_in_at' => Carbon::now(),
+                ]);
+            } else {
+                $v = Visitor::find($request->visitor_id);
+                if ($v) {
+                    EventParticipant::create([
+                        'event_id'      => $request->event_id,
+                        'visitor_id'    => $v->id,
+                        'name'          => $v->name,
+                        'phone'         => $v->phone,
+                        'email'         => $v->email,
+                        'company'       => $v->company,
+                        'position'      => $v->position,
+                        'status'        => 'checked_in',
+                        'registered_at' => Carbon::now(),
+                        'checked_in_at' => Carbon::now(),
+                    ]);
+                }
+            }
+        }
+
         // Audit log
-        $visit->audit('checked_in', null, $visit->toArray(), "Visitor checked in");
+        $visit->audit('checked_in', null, $visit->toArray(), "Visitor checked in" . ($request->event_id ? " for Event" : ""));
 
         return response()->json([
             'success' => true,
             'message' => 'Check-in successful',
-            'data'    => $visit->load(['visitor', 'receptionist:id,name,email', 'event:id,name']),
+            'data'    => $visit->load(['visitor', 'receptionist:id,name,email', 'event:id,name,code']),
         ], 201);
     }
 
@@ -141,16 +199,25 @@ class VisitController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function active()
+    public function active(Request $request)
     {
         $user = auth()->user();
         $query = Visit::whereHas('visitor')
-            ->with(['visitor', 'receptionist:id,name,email', 'event:id,name'])
+            ->with(['visitor', 'receptionist:id,name,email', 'event:id,name,code'])
             ->where('status', 'IN');
 
         // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
             $query->where('receptionist_id', $user->id);
+        }
+
+        // Filter by type: regular / event
+        if ($request->has('type') && !empty($request->type)) {
+            if ($request->type === 'event') {
+                $query->whereNotNull('event_id');
+            } elseif ($request->type === 'regular') {
+                $query->whereNull('event_id');
+            }
         }
 
         $visits = $query->orderBy('check_in', 'desc')->get();
@@ -169,9 +236,21 @@ class VisitController extends Controller
      */
     public function history(Request $request)
     {
-        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name']);
+        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name,code']);
 
-        // All roles (admin, receptionist, supervisor) see full visit history
+        // Filter by type: regular / event
+        if ($request->has('type') && !empty($request->type)) {
+            if ($request->type === 'event') {
+                $query->whereNotNull('event_id');
+            } elseif ($request->type === 'regular') {
+                $query->whereNull('event_id');
+            }
+        }
+
+        // Filter by event_id
+        if ($request->has('event_id') && !empty($request->event_id)) {
+            $query->where('event_id', $request->event_id);
+        }
 
         // Filter by date range
         if ($request->has('start_date') && !empty($request->start_date)) {
@@ -182,13 +261,21 @@ class VisitController extends Controller
             $query->whereDate('check_in', '<=', $request->end_date);
         }
 
-        // Search by visitor name (search both relation and snapshot)
+        // Search by visitor name, meet_to, or event name
         if ($request->has('search') && !empty($request->search)) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->whereHas('visitor', function ($subQ) use ($search) {
-                    $subQ->where('name', 'like', "%{$search}%");
-                })->orWhere('visitor_name', 'like', "%{$search}%");
+                    $subQ->where('name', 'like', "%{$search}%")
+                         ->orWhere('company', 'like', "%{$search}%");
+                })
+                ->orWhere('visitor_name', 'like', "%{$search}%")
+                ->orWhere('visitor_company', 'like', "%{$search}%")
+                ->orWhere('meet_to', 'like', "%{$search}%")
+                ->orWhere('purpose', 'like', "%{$search}%")
+                ->orWhereHas('event', function ($evtQ) use ($search) {
+                    $evtQ->where('name', 'like', "%{$search}%");
+                });
             });
         }
 
@@ -223,7 +310,7 @@ class VisitController extends Controller
     public function show($id)
     {
         $user = auth()->user();
-        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name']);
+        $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name,code']);
 
         // Receptionist only see their own visits, supervisor & admin see all
         if ($user->role === 'receptionist') {
@@ -281,8 +368,22 @@ class VisitController extends Controller
 
         $visit->update([
             'check_out' => Carbon::now(),
-            'status' => 'OUT',
+            'status'    => 'OUT',
         ]);
+
+        // Sync with EventParticipant if applicable
+        if ($visit->event_id) {
+            $participant = EventParticipant::where('event_id', $visit->event_id)
+                ->where('visitor_id', $visit->visitor_id)
+                ->first();
+
+            if ($participant) {
+                $participant->update([
+                    'status'         => 'checked_out',
+                    'checked_out_at' => Carbon::now(),
+                ]);
+            }
+        }
 
         // Audit log
         $visit->audit('checked_out', $oldValues, $visit->fresh()->toArray(), "Visitor checked out");
@@ -290,7 +391,7 @@ class VisitController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Check-out successful',
-            'data'    => $visit->load(['visitor', 'receptionist:id,name,email', 'event:id,name']),
+            'data'    => $visit->load(['visitor', 'receptionist:id,name,email', 'event:id,name,code']),
         ]);
     }
 

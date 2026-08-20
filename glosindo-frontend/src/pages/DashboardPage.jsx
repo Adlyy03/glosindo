@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Users,
   UserCheck,
@@ -16,9 +16,16 @@ import {
   FileText,
   FileDown,
   CheckCircle,
-  Calendar
+  Calendar,
+  CalendarRange,
+  Copy,
+  Check,
+  ExternalLink,
+  MapPin,
+  Sparkles,
+  Layers
 } from 'lucide-react';
-import { Line, Bar as BarChart2 } from 'react-chartjs-2';
+import { Line, Bar as BarChart2, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -26,6 +33,7 @@ import {
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Title,
   Tooltip as ChartTooltip,
   Legend,
@@ -36,6 +44,7 @@ import 'dayjs/locale/id';
 import StatCard from '../components/StatCard';
 import dashboardService from '../services/dashboardService';
 import reportService from '../services/reportService';
+import eventService from '../services/eventService';
 import Card, { CardHeader } from '../components/ui/Card';
 import Button from '../components/ui/Button';
 import Badge from '../components/ui/Badge';
@@ -49,6 +58,7 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Title,
   ChartTooltip,
   Legend,
@@ -58,6 +68,7 @@ ChartJS.register(
 dayjs.locale('id');
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [trends, setTrends] = useState([]);
   const [topVisitors, setTopVisitors] = useState([]);
@@ -71,6 +82,9 @@ const DashboardPage = () => {
   const [reportStats, setReportStats] = useState(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [downloading, setDownloading] = useState({ excel: false, pdf: false });
+
+  // Copied link id
+  const [copiedEventId, setCopiedEventId] = useState(null);
 
   // Set default dates for weekly report
   useEffect(() => {
@@ -96,7 +110,6 @@ const DashboardPage = () => {
           dashboardService.getVisitTrends(),
           dashboardService.getTopVisitors(5),
         ]);
-        // dashboardService already returns response.data, so use directly
         const statsData = statsRes?.data ?? statsRes;
         const trendsData = trendsRes?.data ?? trendsRes;
         const topData = topRes?.data ?? topRes;
@@ -139,6 +152,19 @@ const DashboardPage = () => {
     }
   }, [startDate, endDate, period]);
 
+  const handleCopyLink = (event, e) => {
+    e.stopPropagation();
+    const code = event.code || event.id;
+    const url = `${window.location.origin}/event/${code}/register`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedEventId(event.id);
+      toast.success('Link registrasi publik disalin!', { icon: '🔗' });
+      setTimeout(() => setCopiedEventId(null), 2500);
+    }).catch(() => {
+      toast.error('Gagal menyalin link');
+    });
+  };
+
   const handleDownloadExcel = async () => {
     if (!startDate || !endDate) {
       toast.error('Pilih tanggal terlebih dahulu');
@@ -147,10 +173,7 @@ const DashboardPage = () => {
 
     setDownloading({ ...downloading, excel: true });
     try {
-      console.log('[DashboardPage] Downloading Excel:', { startDate, endDate });
       const res = await reportService.exportExcel(startDate, endDate);
-      console.log('[DashboardPage] Excel response:', res);
-
       const blob = new Blob([res.data], {
         type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
@@ -162,10 +185,8 @@ const DashboardPage = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
       toast.success('File Excel berhasil diunduh!', { icon: '📥' });
-    } catch (err) {
-      console.error('[DashboardPage] Download Excel error:', err);
+    } catch {
       toast.error('Gagal mengunduh file Excel');
     } finally {
       setDownloading({ ...downloading, excel: false });
@@ -180,13 +201,8 @@ const DashboardPage = () => {
 
     setDownloading({ ...downloading, pdf: true });
     try {
-      console.log('[DashboardPage] Downloading PDF:', { startDate, endDate });
       const res = await reportService.exportPdf(startDate, endDate);
-      console.log('[DashboardPage] PDF response:', res);
-
-      const blob = new Blob([res.data], {
-        type: 'application/pdf',
-      });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -195,10 +211,8 @@ const DashboardPage = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
       toast.success('File PDF berhasil diunduh!', { icon: '📥' });
-    } catch (err) {
-      console.error('[DashboardPage] Download PDF error:', err);
+    } catch {
       toast.error('Gagal mengunduh file PDF');
     } finally {
       setDownloading({ ...downloading, pdf: false });
@@ -207,11 +221,13 @@ const DashboardPage = () => {
 
   // Prepare chart data
   const lineChartData = reportStats ? {
-    labels: reportStats.daily_stats.map(d => new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })),
+    labels: reportStats.daily_stats.map((d) =>
+      new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+    ),
     datasets: [
       {
         label: 'Total Kunjungan',
-        data: reportStats.daily_stats.map(d => d.total_visits),
+        data: reportStats.daily_stats.map((d) => d.total_visits),
         borderColor: '#3B82F6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
@@ -224,22 +240,39 @@ const DashboardPage = () => {
   } : null;
 
   const barChartData = reportStats ? {
-    labels: reportStats.daily_stats.map(d => new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })),
+    labels: reportStats.daily_stats.map((d) =>
+      new Date(d.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+    ),
     datasets: [
       {
         label: 'Aktif',
-        data: reportStats.daily_stats.map(d => d.active_visits),
+        data: reportStats.daily_stats.map((d) => d.active_visits),
         backgroundColor: '#3B82F6',
         borderRadius: 6,
       },
       {
         label: 'Selesai',
-        data: reportStats.daily_stats.map(d => d.completed_visits),
+        data: reportStats.daily_stats.map((d) => d.completed_visits),
         backgroundColor: '#10B981',
         borderRadius: 6,
       },
     ],
   } : null;
+
+  // Event Doughnut Chart Data
+  const eventDoughnutData = {
+    labels: ['Sudah Check-In', 'Belum Check-In'],
+    datasets: [
+      {
+        data: [
+          stats?.event_participants_checked_in || 0,
+          stats?.event_participants_not_checked_in || 0,
+        ],
+        backgroundColor: ['#10B981', '#F59E0B'],
+        borderWidth: 0,
+      },
+    ],
+  };
 
   const chartOptions = {
     responsive: true,
@@ -275,200 +308,359 @@ const DashboardPage = () => {
     },
   };
 
-  const statCards = [
-    {
-      title: 'Total Tamu Terdaftar',
-      value: stats?.total_visitor,
-      color: 'blue',
-      subtitle: 'Master database visitor',
-      icon: Users,
-    },
-    {
-      title: 'Kunjungan Hari Ini',
-      value: stats?.visitor_today,
-      color: 'green',
-      subtitle: dayjs().format('DD MMMM YYYY'),
-      icon: CalendarCheck,
-    },
-    {
-      title: 'Tamu Aktif (Status IN)',
-      value: stats?.active_visitor,
-      color: 'amber',
-      subtitle: 'Sedang di dalam gedung',
-      icon: UserCheck,
-    },
-    {
-      title: 'Kunjungan Bulan Ini',
-      value: stats?.total_visit_this_month,
-      color: 'purple',
-      subtitle: dayjs().format('MMMM YYYY'),
-      icon: TrendingUp,
-    },
-    {
-      title: 'Event Hari Ini',
-      value: stats?.event_today || stats?.events_today || 0,
-      color: 'cyan',
-      subtitle: `${stats?.active_events || 0} event berlangsung`,
-      icon: Calendar,
-    },
-  ];
-
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-5 animate-fadeIn">
-      {/* Purple Gradient Header dengan Ilustrasi */}
-      <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 rounded-3xl p-8 md:p-10 text-white shadow-xl overflow-hidden min-h-[200px]">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-900/20 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl"></div>
-          
-          {/* Floating particles */}
-          <div className="absolute top-20 left-20 w-2 h-2 bg-white/30 rounded-full animate-bounce" style={{ animationDelay: '0s', animationDuration: '3s' }}></div>
-          <div className="absolute top-40 right-32 w-3 h-3 bg-yellow-300/40 rounded-full animate-bounce" style={{ animationDelay: '1s', animationDuration: '4s' }}></div>
-          <div className="absolute bottom-32 left-40 w-2 h-2 bg-purple-300/30 rounded-full animate-bounce" style={{ animationDelay: '2s', animationDuration: '3.5s' }}></div>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6 animate-fadeIn">
+      {/* Header Banner */}
+      <div className="relative bg-gradient-to-br from-indigo-700 via-brand-navy to-blue-900 rounded-3xl p-8 md:p-10 text-white shadow-xl overflow-hidden min-h-[190px]">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-400/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full translate-y-1/2 -translate-x-1/2 blur-3xl" />
         </div>
-        
-        <div className="relative">
-          <div className="z-10">
-            <p className="text-sm text-purple-200 mb-2">{dayjs().format('dddd, DD MMMM YYYY')}</p>
-            <h1 className="text-3xl md:text-4xl font-bold mb-3">
-              Selamat datang, <span className="text-yellow-300">{user?.name || 'User'}</span>
-            </h1>
-            <p className="text-purple-100 text-sm max-w-md">
-              Sistem buku tamu digital dengan face recognition PT GLOSINDO.
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-cyan-200 font-semibold uppercase tracking-wider mb-1">
+              {dayjs().format('dddd, DD MMMM YYYY')}
             </p>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight">
+              Selamat datang, <span className="text-cyan-300">{user?.name || 'User'}</span>
+            </h1>
+            <p className="text-slate-200 text-xs sm:text-sm max-w-md mt-1 leading-relaxed">
+              Sistem buku tamu digital terintegrasi & manajemen event PT GLOSINDO.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              size="sm"
+              icon={CalendarRange}
+              onClick={() => navigate('/events')}
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+            >
+              Kelola Event
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={Camera}
+              onClick={() => navigate('/check-in')}
+              className="bg-brand-cyan hover:bg-cyan-500 text-white border-none font-bold"
+            >
+              Camera Check-In
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* 4 Menu Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Quick Navigation Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Link to="/check-in">
-          <Card hover className="p-6 text-center bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all">
-            <div className="w-14 h-14 mx-auto mb-3 bg-blue-100 rounded-2xl flex items-center justify-center">
-              <Camera className="w-7 h-7 text-blue-600" />
+          <Card hover className="p-5 text-center bg-white border border-slate-200 rounded-2xl shadow-xs hover:shadow-md transition-all">
+            <div className="w-12 h-12 mx-auto mb-2 bg-blue-100 rounded-2xl flex items-center justify-center">
+              <Camera className="w-6 h-6 text-blue-600" />
             </div>
-            <p className="text-sm font-bold text-slate-900">Check-In</p>
+            <p className="text-xs font-bold text-slate-900">Check-In</p>
+            <p className="text-[10px] text-slate-400">Scanner Wajah</p>
           </Card>
         </Link>
 
-        <Link to="/visit-history">
-          <Card hover className="p-6 text-center bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all">
-            <div className="w-14 h-14 mx-auto mb-3 bg-amber-100 rounded-2xl flex items-center justify-center">
-              <History className="w-7 h-7 text-amber-600" />
+        <Link to="/events">
+          <Card hover className="p-5 text-center bg-white border border-cyan-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all bg-cyan-50/20">
+            <div className="w-12 h-12 mx-auto mb-2 bg-cyan-100 rounded-2xl flex items-center justify-center">
+              <CalendarRange className="w-6 h-6 text-cyan-600" />
             </div>
-            <p className="text-sm font-bold text-slate-900">History</p>
+            <p className="text-xs font-bold text-slate-900">Event</p>
+            <p className="text-[10px] text-cyan-600 font-semibold">Tamu Perusahaan</p>
           </Card>
         </Link>
 
         <Link to="/active-visitors">
-          <Card hover className="p-6 text-center bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all">
-            <div className="w-14 h-14 mx-auto mb-3 bg-green-100 rounded-2xl flex items-center justify-center">
-              <UserCheck className="w-7 h-7 text-green-600" />
+          <Card hover className="p-5 text-center bg-white border border-slate-200 rounded-2xl shadow-xs hover:shadow-md transition-all">
+            <div className="w-12 h-12 mx-auto mb-2 bg-emerald-100 rounded-2xl flex items-center justify-center">
+              <UserCheck className="w-6 h-6 text-emerald-600" />
             </div>
-            <p className="text-sm font-bold text-slate-900">Active</p>
+            <p className="text-xs font-bold text-slate-900">Tamu Aktif</p>
+            <p className="text-[10px] text-slate-400">Di Dalam Gedung</p>
+          </Card>
+        </Link>
+
+        <Link to="/visit-history">
+          <Card hover className="p-5 text-center bg-white border border-slate-200 rounded-2xl shadow-xs hover:shadow-md transition-all">
+            <div className="w-12 h-12 mx-auto mb-2 bg-amber-100 rounded-2xl flex items-center justify-center">
+              <History className="w-6 h-6 text-amber-600" />
+            </div>
+            <p className="text-xs font-bold text-slate-900">Riwayat</p>
+            <p className="text-[10px] text-slate-400">Log Kunjungan</p>
           </Card>
         </Link>
 
         <Link to="/visitors">
-          <Card hover className="p-6 text-center bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition-all">
-            <div className="w-14 h-14 mx-auto mb-3 bg-purple-100 rounded-2xl flex items-center justify-center">
-              <Users className="w-7 h-7 text-purple-600" />
+          <Card hover className="p-5 text-center bg-white border border-slate-200 rounded-2xl shadow-xs hover:shadow-md transition-all">
+            <div className="w-12 h-12 mx-auto mb-2 bg-purple-100 rounded-2xl flex items-center justify-center">
+              <Users className="w-6 h-6 text-purple-600" />
             </div>
-            <p className="text-sm font-bold text-slate-900">Directory</p>
+            <p className="text-xs font-bold text-slate-900">Direktori Tamu</p>
+            <p className="text-[10px] text-slate-400">Database Master</p>
           </Card>
         </Link>
       </div>
 
-      {/* Info Section Horizontal */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="p-5 bg-white border border-slate-200 rounded-2xl">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-green-100 rounded-xl">
-              <CalendarCheck className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-1">Tamu hari ini</p>
+      {/* ─── EVENT & TAMU PERUSAHAAN SECTION ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CalendarRange className="w-5 h-5 text-brand-navy" />
+            <h2 className="text-lg font-black text-slate-900 tracking-tight">
+              Statistik Event & Tamu Perusahaan
+            </h2>
+            <Badge variant="cyan">Event System</Badge>
+          </div>
+          <Link to="/events" className="text-xs font-bold text-brand-navy hover:underline flex items-center gap-1">
+            Lihat Semua Event <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* 6 Event KPI Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+          <Card padding="p-4" className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Event</p>
+            <p className="text-2xl font-black text-slate-900 mt-1">{stats?.total_events || 0}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Semua event</p>
+          </Card>
+
+          <Card padding="p-4" className="bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-700">Event Aktif</p>
+            <p className="text-2xl font-black text-brand-navy mt-1">{stats?.active_events || 0}</p>
+            <p className="text-[10px] text-cyan-600 mt-0.5">Sedang berjalan</p>
+          </Card>
+
+          <Card padding="p-4" className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Event Selesai</p>
+            <p className="text-2xl font-black text-slate-700 mt-1">{stats?.finished_events || 0}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Riwayat tuntas</p>
+          </Card>
+
+          <Card padding="p-4" className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Total Peserta</p>
+            <p className="text-2xl font-black text-purple-900 mt-1">{stats?.total_event_participants || 0}</p>
+            <p className="text-[10px] text-purple-600 mt-0.5">Pra-registrasi & tamu</p>
+          </Card>
+
+          <Card padding="p-4" className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Sudah Check-In</p>
+            <p className="text-2xl font-black text-emerald-800 mt-1">{stats?.event_participants_checked_in || 0}</p>
+            <p className="text-[10px] text-emerald-600 mt-0.5">Telah hadir di lokasi</p>
+          </Card>
+
+          <Card padding="p-4" className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 text-center">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Belum Check-In</p>
+            <p className="text-2xl font-black text-amber-800 mt-1">{stats?.event_participants_not_checked_in || 0}</p>
+            <p className="text-[10px] text-amber-600 mt-0.5">Menunggu kehadiran</p>
+          </Card>
+        </div>
+
+        {/* Event Terdekat & Grafik Kehadiran */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Upcoming / Active Events List */}
+          <Card padding="p-6" className="lg:col-span-8">
+            <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-slate-900">{stats?.visitor_today || 0}</span>
-                <span className="text-xs text-slate-500">pengunjung</span>
+                <CalendarRange className="w-5 h-5 text-brand-navy" />
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                  Event Aktif & Terdekat
+                </h3>
+              </div>
+              <Badge variant="neutral">Top 5 Agenda</Badge>
+            </div>
+
+            {(!stats?.upcoming_events || stats.upcoming_events.length === 0) ? (
+              <div className="p-8 text-center text-slate-400 space-y-1">
+                <Calendar className="w-8 h-8 mx-auto opacity-50" />
+                <p className="text-xs font-semibold text-slate-600">Tidak ada event terdekat saat ini.</p>
+                <p className="text-[11px]">Buat event baru untuk membuka registrasi tamu perusahaan.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {stats.upcoming_events.map((evt) => {
+                  const startDate = evt.start_date || evt.event_date;
+                  const totalPart = Math.max(evt.participants_count || 0, evt.visits_count || 0);
+
+                  return (
+                    <div
+                      key={evt.id}
+                      className="p-4 bg-slate-50 rounded-2xl border border-slate-200/70 hover:bg-slate-100/80 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0 space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-extrabold text-slate-900 text-sm">{evt.name}</p>
+                          {evt.code && (
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
+                              {evt.code}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            {dayjs(startDate).format('DD MMM YYYY')}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                            {evt.start_time?.slice(0, 5)} - {evt.end_time?.slice(0, 5)} WIB
+                          </span>
+                          {evt.location && (
+                            <span className="flex items-center gap-1 truncate max-w-[120px]">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                              {evt.location}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-center">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white text-brand-navy font-bold text-xs border border-slate-200">
+                          <Users className="w-3.5 h-3.5" />
+                          {totalPart} Peserta
+                        </span>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          icon={copiedEventId === evt.id ? Check : Copy}
+                          onClick={(e) => handleCopyLink(evt, e)}
+                          className="text-xs"
+                          title="Salin Link Registrasi Publik"
+                        >
+                          {copiedEventId === evt.id ? 'Tersalin' : 'Link'}
+                        </Button>
+
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          onClick={() => navigate(`/events/${evt.id}`)}
+                          className="text-xs py-1.5 px-3"
+                        >
+                          Detail
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+
+          {/* Participant Presence Status Donut */}
+          <Card padding="p-6" className="lg:col-span-4 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-emerald-600" />
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                    Kehadiran Peserta
+                  </h3>
+                </div>
+                <Badge variant="emerald">Realtime</Badge>
+              </div>
+              <p className="text-xs text-slate-500 mb-3">
+                Rasio peserta event yang telah melakukan check-in vs belum hadir.
+              </p>
+            </div>
+
+            <div className="h-44 relative flex items-center justify-center my-2">
+              <Doughnut
+                data={eventDoughnutData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 11, weight: '600' } } },
+                  },
+                  cutout: '70%',
+                }}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-center text-xs font-bold">
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-800">
+                <p className="text-[10px] text-emerald-600 font-semibold uppercase">Check-In</p>
+                <p className="text-base font-extrabold">{stats?.event_participants_checked_in || 0}</p>
+              </div>
+              <div className="p-2 rounded-xl bg-amber-50 text-amber-800">
+                <p className="text-[10px] text-amber-600 font-semibold uppercase">Belum Hadir</p>
+                <p className="text-base font-extrabold">{stats?.event_participants_not_checked_in || 0}</p>
               </div>
             </div>
-          </div>
-        </Card>
-
-        <Card className="p-5 bg-white border border-slate-200 rounded-2xl">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-slate-100 rounded-xl">
-              <TrendingUp className="w-5 h-5 text-slate-600" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500 mb-1">Status tamu</p>
-              <p className="text-sm font-bold text-slate-900">{stats?.active_visitor || 0} sedang di dalam</p>
-              <Link to="/active-visitors" className="text-xs text-blue-600 hover:underline mt-1 inline-block">
-                Lihat daftar tamu aktif
-              </Link>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
-      {/* Stats Cards Bottom */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="p-5 bg-gradient-to-br from-blue-50 to-blue-100 border-none rounded-2xl">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white rounded-2xl shadow-sm">
-              <CalendarCheck className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-blue-900">{stats?.visitor_today || 0}</p>
-              <p className="text-xs text-blue-700 font-medium">Visitor hari ini</p>
-            </div>
-          </div>
-        </Card>
+      {/* ─── GENERAL VISITOR STATS ─── */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-5 h-5 text-brand-navy" />
+          <h2 className="text-lg font-black text-slate-900 tracking-tight">
+            Ringkasan Kunjungan Kantor
+          </h2>
+          <Badge variant="navy">Visitor Summary</Badge>
+        </div>
 
-        <Card className="p-5 bg-gradient-to-br from-amber-50 to-amber-100 border-none rounded-2xl">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white rounded-2xl shadow-sm">
-              <History className="w-6 h-6 text-amber-600" />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card className="p-5 bg-gradient-to-br from-blue-50 to-blue-100 border-none rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white rounded-2xl shadow-xs">
+                <CalendarCheck className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-blue-900">{stats?.visitor_today || 0}</p>
+                <p className="text-xs text-blue-700 font-semibold">Tamu Hari Ini</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-amber-900">{stats?.total_visit_this_month || 0}</p>
-              <p className="text-xs text-amber-700 font-medium">Visit bulan ini</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card className="p-5 bg-gradient-to-br from-green-50 to-green-100 border-none rounded-2xl">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-white rounded-2xl shadow-sm">
-              <Users className="w-6 h-6 text-green-600" />
+          <Card className="p-5 bg-gradient-to-br from-amber-50 to-amber-100 border-none rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white rounded-2xl shadow-xs">
+                <History className="w-6 h-6 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-amber-900">{stats?.total_visit_this_month || 0}</p>
+                <p className="text-xs text-amber-700 font-semibold">Kunjungan Bulan Ini</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-green-900">{stats?.total_visitor || 0}</p>
-              <p className="text-xs text-green-700 font-medium">Total visitor</p>
+          </Card>
+
+          <Card className="p-5 bg-gradient-to-br from-green-50 to-green-100 border-none rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-white rounded-2xl shadow-xs">
+                <Users className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-black text-green-900">{stats?.total_visitor || 0}</p>
+                <p className="text-xs text-green-700 font-semibold">Total Profil Tamu</p>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
-      {/* Weekly Report Section */}
+      {/* Weekly & Monthly Report Section */}
       <div className="space-y-5">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-2">
           <FileText className="w-5 h-5 text-brand-navy" />
-          <h2 className="text-xl font-bold text-slate-900">Laporan Mingguan</h2>
-          <Badge variant="blue" dot>Weekly Report</Badge>
+          <h2 className="text-lg font-black text-slate-900 tracking-tight">Laporan & Tren Statistik</h2>
+          <Badge variant="blue" dot>Analytics</Badge>
         </div>
 
         {/* Filter Controls */}
         <Card padding="p-6">
           <CardHeader className="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100">
             <Calendar className="w-5 h-5 text-brand-navy" />
-            <h3 className="text-lg font-bold text-slate-900">Filter Periode</h3>
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Filter Periode Analitik</h3>
           </CardHeader>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Period Toggle */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wider">
                 Periode
@@ -478,7 +670,7 @@ const DashboardPage = () => {
                   onClick={() => setPeriod('weekly')}
                   className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                     period === 'weekly'
-                      ? 'bg-brand-navy text-white shadow-md'
+                      ? 'bg-brand-navy text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -488,7 +680,7 @@ const DashboardPage = () => {
                   onClick={() => setPeriod('monthly')}
                   className={`flex-1 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all ${
                     period === 'monthly'
-                      ? 'bg-brand-navy text-white shadow-md'
+                      ? 'bg-brand-navy text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -497,7 +689,6 @@ const DashboardPage = () => {
               </div>
             </div>
 
-            {/* Start Date */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wider">
                 Tanggal Mulai
@@ -506,11 +697,10 @@ const DashboardPage = () => {
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-navy/30 focus:border-brand-navy text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-cyan text-sm"
               />
             </div>
 
-            {/* End Date */}
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-2 uppercase tracking-wider">
                 Tanggal Akhir
@@ -519,16 +709,15 @@ const DashboardPage = () => {
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-navy/30 focus:border-brand-navy text-sm"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-cyan text-sm"
               />
             </div>
 
-            {/* Refresh Button */}
             <div className="flex items-end">
               <button
                 onClick={fetchReportStatistics}
                 disabled={loadingReport}
-                className="w-full px-6 py-2.5 rounded-xl bg-brand-cyan text-white font-bold text-sm shadow-md hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-6 py-2.5 rounded-xl bg-brand-cyan text-white font-bold text-sm shadow-sm hover:bg-cyan-600 transition-all disabled:opacity-50"
               >
                 {loadingReport ? 'Memuat...' : 'Perbarui Data'}
               </button>
@@ -540,8 +729,7 @@ const DashboardPage = () => {
         {reportStats && (
           <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Total Visits */}
-              <Card padding="p-6" className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-xl">
+              <Card padding="p-6" className="bg-gradient-to-br from-blue-600 to-blue-700 text-white border-none shadow-lg">
                 <div className="flex items-start justify-between mb-3">
                   <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
                     <TrendingUp className="w-6 h-6" />
@@ -554,8 +742,7 @@ const DashboardPage = () => {
                 </div>
               </Card>
 
-              {/* Active Visits */}
-              <Card padding="p-6" className="bg-gradient-to-br from-amber-500 to-orange-600 text-white border-none shadow-xl">
+              <Card padding="p-6" className="bg-gradient-to-br from-amber-500 to-orange-600 text-white border-none shadow-lg">
                 <div className="flex items-start justify-between mb-3">
                   <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
                     <Clock className="w-6 h-6" />
@@ -568,8 +755,7 @@ const DashboardPage = () => {
                 </div>
               </Card>
 
-              {/* Completed Visits */}
-              <Card padding="p-6" className="bg-gradient-to-br from-emerald-500 to-green-600 text-white border-none shadow-xl">
+              <Card padding="p-6" className="bg-gradient-to-br from-emerald-500 to-green-600 text-white border-none shadow-lg">
                 <div className="flex items-start justify-between mb-3">
                   <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
                     <CheckCircle className="w-6 h-6" />
@@ -585,54 +771,26 @@ const DashboardPage = () => {
 
             {/* Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Line Chart */}
               <Card padding="p-6">
                 <CardHeader className="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100">
                   <TrendingUp className="w-5 h-5 text-blue-600" />
-                  <h3 className="text-lg font-bold text-slate-900">Tren Kunjungan Harian</h3>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Tren Kunjungan Harian</h3>
                 </CardHeader>
-                <div style={{ height: '300px' }}>
+                <div style={{ height: '280px' }}>
                   {lineChartData && <Line data={lineChartData} options={chartOptions} />}
                 </div>
               </Card>
 
-              {/* Bar Chart */}
               <Card padding="p-6">
                 <CardHeader className="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100">
                   <Users className="w-5 h-5 text-emerald-600" />
-                  <h3 className="text-lg font-bold text-slate-900">Status Kunjungan</h3>
+                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">Status Kunjungan</h3>
                 </CardHeader>
-                <div style={{ height: '300px' }}>
+                <div style={{ height: '280px' }}>
                   {barChartData && <BarChart2 data={barChartData} options={chartOptions} />}
                 </div>
               </Card>
             </div>
-
-            {/* Top Visitors */}
-            {reportStats.top_visitors.length > 0 && (
-              <Card padding="p-6">
-                <CardHeader className="flex items-center gap-2 pb-4 mb-4 border-b border-slate-100">
-                  <Users className="w-5 h-5 text-brand-navy" />
-                  <h3 className="text-lg font-bold text-slate-900">10 Tamu Teratas</h3>
-                </CardHeader>
-                <div className="space-y-3">
-                  {reportStats.top_visitors.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-navy text-white flex items-center justify-center font-bold text-sm">
-                          {idx + 1}
-                        </div>
-                        <div>
-                          <p className="font-bold text-slate-900">{item.visitor?.name || '-'}</p>
-                          <p className="text-xs text-slate-500">{item.visitor?.company || '-'}</p>
-                        </div>
-                      </div>
-                      <Badge variant="blue">{item.visit_count} kunjungan</Badge>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
 
             {/* Export Buttons */}
             <Card padding="p-6" className="bg-slate-900 text-white border-none shadow-xl">
@@ -642,9 +800,9 @@ const DashboardPage = () => {
                     <FileDown className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold mb-1">Unduh Laporan</h3>
-                    <p className="text-sm text-slate-300">
-                      Ekspor data statistik ke format Excel atau PDF untuk arsip dan dokumentasi.
+                    <h3 className="text-base font-bold mb-0.5">Unduh Laporan Kunjungan</h3>
+                    <p className="text-xs text-slate-300">
+                      Ekspor data statistik kunjungan ke format Excel atau PDF untuk arsip resmi.
                     </p>
                   </div>
                 </div>
@@ -653,18 +811,18 @@ const DashboardPage = () => {
                   <button
                     onClick={handleDownloadExcel}
                     disabled={downloading.excel}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-md hover:bg-emerald-700 transition-all disabled:opacity-50"
                   >
-                    <FileSpreadsheet className="w-5 h-5" />
+                    <FileSpreadsheet className="w-4 h-4" />
                     <span>{downloading.excel ? 'Mengunduh...' : 'Excel'}</span>
                   </button>
 
                   <button
                     onClick={handleDownloadPdf}
                     disabled={downloading.pdf}
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-red-600 text-white font-bold text-sm shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-600 text-white font-bold text-xs shadow-md hover:bg-red-700 transition-all disabled:opacity-50"
                   >
-                    <FileText className="w-5 h-5" />
+                    <FileText className="w-4 h-4" />
                     <span>{downloading.pdf ? 'Mengunduh...' : 'PDF'}</span>
                   </button>
                 </div>

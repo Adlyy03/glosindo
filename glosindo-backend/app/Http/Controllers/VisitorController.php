@@ -17,7 +17,26 @@ class VisitorController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Visitor::query()->with(['faceEmbedding', 'latestVisit']);
+        $query = Visitor::query()->with(['faceEmbedding', 'latestVisit.event:id,name', 'eventParticipants.event:id,name']);
+
+        // Filter by type: regular vs event
+        if ($request->has('type') && !empty($request->type)) {
+            if ($request->type === 'event') {
+                $query->where(function ($q) {
+                    $q->whereHas('visits', function ($sub) {
+                        $sub->whereNotNull('event_id');
+                    })->orWhereHas('eventParticipants');
+                });
+            } elseif ($request->type === 'regular') {
+                $query->whereDoesntHave('eventParticipants')
+                      ->where(function ($q) {
+                          $q->whereDoesntHave('visits')
+                            ->orWhereHas('visits', function ($sub) {
+                                $sub->whereNull('event_id');
+                            });
+                      });
+            }
+        }
 
         // Search functionality
         if ($request->has('search') && !empty($request->search)) {

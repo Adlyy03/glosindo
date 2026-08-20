@@ -25,9 +25,13 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // Authentication
     $router->post('login', 'AuthController@login');
     
-    // Public registration
+    // Public guest registration
     $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
     $router->post('public-registration/register', 'PublicRegistrationController@register');
+
+    // Public event registration
+    $router->get('public/events/{code}', 'EventController@publicShow');
+    $router->post('public/events/{code}/register', 'EventController@publicRegister');
     
     // Temp debug route - check users
     $router->get('debug/users', function () {
@@ -118,6 +122,13 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->get('events/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@show']);
     $router->put('events/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@update']);
     $router->delete('events/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@destroy']);
+
+    // Event participants
+    $router->get('events/{id}/participants', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@participants']);
+    $router->post('events/{id}/participants', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@storeParticipant']);
+    $router->post('events/{id}/participants/{participantId}/check-in', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@checkInParticipant']);
+    $router->post('events/{id}/participants/{participantId}/check-out', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@checkOutParticipant']);
+    $router->delete('events/{id}/participants/{participantId}', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@destroyParticipant']);
 });
 
 // Swagger UI route

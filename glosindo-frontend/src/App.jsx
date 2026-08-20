@@ -22,6 +22,7 @@ import ReceptionistActivePage from './pages/receptionist/ReceptionistActivePage'
 import ReceptionistHistoryPage from './pages/receptionist/ReceptionistHistoryPage';
 import ReceptionistVisitorPage from './pages/receptionist/ReceptionistVisitorPage';
 import PublicGuestRegisterPage from './pages/PublicGuestRegisterPage';
+import PublicEventRegisterPage from './pages/PublicEventRegisterPage';
 
 import EventListPage from './pages/events/EventListPage';
 import EventFormPage from './pages/events/EventFormPage';
@@ -152,8 +153,13 @@ function App() {
         />
         <Route path="/register" element={<PublicGuestRegisterPage />} />
         <Route path="/guest-register" element={<PublicGuestRegisterPage />} />
+        <Route path="/guest/register" element={<PublicGuestRegisterPage />} />
         <Route path="/registrasi-tamu" element={<PublicGuestRegisterPage />} />
         <Route path="/guest-registration" element={<PublicGuestRegisterPage />} />
+
+        {/* Public Event Registration routes */}
+        <Route path="/event/:code/register" element={<PublicEventRegisterPage />} />
+        <Route path="/events/:code/register" element={<PublicEventRegisterPage />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>

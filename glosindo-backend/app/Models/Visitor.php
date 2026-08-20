@@ -21,6 +21,7 @@ class Visitor extends Model
         'phone',
         'email',
         'company',
+        'position',
         'photo',
     ];
 
@@ -38,6 +39,14 @@ class Visitor extends Model
     public function visits()
     {
         return $this->hasMany(Visit::class);
+    }
+
+    /**
+     * Get all event participant records for the visitor.
+     */
+    public function eventParticipants()
+    {
+        return $this->hasMany(EventParticipant::class);
     }
 
     /**
