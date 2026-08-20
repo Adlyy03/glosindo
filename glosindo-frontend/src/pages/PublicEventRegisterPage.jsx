@@ -34,6 +34,7 @@ const PublicEventRegisterPage = () => {
   // Steps: 'scan' | 'verifying' | 'already_registered' | 'form' | 'success'
   const [step, setStep] = useState('scan');
   const [scanningFace, setScanningFace] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [faceVector, setFaceVector] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [matchedVisitor, setMatchedVisitor] = useState(null);
@@ -84,17 +85,36 @@ const PublicEventRegisterPage = () => {
     setScanningFace(true);
 
     try {
+      // Wait for video ready with retry
+      const video = webcamRef.current.video;
+      if (!video) {
+        throw new Error('Kamera belum siap. Mohon tunggu sebentar.');
+      }
+
+      // Retry up to 3 times with 500ms delay if video not ready
+      let retries = 3;
+      while (video.readyState !== 4 && retries > 0) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        retries--;
+      }
+
+      if (video.readyState !== 4) {
+        throw new Error('Kamera belum siap. Refresh halaman dan coba lagi.');
+      }
+
+      if (!modelsLoaded) {
+        throw new Error('Model AI wajah belum siap. Harap tunggu sebentar.');
+      }
+
+      // Add small delay to ensure frame capture
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       const imageSrc = webcamRef.current.getScreenshot();
       if (!imageSrc) {
-        throw new Error('Gagal mengambil gambar dari kamera.');
+        throw new Error('Gagal mengambil gambar. Pastikan kamera memiliki izin akses dan preview terlihat.');
       }
 
       setPhotoPreview(imageSrc);
-
-      const video = webcamRef.current.video;
-      if (!video || !modelsLoaded) {
-        throw new Error('Model AI wajah belum siap. Harap tunggu sebentar.');
-      }
 
       // Detect Face & compute 128-d descriptor
       const detection = await faceapi
@@ -351,6 +371,8 @@ const PublicEventRegisterPage = () => {
                       width: 640,
                       height: 480,
                     }}
+                    onUserMedia={() => setVideoReady(true)}
+                    onUserMediaError={() => setVideoReady(false)}
                     className="w-full h-full object-cover transform -scale-x-100"
                   />
 
@@ -376,11 +398,11 @@ const PublicEventRegisterPage = () => {
                 fullWidth
                 icon={Camera}
                 loading={scanningFace || modelsLoading}
-                disabled={modelsLoading || Boolean(modelsError)}
+                disabled={modelsLoading || !videoReady || !modelsLoaded || Boolean(modelsError)}
                 onClick={handleCaptureAndScan}
                 className="bg-brand-navy hover:bg-slate-800 text-white font-black shadow-md text-sm py-3.5"
               >
-                {scanningFace ? 'Menganalisis Biometrik...' : 'Pindai & Verifikasi Wajah'}
+                {scanningFace ? 'Menganalisis Biometrik...' : !videoReady ? 'Memuat Kamera...' : 'Pindai & Verifikasi Wajah'}
               </Button>
             </div>
           </Card>

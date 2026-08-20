@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Visitor;
 use App\Models\FaceEmbedding;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class VisitorController extends Controller
 {
@@ -271,14 +270,21 @@ class VisitorController extends Controller
         // Handle photo upload
         if ($request->hasFile('photo')) {
             // Delete old photo if exists
-            if ($visitor->photo && Storage::disk('public')->exists($visitor->photo)) {
-                Storage::disk('public')->delete($visitor->photo);
+            if ($visitor->photo) {
+                $oldPhotoPath = storage_path('app/public/' . $visitor->photo);
+                if (file_exists($oldPhotoPath)) {
+                    @unlink($oldPhotoPath);
+                }
             }
 
             $photo = $request->file('photo');
             $filename = time() . '_' . $photo->getClientOriginalName();
-            $path = $photo->storeAs('visitors', $filename, 'public');
-            $data['photo'] = $path;
+            $storageDir = storage_path('app/public/visitors');
+            if (!is_dir($storageDir)) {
+                @mkdir($storageDir, 0755, true);
+            }
+            $photo->move($storageDir, $filename);
+            $data['photo'] = 'visitors/' . $filename;
         }
 
         $visitor->update($data);
@@ -352,8 +358,11 @@ class VisitorController extends Controller
         }
 
         // Delete photo if exists
-        if ($visitor->photo && Storage::disk('public')->exists($visitor->photo)) {
-            Storage::disk('public')->delete($visitor->photo);
+        if ($visitor->photo) {
+            $photoPath = storage_path('app/public/' . $visitor->photo);
+            if (file_exists($photoPath)) {
+                @unlink($photoPath);
+            }
         }
 
         // Soft-delete active and associated visits of deleted visitor

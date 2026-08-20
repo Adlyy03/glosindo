@@ -8,7 +8,6 @@ use App\Models\FaceEmbedding;
 use App\Models\SystemSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 
@@ -103,26 +102,36 @@ class PublicRegistrationController extends Controller
      */
     private function handlePhotoStorage($photoInput, Request $request)
     {
-        if ($request->hasFile('photo')) {
-            $photo = $request->file('photo');
-            $filename = time() . '_' . Str::random(8) . '.' . $photo->getClientOriginalExtension();
-            return $photo->storeAs('visitors', $filename, 'public');
-        }
+        try {
+            $storageDir = storage_path('app/public/visitors');
+            if (!is_dir($storageDir)) {
+                @mkdir($storageDir, 0755, true);
+            }
 
-        // Handle Base64 Data URL (e.g. from webcam capture)
-        if (is_string($photoInput) && preg_match('/^data:image\/(\w+);base64,/', $photoInput, $matches)) {
-            $extension = strtolower($matches[1]);
-            if (in_array($extension, ['jpeg', 'jpg', 'png', 'webp'])) {
-                $imageData = substr($photoInput, strpos($photoInput, ',') + 1);
-                $decodedImage = base64_decode($imageData);
+            if ($request->hasFile('photo')) {
+                $photo = $request->file('photo');
+                $filename = time() . '_' . Str::random(8) . '.' . $photo->getClientOriginalExtension();
+                $photo->move($storageDir, $filename);
+                return 'visitors/' . $filename;
+            }
 
-                if ($decodedImage !== false) {
-                    $filename = time() . '_' . Str::random(8) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
-                    $path = 'visitors/' . $filename;
-                    Storage::disk('public')->put($path, $decodedImage);
-                    return $path;
+            // Handle Base64 Data URL
+            if (is_string($photoInput) && preg_match('/^data:image\/(\w+);base64,/', $photoInput, $matches)) {
+                $extension = strtolower($matches[1]);
+                if (in_array($extension, ['jpeg', 'jpg', 'png', 'webp'])) {
+                    $imageData = substr($photoInput, strpos($photoInput, ',') + 1);
+                    $decodedImage = base64_decode($imageData);
+
+                    if ($decodedImage !== false) {
+                        $filename = time() . '_' . Str::random(8) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
+                        $fullPath = $storageDir . '/' . $filename;
+                        @file_put_contents($fullPath, $decodedImage);
+                        return 'visitors/' . $filename;
+                    }
                 }
             }
+        } catch (\Throwable $e) {
+            \Log::error('PublicRegistration handlePhotoStorage error: ' . $e->getMessage());
         }
 
         return null;
@@ -220,8 +229,11 @@ class PublicRegistrationController extends Controller
                 'company' => $request->company ?: $visitor->company,
             ];
             if ($photoPath) {
-                if ($visitor->photo && Storage::disk('public')->exists($visitor->photo)) {
-                    Storage::disk('public')->delete($visitor->photo);
+                if ($visitor->photo) {
+                    $oldPhotoPath = storage_path('app/public/' . $visitor->photo);
+                    if (file_exists($oldPhotoPath)) {
+                        @unlink($oldPhotoPath);
+                    }
                 }
                 $updateData['photo'] = $photoPath;
             }

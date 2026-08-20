@@ -10,7 +10,6 @@ use App\Models\Visitor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -629,11 +628,21 @@ class EventController extends Controller
         } elseif ($event->registration_end_at && $now->gt(Carbon::parse($event->registration_end_at))) {
             $isClosed = true;
         } elseif (empty($event->registration_end_at)) {
-            // If no registration_end_at specified, close when event end_date and end_time passes
-            $eventEndDate = $event->end_date ?: ($event->start_date ?: $event->event_date);
-            $eventEndTime = $event->end_time ?: '23:59:59';
-            if ($now->gt(Carbon::parse($eventEndDate . ' ' . $eventEndTime))) {
-                $isClosed = true;
+            // Safely parse date avoiding double time string
+            $rawEndDate = $event->getRawOriginal('end_date') ?: ($event->getRawOriginal('start_date') ?: $event->getRawOriginal('event_date'));
+            if ($rawEndDate) {
+                $datePart = substr((string)$rawEndDate, 0, 10);
+                $timePart = $event->end_time ? substr((string)$event->end_time, 0, 8) : '23:59:59';
+                try {
+                    if ($now->gt(Carbon::parse($datePart . ' ' . $timePart))) {
+                        $isClosed = true;
+                    }
+                } catch (\Throwable $e) {
+                    // Fallback comparison
+                    if ($now->toDateString() > $datePart) {
+                        $isClosed = true;
+                    }
+                }
             }
         }
 
@@ -722,30 +731,40 @@ class EventController extends Controller
     }
 
     /**
-     * Store photo file or base64 string into storage.
+     * Store photo file or base64 string into storage reliably.
      */
     private function handlePhotoStorage($photoInput, Request $request)
     {
-        if ($request->hasFile('photo')) {
-            $photo = $request->file('photo');
-            $filename = time() . '_' . Str::random(8) . '.' . $photo->getClientOriginalExtension();
-            return $photo->storeAs('visitors', $filename, 'public');
-        }
+        try {
+            $storageDir = storage_path('app/public/visitors');
+            if (!is_dir($storageDir)) {
+                @mkdir($storageDir, 0755, true);
+            }
 
-        // Handle Base64 Data URL
-        if (is_string($photoInput) && preg_match('/^data:image\/(\w+);base64,/', $photoInput, $matches)) {
-            $extension = strtolower($matches[1]);
-            if (in_array($extension, ['jpeg', 'jpg', 'png', 'webp'])) {
-                $imageData = substr($photoInput, strpos($photoInput, ',') + 1);
-                $decodedImage = base64_decode($imageData);
+            if ($request->hasFile('photo')) {
+                $photo = $request->file('photo');
+                $filename = time() . '_' . Str::random(8) . '.' . $photo->getClientOriginalExtension();
+                $photo->move($storageDir, $filename);
+                return 'visitors/' . $filename;
+            }
 
-                if ($decodedImage !== false) {
-                    $filename = time() . '_' . Str::random(8) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
-                    $path = 'visitors/' . $filename;
-                    Storage::disk('public')->put($path, $decodedImage);
-                    return $path;
+            // Handle Base64 Data URL
+            if (is_string($photoInput) && preg_match('/^data:image\/(\w+);base64,/', $photoInput, $matches)) {
+                $extension = strtolower($matches[1]);
+                if (in_array($extension, ['jpeg', 'jpg', 'png', 'webp'])) {
+                    $imageData = substr($photoInput, strpos($photoInput, ',') + 1);
+                    $decodedImage = base64_decode($imageData);
+
+                    if ($decodedImage !== false) {
+                        $filename = time() . '_' . Str::random(8) . '.' . ($extension === 'jpeg' ? 'jpg' : $extension);
+                        $fullPath = $storageDir . '/' . $filename;
+                        @file_put_contents($fullPath, $decodedImage);
+                        return 'visitors/' . $filename;
+                    }
                 }
             }
+        } catch (\Throwable $e) {
+            \Log::error('Event handlePhotoStorage error: ' . $e->getMessage());
         }
 
         return null;
@@ -757,77 +776,85 @@ class EventController extends Controller
      */
     public function publicCheckFace(Request $request, $code)
     {
-        $event = Event::where('code', $code)
-                      ->orWhere('id', is_numeric($code) ? $code : 0)
-                      ->first();
+        try {
+            $event = Event::where('code', $code)
+                          ->orWhere('id', is_numeric($code) ? $code : 0)
+                          ->first();
 
-        if (!$event) {
-            return response()->json([
-                'success' => false,
-                'status_code' => 'NOT_FOUND',
-                'message' => 'Event tidak ditemukan.',
-            ], 404);
-        }
-
-        $faceVector = $this->parseFaceVector($request);
-        if (!$faceVector || count($faceVector) !== 128) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Vektor wajah harus valid dengan 128 dimensi.',
-            ], 422);
-        }
-
-        // Find match in FaceEmbedding database
-        $embeddings = FaceEmbedding::with('visitor:id,name,phone,email,company,position,photo')->get();
-        $threshold = 0.5; // matching threshold
-        $bestMatchVisitor = null;
-        $minDistance = 999.0;
-
-        foreach ($embeddings as $embedding) {
-            if (!$embedding->visitor) {
-                continue;
-            }
-            $dist = $this->calculateEuclideanDistance($faceVector, $embedding->face_vector);
-            if ($dist < $threshold && $dist < $minDistance) {
-                $minDistance = $dist;
-                $bestMatchVisitor = $embedding->visitor;
-            }
-        }
-
-        if ($bestMatchVisitor) {
-            // Check if visitor is ALREADY participant in this event
-            $isParticipant = EventParticipant::where('event_id', $event->id)
-                ->where(function ($q) use ($bestMatchVisitor) {
-                    $q->where('visitor_id', $bestMatchVisitor->id)
-                      ->orWhere('phone', $bestMatchVisitor->phone);
-                })
-                ->first();
-
-            if ($isParticipant) {
+            if (!$event) {
                 return response()->json([
-                    'success'            => true,
-                    'status'             => 'already_registered',
-                    'message'            => 'Anda sudah terdaftar pada event ini.',
-                    'visitor'            => $bestMatchVisitor,
-                    'participant'        => $isParticipant,
-                    'distance'           => $minDistance,
+                    'success' => false,
+                    'status_code' => 'NOT_FOUND',
+                    'message' => 'Event tidak ditemukan.',
+                ], 404);
+            }
+
+            $faceVector = $this->parseFaceVector($request);
+            if (!$faceVector || count($faceVector) !== 128) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Vektor wajah harus valid dengan 128 dimensi.',
+                ], 422);
+            }
+
+            // Find match in FaceEmbedding database
+            $embeddings = FaceEmbedding::with('visitor:id,name,phone,email,company,position,photo')->get();
+            $threshold = 0.5; // matching threshold
+            $bestMatchVisitor = null;
+            $minDistance = 999.0;
+
+            foreach ($embeddings as $embedding) {
+                if (!$embedding->visitor) {
+                    continue;
+                }
+                $dist = $this->calculateEuclideanDistance($faceVector, $embedding->face_vector);
+                if ($dist < $threshold && $dist < $minDistance) {
+                    $minDistance = $dist;
+                    $bestMatchVisitor = $embedding->visitor;
+                }
+            }
+
+            if ($bestMatchVisitor) {
+                // Check if visitor is ALREADY participant in this event
+                $isParticipant = EventParticipant::where('event_id', $event->id)
+                    ->where(function ($q) use ($bestMatchVisitor) {
+                        $q->where('visitor_id', $bestMatchVisitor->id)
+                          ->orWhere('phone', $bestMatchVisitor->phone);
+                    })
+                    ->first();
+
+                if ($isParticipant) {
+                    return response()->json([
+                        'success'            => true,
+                        'status'             => 'already_registered',
+                        'message'            => 'Anda sudah terdaftar pada event ini.',
+                        'visitor'            => $bestMatchVisitor,
+                        'participant'        => $isParticipant,
+                        'distance'           => $minDistance,
+                    ]);
+                }
+
+                return response()->json([
+                    'success'     => true,
+                    'status'      => 'found',
+                    'message'     => 'Wajah terdeteksi. Data Anda ditemukan.',
+                    'visitor'     => $bestMatchVisitor,
+                    'distance'    => $minDistance,
                 ]);
             }
 
             return response()->json([
-                'success'     => true,
-                'status'      => 'found',
-                'message'     => 'Wajah terdeteksi. Data Anda ditemukan.',
-                'visitor'     => $bestMatchVisitor,
-                'distance'    => $minDistance,
+                'success' => true,
+                'status'  => 'not_found',
+                'message' => 'Data wajah belum ditemukan dalam sistem. Silakan lengkapi formulir pendaftaran.',
             ]);
+        } catch (\Throwable $e) {
+            \Log::error('publicCheckFace exception: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memproses verifikasi biometrik: ' . $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'status'  => 'not_found',
-            'message' => 'Data wajah belum ditemukan dalam sistem. Silakan lengkapi formulir pendaftaran.',
-        ]);
     }
 
     /**
@@ -835,180 +862,197 @@ class EventController extends Controller
      */
     public function publicRegister(Request $request, $code)
     {
-        $event = Event::where('code', $code)
-                      ->orWhere('id', is_numeric($code) ? $code : 0)
-                      ->first();
+        try {
+            $event = Event::where('code', $code)
+                          ->orWhere('id', is_numeric($code) ? $code : 0)
+                          ->first();
 
-        if (!$event) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Event tidak ditemukan.',
-            ], 404);
-        }
+            if (!$event) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event tidak ditemukan.',
+                ], 404);
+            }
 
-        $now = Carbon::now();
+            $now = Carbon::now();
 
-        // Validations
-        if ($event->status === 'cancelled') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Event dibatalkan. Pendaftaran tidak dapat diproses.',
-            ], 422);
-        }
+            // Validations
+            if ($event->status === 'cancelled') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Event dibatalkan. Pendaftaran tidak dapat diproses.',
+                ], 422);
+            }
 
-        if ($event->registration_start_at && $now->lt(Carbon::parse($event->registration_start_at))) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pendaftaran belum dibuka.',
-            ], 422);
-        }
+            if ($event->registration_start_at && $now->lt(Carbon::parse($event->registration_start_at))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pendaftaran belum dibuka.',
+                ], 422);
+            }
 
-        $isClosed = false;
-        if ($event->status === 'finished') {
-            $isClosed = true;
-        } elseif ($event->registration_end_at && $now->gt(Carbon::parse($event->registration_end_at))) {
-            $isClosed = true;
-        } elseif (empty($event->registration_end_at)) {
-            $eventEndDate = $event->end_date ?: ($event->start_date ?: $event->event_date);
-            $eventEndTime = $event->end_time ?: '23:59:59';
-            if ($now->gt(Carbon::parse($eventEndDate . ' ' . $eventEndTime))) {
+            $isClosed = false;
+            if ($event->status === 'finished') {
                 $isClosed = true;
-            }
-        }
-
-        if ($isClosed) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Pendaftaran sudah ditutup.',
-            ], 422);
-        }
-
-        $faceVector = $this->parseFaceVector($request);
-        if ($faceVector !== null) {
-            $request->merge(['face_vector' => $faceVector]);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name'     => 'required|string|max:255',
-            'phone'    => 'required|string|max:30',
-            'email'    => 'nullable|email|max:255',
-            'company'  => 'nullable|string|max:255',
-            'position' => 'nullable|string|max:255',
-            'photo'    => 'nullable',
-            'face_vector' => 'nullable|array',
-            'face_vector.*' => 'nullable|numeric',
-        ], [
-            'name.required'  => 'Nama lengkap wajib diisi.',
-            'phone.required' => 'Nomor HP / WhatsApp wajib diisi.',
-            'email.email'    => 'Format email tidak valid.',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Data pendaftaran tidak valid.',
-                'errors'  => $validator->errors(),
-            ], 422);
-        }
-
-        // Duplicate participant check on this same event
-        $duplicate = EventParticipant::where('event_id', $event->id)
-            ->where(function ($q) use ($request) {
-                if ($request->has('visitor_id') && !empty($request->visitor_id)) {
-                    $q->where('visitor_id', $request->visitor_id);
+            } elseif ($event->registration_end_at && $now->gt(Carbon::parse($event->registration_end_at))) {
+                $isClosed = true;
+            } elseif (empty($event->registration_end_at)) {
+                $rawEndDate = $event->getRawOriginal('end_date') ?: ($event->getRawOriginal('start_date') ?: $event->getRawOriginal('event_date'));
+                if ($rawEndDate) {
+                    $datePart = substr((string)$rawEndDate, 0, 10);
+                    $timePart = $event->end_time ? substr((string)$event->end_time, 0, 8) : '23:59:59';
+                    try {
+                        if ($now->gt(Carbon::parse($datePart . ' ' . $timePart))) {
+                            $isClosed = true;
+                        }
+                    } catch (\Throwable $e) {
+                        if ($now->toDateString() > $datePart) {
+                            $isClosed = true;
+                        }
+                    }
                 }
-                $q->orWhere('phone', $request->phone);
-                if ($request->email) {
-                    $q->orWhere('email', $request->email);
-                }
-            })->first();
-
-        if ($duplicate) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sudah terdaftar! Anda telah terdaftar sebagai peserta pada event ini.',
-                'duplicate' => true,
-            ], 422);
-        }
-
-        // Store Photo if provided
-        $photoPath = $this->handlePhotoStorage($request->input('photo'), $request);
-
-        // Find or create Visitor
-        $visitor = null;
-        if ($request->has('visitor_id') && !empty($request->visitor_id)) {
-            $visitor = Visitor::find($request->visitor_id);
-        }
-        if (!$visitor) {
-            $visitor = Visitor::where('phone', $request->phone)->first();
-        }
-
-        if ($visitor) {
-            $updateData = [
-                'name'     => $request->name,
-                'email'    => $request->email ?: $visitor->email,
-                'company'  => $request->company ?: $visitor->company,
-                'position' => $request->position ?: $visitor->position,
-            ];
-            if ($photoPath && !$visitor->photo) {
-                $updateData['photo'] = $photoPath;
             }
-            $visitor->update($updateData);
-        } else {
-            $visitor = Visitor::create([
-                'name'     => $request->name,
-                'phone'    => $request->phone,
-                'email'    => $request->email,
-                'company'  => $request->company,
-                'position' => $request->position,
-                'photo'    => $photoPath,
+
+            if ($isClosed) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Pendaftaran sudah ditutup.',
+                ], 422);
+            }
+
+            $faceVector = $this->parseFaceVector($request);
+            if ($faceVector !== null) {
+                $request->merge(['face_vector' => $faceVector]);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'name'     => 'required|string|max:255',
+                'phone'    => 'required|string|max:30',
+                'email'    => 'nullable|email|max:255',
+                'company'  => 'nullable|string|max:255',
+                'position' => 'nullable|string|max:255',
+                'photo'    => 'nullable',
+                'face_vector' => 'nullable|array',
+                'face_vector.*' => 'nullable|numeric',
+            ], [
+                'name.required'  => 'Nama lengkap wajib diisi.',
+                'phone.required' => 'Nomor HP / WhatsApp wajib diisi.',
+                'email.email'    => 'Format email tidak valid.',
             ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data pendaftaran tidak valid.',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+
+            // Duplicate participant check on this same event
+            $duplicate = EventParticipant::where('event_id', $event->id)
+                ->where(function ($q) use ($request) {
+                    if ($request->has('visitor_id') && !empty($request->visitor_id)) {
+                        $q->where('visitor_id', $request->visitor_id);
+                    }
+                    $q->orWhere('phone', $request->phone);
+                    if ($request->email) {
+                        $q->orWhere('email', $request->email);
+                    }
+                })->first();
+
+            if ($duplicate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sudah terdaftar! Anda telah terdaftar sebagai peserta pada event ini.',
+                    'duplicate' => true,
+                ], 409);
+            }
+
+            // Store Photo if provided
+            $photoPath = $this->handlePhotoStorage($request->input('photo'), $request);
+
+            // Find or create Visitor
+            $visitor = null;
+            if ($request->has('visitor_id') && !empty($request->visitor_id)) {
+                $visitor = Visitor::find($request->visitor_id);
+            }
+            if (!$visitor) {
+                $visitor = Visitor::where('phone', $request->phone)->first();
+            }
+
+            if ($visitor) {
+                $updateData = [
+                    'name'     => $request->name,
+                    'email'    => $request->email ?: $visitor->email,
+                    'company'  => $request->company ?: $visitor->company,
+                    'position' => $request->position ?: $visitor->position,
+                ];
+                if ($photoPath && !$visitor->photo) {
+                    $updateData['photo'] = $photoPath;
+                }
+                $visitor->update($updateData);
+            } else {
+                $visitor = Visitor::create([
+                    'name'     => $request->name,
+                    'phone'    => $request->phone,
+                    'email'    => $request->email,
+                    'company'  => $request->company,
+                    'position' => $request->position,
+                    'photo'    => $photoPath,
+                ]);
+            }
+
+            // Save Face Embedding if provided
+            if ($faceVector !== null && is_array($faceVector) && count($faceVector) === 128) {
+                FaceEmbedding::updateOrCreate(
+                    ['visitor_id' => $visitor->id],
+                    ['face_vector' => $faceVector]
+                );
+            }
+
+            // Create participant
+            $participant = EventParticipant::create([
+                'event_id'      => $event->id,
+                'visitor_id'    => $visitor->id,
+                'name'          => $request->name,
+                'phone'         => $request->phone,
+                'email'         => $request->email,
+                'company'       => $request->company,
+                'position'      => $request->position,
+                'status'        => 'registered',
+                'registered_at' => Carbon::now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pendaftaran event berhasil! Terima kasih telah mendaftar.',
+                'data'    => [
+                    'registration_id' => $participant->id,
+                    'participant'     => [
+                        'name'          => $participant->name,
+                        'phone'         => $participant->phone,
+                        'email'         => $participant->email,
+                        'company'       => $participant->company,
+                        'position'      => $participant->position,
+                        'registered_at' => $participant->registered_at,
+                    ],
+                    'event'           => [
+                        'name'        => $event->name,
+                        'start_date'  => $event->start_date ?: $event->event_date,
+                        'end_date'    => $event->end_date ?: ($event->start_date ?: $event->event_date),
+                        'start_time'  => $event->start_time,
+                        'end_time'    => $event->end_time,
+                        'location'    => $event->location,
+                    ],
+                ]
+            ], 201);
+        } catch (\Throwable $e) {
+            \Log::error('publicRegister exception: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem saat mendaftar event: ' . $e->getMessage(),
+            ], 500);
         }
-
-        // Save Face Embedding if provided
-        if ($faceVector !== null && is_array($faceVector) && count($faceVector) === 128) {
-            FaceEmbedding::updateOrCreate(
-                ['visitor_id' => $visitor->id],
-                ['face_vector' => $faceVector]
-            );
-        }
-
-        // Create participant
-        $participant = EventParticipant::create([
-            'event_id'      => $event->id,
-            'visitor_id'    => $visitor->id,
-            'name'          => $request->name,
-            'phone'         => $request->phone,
-            'email'         => $request->email,
-            'company'       => $request->company,
-            'position'      => $request->position,
-            'status'        => 'registered',
-            'registered_at' => Carbon::now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Pendaftaran event berhasil! Terima kasih telah mendaftar.',
-            'data'    => [
-                'registration_id' => $participant->id,
-                'participant'     => [
-                    'name'          => $participant->name,
-                    'phone'         => $participant->phone,
-                    'email'         => $participant->email,
-                    'company'       => $participant->company,
-                    'position'      => $participant->position,
-                    'registered_at' => $participant->registered_at,
-                ],
-                'event'           => [
-                    'name'        => $event->name,
-                    'start_date'  => $event->start_date ?: $event->event_date,
-                    'end_date'    => $event->end_date ?: ($event->start_date ?: $event->event_date),
-                    'start_time'  => $event->start_time,
-                    'end_time'    => $event->end_time,
-                    'location'    => $event->location,
-                ],
-            ]
-        ], 201);
     }
 
     /**
