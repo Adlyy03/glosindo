@@ -27,7 +27,6 @@ import PublicEventRegisterPage from './pages/PublicEventRegisterPage';
 import EventListPage from './pages/events/EventListPage';
 import EventFormPage from './pages/events/EventFormPage';
 import EventDetailPage from './pages/events/EventDetailPage';
-import EventReportPage from './pages/events/EventReportPage';
 
 const ROUTE_PRIORITY = [
   { path: '/dashboard', featureId: 'dashboard' },
@@ -181,7 +180,6 @@ function App() {
                       {/* Events */}
                       <Route path="/events" element={<FeatureGate featureId="events"><EventListPage /></FeatureGate>} />
                       <Route path="/events/new" element={<FeatureGate featureId="events"><EventFormPage /></FeatureGate>} />
-                      <Route path="/events/reports" element={<FeatureGate featureId="events"><EventReportPage /></FeatureGate>} />
                       <Route path="/events/:id" element={<FeatureGate featureId="events"><EventDetailPage /></FeatureGate>} />
                       <Route path="/events/:id/edit" element={<FeatureGate featureId="events"><EventFormPage /></FeatureGate>} />
                       <Route element={<ProtectedRoute allowedRoles={['receptionist']} />}>

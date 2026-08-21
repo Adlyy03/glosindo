@@ -25,14 +25,14 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // Authentication
     $router->post('login', 'AuthController@login');
     
-    // Public guest registration
+    // Public guest registration (rate limited: 10 requests per minute)
     $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
-    $router->post('public-registration/register', 'PublicRegistrationController@register');
+    $router->post('public-registration/register', ['middleware' => 'throttle:10,1', 'uses' => 'PublicRegistrationController@register']);
 
-    // Public event registration
+    // Public event registration (rate limited: 10 requests per minute)
     $router->get('public/events/{code}', 'EventController@publicShow');
-    $router->post('public/events/{code}/check-face', 'EventController@publicCheckFace');
-    $router->post('public/events/{code}/register', 'EventController@publicRegister');
+    $router->post('public/events/{code}/check-face', ['middleware' => 'throttle:10,1', 'uses' => 'EventController@publicCheckFace']);
+    $router->post('public/events/{code}/register', ['middleware' => 'throttle:10,1', 'uses' => 'EventController@publicRegister']);
     
     // Temp debug route - check users
     $router->get('debug/users', function () {

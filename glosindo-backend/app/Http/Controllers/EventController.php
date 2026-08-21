@@ -121,15 +121,15 @@ class EventController extends Controller
             ], 422);
         }
 
-        // Validation: registration period should not exceed event end reasonably
+        // Validation: registration_end_at must be <= event end datetime
         if ($request->registration_end_at) {
             $eventEndDateTime = Carbon::parse($endDate . ' ' . $request->end_time);
             $regEndDateTime   = Carbon::parse($request->registration_end_at);
-            if ($regEndDateTime->gt($eventEndDateTime->copy()->addDays(1))) {
+            if ($regEndDateTime->gt($eventEndDateTime)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Batas akhir pendaftaran tidak boleh melewati waktu selesai event.',
-                    'errors'  => ['registration_end_at' => ['Batas akhir pendaftaran tidak boleh melewati akhir event.']]
+                    'message' => 'Batas akhir registrasi tidak boleh melebihi waktu selesai event.',
+                    'errors'  => ['registration_end_at' => ['Batas akhir registrasi tidak boleh melewati waktu selesai event.']]
                 ], 422);
             }
         }
@@ -271,15 +271,28 @@ class EventController extends Controller
 
         $startDate = $request->start_date ?? $event->start_date ?? $event->event_date;
         $endDate   = $request->end_date ?? $event->end_date ?? $startDate;
+        $startTime = $request->start_time ?? $event->start_time;
+        $endTime   = $request->end_time ?? $event->end_time;
 
         if ($startDate === $endDate) {
-            $startTime = $request->start_time ?? $event->start_time;
-            $endTime   = $request->end_time ?? $event->end_time;
             if ($startTime >= $endTime) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Untuk event pada hari yang sama, waktu selesai harus setelah waktu mulai.',
                     'errors'  => ['end_time' => ['Waktu selesai harus setelah waktu mulai.']]
+                ], 422);
+            }
+        }
+
+        // Validation: registration_end_at must be <= event end datetime
+        if ($request->registration_end_at) {
+            $eventEndDateTime = Carbon::parse($endDate . ' ' . $endTime);
+            $regEndDateTime   = Carbon::parse($request->registration_end_at);
+            if ($regEndDateTime->gt($eventEndDateTime)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Batas akhir registrasi tidak boleh melebihi waktu selesai event.',
+                    'errors'  => ['registration_end_at' => ['Batas akhir registrasi tidak boleh melewati waktu selesai event.']]
                 ], 422);
             }
         }
@@ -393,20 +406,16 @@ class EventController extends Controller
             'position' => 'nullable|string|max:255',
         ]);
 
-        // Duplicate check
+        // Duplicate check by phone (unique constraint in DB)
         $exists = EventParticipant::where('event_id', $id)
-            ->where(function ($q) use ($request) {
-                $q->where('phone', $request->phone);
-                if ($request->email) {
-                    $q->orWhere('email', $request->email);
-                }
-            })->first();
+            ->where('phone', $request->phone)
+            ->first();
 
         if ($exists) {
             return response()->json([
                 'success' => false,
-                'message' => 'Peserta dengan nomor telepon atau email tersebut sudah terdaftar pada event ini.',
-            ], 422);
+                'message' => 'Peserta dengan nomor telepon tersebut sudah terdaftar pada event ini.',
+            ], 409);
         }
 
         // Find or create visitor
@@ -948,22 +957,15 @@ class EventController extends Controller
                 ], 422);
             }
 
-            // Duplicate participant check on this same event
+            // Duplicate participant check on this same event (by phone only - unique constraint)
             $duplicate = EventParticipant::where('event_id', $event->id)
-                ->where(function ($q) use ($request) {
-                    if ($request->has('visitor_id') && !empty($request->visitor_id)) {
-                        $q->where('visitor_id', $request->visitor_id);
-                    }
-                    $q->orWhere('phone', $request->phone);
-                    if ($request->email) {
-                        $q->orWhere('email', $request->email);
-                    }
-                })->first();
+                ->where('phone', $request->phone)
+                ->first();
 
             if ($duplicate) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Sudah terdaftar! Anda telah terdaftar sebagai peserta pada event ini.',
+                    'message' => 'Sudah terdaftar! Nomor telepon Anda telah terdaftar sebagai peserta pada event ini.',
                     'duplicate' => true,
                 ], 409);
             }

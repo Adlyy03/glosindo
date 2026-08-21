@@ -2,12 +2,23 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import dayjs from 'dayjs';
+import { Doughnut, Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip as ChartTooltip,
+  Legend,
+} from 'chart.js';
 import {
   CalendarRange, Clock, MapPin, User, Users, CheckCircle2,
   LogOut, LogIn, Hourglass, Building2, ArrowLeft, Pencil, RefreshCw,
   Camera, Zap, AlertCircle, ArrowRight, Copy, Check, ExternalLink,
   Search, UserPlus, Filter, ShieldCheck, Tag, Trash2, Mail, Phone, Briefcase,
-  FileSpreadsheet, FileText
+  FileSpreadsheet, FileText, BarChart3, PieChart
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 import visitService from '../../services/visitService';
@@ -18,6 +29,17 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import FaceScanner from '../../components/FaceScanner';
 import SplashOverlay from '../../components/SplashOverlay';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  ChartTooltip,
+  Legend
+);
 
 const STATUS_CONFIG = {
   draft:     { label: 'Draft',       variant: 'neutral' },
@@ -484,6 +506,123 @@ const EventDetailPage = () => {
           <p className="text-[11px] font-bold text-slate-400 uppercase">Perusahaan</p>
           <p className="text-2xl font-extrabold text-slate-800 mt-1">{statistics?.companies_count || 0}</p>
         </Card>
+      </div>
+
+      {/* Statistics Charts - Premium Glass Design */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Doughnut Chart - Status Peserta */}
+        <div className="relative overflow-hidden rounded-3xl p-6 bg-white/90 backdrop-blur-xl border border-slate-200/50 shadow-xl">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 pb-4 mb-5 border-b border-slate-200/70">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-600 to-green-600 text-white shadow-md">
+                <PieChart className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 tracking-tight">Status Kehadiran Peserta</h3>
+                <p className="text-xs text-slate-500">Distribusi check-in status</p>
+              </div>
+            </div>
+            
+            <div style={{ height: '280px' }} className="flex items-center justify-center">
+              <Doughnut
+                data={{
+                  labels: ['Sudah Check-In', 'Belum Check-In', 'Check-Out'],
+                  datasets: [{
+                    data: [
+                      statistics?.checked_in || 0,
+                      Math.max(0, (statistics?.total_participants || 0) - (statistics?.checked_in || 0) - (statistics?.checked_out || 0)),
+                      statistics?.checked_out || 0,
+                    ],
+                    backgroundColor: ['#10B981', '#F59E0B', '#94A3B8'],
+                    borderWidth: 0,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        font: { size: 12, family: 'Inter, sans-serif', weight: '600' },
+                        padding: 15,
+                        usePointStyle: true,
+                      },
+                    },
+                    tooltip: {
+                      backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                      padding: 12,
+                      titleFont: { size: 13, weight: 'bold' },
+                      bodyFont: { size: 12 },
+                    },
+                  },
+                  cutout: '65%',
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Bar Chart - Ringkasan Event */}
+        <div className="relative overflow-hidden rounded-3xl p-6 bg-white/90 backdrop-blur-xl border border-slate-200/50 shadow-xl">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+          
+          <div className="relative z-10">
+            <div className="flex items-center gap-3 pb-4 mb-5 border-b border-slate-200/70">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 text-white shadow-md">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900 tracking-tight">Ringkasan Statistik Event</h3>
+                <p className="text-xs text-slate-500">Overview performa event</p>
+              </div>
+            </div>
+            
+            <div style={{ height: '280px' }}>
+              <Bar
+                data={{
+                  labels: ['Terdaftar', 'Check-In', 'Check-Out'],
+                  datasets: [{
+                    label: 'Jumlah Peserta',
+                    data: [
+                      statistics?.total_participants || 0,
+                      statistics?.checked_in || 0,
+                      statistics?.checked_out || 0,
+                    ],
+                    backgroundColor: ['#6366F1', '#10B981', '#94A3B8'],
+                    borderRadius: 8,
+                  }],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                      padding: 12,
+                      titleFont: { size: 13, weight: 'bold' },
+                      bodyFont: { size: 12 },
+                    },
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      ticks: { font: { size: 11 }, stepSize: 1 },
+                      grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    },
+                    x: {
+                      ticks: { font: { size: 11 } },
+                      grid: { display: false },
+                    },
+                  },
+                }}
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Splash overlay untuk quick scan */}

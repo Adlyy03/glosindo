@@ -127,6 +127,15 @@ const EventFormPage = () => {
         toast.error('Batas akhir registrasi harus setelah waktu mulai registrasi');
         return;
       }
+      
+      // Registration end must be <= event end (end_date + end_time)
+      const eventEndDateTime = new Date(`${form.end_date}T${form.end_time}:00`);
+      const regEndDateTime = new Date(form.registration_end_at);
+      
+      if (regEndDateTime > eventEndDateTime) {
+        toast.error('Batas akhir registrasi tidak boleh melebihi waktu selesai event');
+        return;
+      }
     }
 
     setSaving(true);

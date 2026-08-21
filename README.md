@@ -27,6 +27,21 @@ Sistem manajemen tamu dengan face recognition, event management, laporan visit h
 
 ## 🚀 Instalasi
 
+Lihat panduan lengkap di **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**
+
+### Utils Documentation
+
+📖 **[Frontend Utils Documentation](./glosindo-frontend/src/utils/README.md)**
+- Datetime (timezone-aware)
+- Validation (phone/email/form)
+- Loading components
+
+📖 **[Event Status Logic](./EVENT_STATUS_LOGIC.md)**
+- Auto-update event status (scheduled → active → finished)
+- Real-time computed status attributes
+
+### Quick Start
+
 ### 1. Clone Repository
 
 ```bash
@@ -74,6 +89,10 @@ cd glosindo-frontend
 # Install dependencies
 npm install
 
+# Copy env
+cp .env.example .env
+# Edit .env: VITE_API_URL=http://localhost:8000/api
+
 # Copy face-api models ke /public/models
 # Download dari: https://github.com/justadudewhohacks/face-api.js-models
 # Folder models wajib ada:
@@ -108,12 +127,17 @@ JWT_TTL=1440
 CORS_ALLOWED_ORIGIN=http://localhost:5173
 ```
 
-### 5. Config Frontend (Optional)
+### 5. Config Frontend
 
 File `glosindo-frontend/.env`:
 
 ```env
 VITE_API_URL=http://localhost:8000/api
+```
+
+**Production:**
+```env
+VITE_API_URL=https://yourdomain.com/api
 ```
 
 ---
@@ -210,10 +234,10 @@ glosindo/
 │   │   ├── Http/
 │   │   │   ├── Controllers/  # API controllers
 │   │   │   └── Middleware/   # JWT, Role, CORS
-│   │   ├── Models/           # User, Visitor, Visit, Event, FaceEmbedding
+│   │   ├── Models/           # User, Visitor, Visit, Event, EventParticipant, FaceEmbedding
 │   │   └── Traits/           # Auditable
 │   ├── database/
-│   │   ├── migrations/       # Schema DB
+│   │   ├── migrations/       # Schema DB (14 files)
 │   │   └── seeders/          # Data awal
 │   ├── routes/web.php        # API routes
 │   └── .env
@@ -229,6 +253,7 @@ glosindo/
 │   │   └── App.jsx
 │   └── .env
 │
+├── DATABASE_SCHEMA.md        # 📊 Database documentation
 └── README.md
 ```
 
@@ -244,6 +269,24 @@ glosindo/
 - ✅ Role-based access (Admin, Receptionist, Supervisor)
 - ✅ Feature toggle per user (admin bisa disable fitur per role)
 - ✅ Quick check-in di event detail
+
+---
+
+## 📊 Database Schema
+
+Lihat dokumentasi lengkap di **[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)**
+
+**Key Tables:**
+- `visitors` - Master tamu (satu ID untuk semua event & regular visit)
+- `event_participants` - Snapshot peserta per event (UNIQUE phone per event)
+- `visits` - Check-in/out log (regular + event)
+- `events` - Event management
+- `face_embeddings` - Face vector 128-float (one-to-one dengan visitor)
+
+**Recent Fixes (2026-08-21):**
+- ✅ UNIQUE constraint `event_participants(event_id, phone)` - no duplicate registration
+- ✅ Performance indexes: visits, events, audit_logs
+- ✅ Phone index di visitors table
 
 ---
 

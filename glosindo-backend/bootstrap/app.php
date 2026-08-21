@@ -89,6 +89,7 @@ $app->routeMiddleware([
     'auth' => App\Http\Middleware\Authenticate::class,
     'jwt.auth' => App\Http\Middleware\JwtMiddleware::class,
     'role' => App\Http\Middleware\RoleMiddleware::class,
+    'throttle' => App\Http\Middleware\ThrottleMiddleware::class,
 ]);
 
 /*

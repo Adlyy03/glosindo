@@ -421,43 +421,67 @@ const DashboardPage = () => {
           </Link>
         </div>
 
-        {/* 6 Event KPI Cards */}
+        {/* 6 Event KPI Cards - Premium Glass */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-          <Card padding="p-4" className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Event</p>
-            <p className="text-2xl font-black text-slate-900 mt-1">{stats?.total_events || 0}</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Semua event</p>
-          </Card>
+          {/* Total Event */}
+          <div className="relative overflow-hidden rounded-2xl p-4 bg-white/70 backdrop-blur-xl border border-slate-300/50 shadow-lg text-center group hover:scale-105 hover:shadow-2xl transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-slate-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Total Event</p>
+              <p className="text-3xl font-black text-slate-900 mb-0.5">{stats?.total_events || 0}</p>
+              <p className="text-[10px] text-slate-400">Semua event</p>
+            </div>
+          </div>
 
-          <Card padding="p-4" className="bg-gradient-to-br from-cyan-50 to-blue-50 border-cyan-200 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-700">Event Aktif</p>
-            <p className="text-2xl font-black text-brand-navy mt-1">{stats?.active_events || 0}</p>
-            <p className="text-[10px] text-cyan-600 mt-0.5">Sedang berjalan</p>
-          </Card>
+          {/* Event Aktif */}
+          <div className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-cyan-50/80 to-blue-100/80 backdrop-blur-xl border border-cyan-300/50 shadow-lg text-center group hover:scale-105 hover:shadow-2xl hover:shadow-cyan-200/50 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-700 mb-1">Event Aktif</p>
+              <p className="text-3xl font-black text-brand-navy mb-0.5">{stats?.active_events || 0}</p>
+              <p className="text-[10px] text-cyan-600 font-semibold">Sedang berjalan</p>
+            </div>
+          </div>
 
-          <Card padding="p-4" className="bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Event Selesai</p>
-            <p className="text-2xl font-black text-slate-700 mt-1">{stats?.finished_events || 0}</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Riwayat tuntas</p>
-          </Card>
+          {/* Event Selesai */}
+          <div className="relative overflow-hidden rounded-2xl p-4 bg-white/70 backdrop-blur-xl border border-slate-300/50 shadow-lg text-center group hover:scale-105 hover:shadow-2xl transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-slate-500/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1">Event Selesai</p>
+              <p className="text-3xl font-black text-slate-700 mb-0.5">{stats?.finished_events || 0}</p>
+              <p className="text-[10px] text-slate-400">Riwayat tuntas</p>
+            </div>
+          </div>
 
-          <Card padding="p-4" className="bg-gradient-to-br from-purple-50 to-indigo-50 border-purple-200 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-purple-700">Total Peserta</p>
-            <p className="text-2xl font-black text-purple-900 mt-1">{stats?.total_event_participants || 0}</p>
-            <p className="text-[10px] text-purple-600 mt-0.5">Pra-registrasi & tamu</p>
-          </Card>
+          {/* Total Peserta */}
+          <div className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-purple-50/80 to-indigo-100/80 backdrop-blur-xl border border-purple-300/50 shadow-lg text-center group hover:scale-105 hover:shadow-2xl hover:shadow-purple-200/50 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-purple-700 mb-1">Total Peserta</p>
+              <p className="text-3xl font-black text-purple-900 mb-0.5">{stats?.total_event_participants || 0}</p>
+              <p className="text-[10px] text-purple-600 font-semibold">Pra-registrasi & tamu</p>
+            </div>
+          </div>
 
-          <Card padding="p-4" className="bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Sudah Check-In</p>
-            <p className="text-2xl font-black text-emerald-800 mt-1">{stats?.event_participants_checked_in || 0}</p>
-            <p className="text-[10px] text-emerald-600 mt-0.5">Telah hadir di lokasi</p>
-          </Card>
+          {/* Sudah Check-In */}
+          <div className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-emerald-50/80 to-green-100/80 backdrop-blur-xl border border-emerald-300/50 shadow-lg text-center group hover:scale-105 hover:shadow-2xl hover:shadow-emerald-200/50 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-1">Sudah Check-In</p>
+              <p className="text-3xl font-black text-emerald-800 mb-0.5">{stats?.event_participants_checked_in || 0}</p>
+              <p className="text-[10px] text-emerald-600 font-semibold">Telah hadir di lokasi</p>
+            </div>
+          </div>
 
-          <Card padding="p-4" className="bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200 text-center">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Belum Check-In</p>
-            <p className="text-2xl font-black text-amber-800 mt-1">{stats?.event_participants_not_checked_in || 0}</p>
-            <p className="text-[10px] text-amber-600 mt-0.5">Menunggu kehadiran</p>
-          </Card>
+          {/* Belum Check-In */}
+          <div className="relative overflow-hidden rounded-2xl p-4 bg-gradient-to-br from-amber-50/80 to-yellow-100/80 backdrop-blur-xl border border-amber-300/50 shadow-lg text-center group hover:scale-105 hover:shadow-2xl hover:shadow-amber-200/50 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:scale-150 transition-transform duration-500" />
+            <div className="relative z-10">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-700 mb-1">Belum Check-In</p>
+              <p className="text-3xl font-black text-amber-800 mb-0.5">{stats?.event_participants_not_checked_in || 0}</p>
+              <p className="text-[10px] text-amber-600 font-semibold">Menunggu kehadiran</p>
+            </div>
+          </div>
         </div>
 
         {/* Event Terdekat & Grafik Kehadiran */}
@@ -606,42 +630,49 @@ const DashboardPage = () => {
           <Badge variant="navy">Visitor Summary</Badge>
         </div>
 
+        {/* 3 Visitor Summary Cards - Premium Glass */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card className="p-5 bg-gradient-to-br from-blue-50 to-blue-100 border-none rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white rounded-2xl shadow-xs">
-                <CalendarCheck className="w-6 h-6 text-blue-600" />
+          {/* Tamu Hari Ini */}
+          <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-blue-50/70 to-blue-100/90 backdrop-blur-xl border border-blue-300/40 shadow-xl group hover:scale-105 hover:shadow-2xl hover:shadow-blue-200/60 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/15 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-125 transition-transform duration-500" />
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="p-3.5 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow">
+                <CalendarCheck className="w-7 h-7 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-black text-blue-900">{stats?.visitor_today || 0}</p>
-                <p className="text-xs text-blue-700 font-semibold">Tamu Hari Ini</p>
+                <p className="text-4xl font-black text-blue-900 leading-none mb-1">{stats?.visitor_today || 0}</p>
+                <p className="text-xs text-blue-700 font-bold uppercase tracking-wider">Tamu Hari Ini</p>
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-5 bg-gradient-to-br from-amber-50 to-amber-100 border-none rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white rounded-2xl shadow-xs">
-                <History className="w-6 h-6 text-amber-600" />
+          {/* Kunjungan Bulan Ini */}
+          <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-amber-50/70 to-amber-100/90 backdrop-blur-xl border border-amber-300/40 shadow-xl group hover:scale-105 hover:shadow-2xl hover:shadow-amber-200/60 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/15 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-125 transition-transform duration-500" />
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="p-3.5 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow">
+                <History className="w-7 h-7 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-black text-amber-900">{stats?.total_visit_this_month || 0}</p>
-                <p className="text-xs text-amber-700 font-semibold">Kunjungan Bulan Ini</p>
+                <p className="text-4xl font-black text-amber-900 leading-none mb-1">{stats?.total_visit_this_month || 0}</p>
+                <p className="text-xs text-amber-700 font-bold uppercase tracking-wider">Kunjungan Bulan Ini</p>
               </div>
             </div>
-          </Card>
+          </div>
 
-          <Card className="p-5 bg-gradient-to-br from-green-50 to-green-100 border-none rounded-2xl">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white rounded-2xl shadow-xs">
-                <Users className="w-6 h-6 text-green-600" />
+          {/* Total Profil Tamu */}
+          <div className="relative overflow-hidden rounded-3xl p-6 bg-gradient-to-br from-green-50/70 to-green-100/90 backdrop-blur-xl border border-green-300/40 shadow-xl group hover:scale-105 hover:shadow-2xl hover:shadow-green-200/60 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-green-500/15 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:scale-125 transition-transform duration-500" />
+            <div className="relative z-10 flex items-center gap-4">
+              <div className="p-3.5 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg group-hover:shadow-xl transition-shadow">
+                <Users className="w-7 h-7 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-black text-green-900">{stats?.total_visitor || 0}</p>
-                <p className="text-xs text-green-700 font-semibold">Total Profil Tamu</p>
+                <p className="text-4xl font-black text-green-900 leading-none mb-1">{stats?.total_visitor || 0}</p>
+                <p className="text-xs text-green-700 font-bold uppercase tracking-wider">Total Profil Tamu</p>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
 
