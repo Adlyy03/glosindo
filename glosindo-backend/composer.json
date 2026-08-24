@@ -9,6 +9,7 @@
         "barryvdh/laravel-dompdf": "^3.0",
         "doctrine/dbal": "^3.10",
         "laravel/lumen-framework": "^10.0",
+        "laravel/tinker": "^3.0",
         "phpoffice/phpspreadsheet": "^2.0",
         "tymon/jwt-auth": "^2.3"
     },
