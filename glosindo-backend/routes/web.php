@@ -33,6 +33,11 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('public/events/{code}', 'EventController@publicShow');
     $router->post('public/events/{code}/check-face', ['middleware' => 'throttle:10,1', 'uses' => 'EventController@publicCheckFace']);
     $router->post('public/events/{code}/register', ['middleware' => 'throttle:10,1', 'uses' => 'EventController@publicRegister']);
+
+    // Public games registration & scan (rate limited: 10 requests per minute)
+    $router->get('games/register/{token}', 'GamesPublicController@getGroupInfo');
+    $router->post('games/register/{token}', ['middleware' => 'throttle:10,1', 'uses' => 'GamesPublicController@register']);
+    $router->post('games/scan-point', ['middleware' => 'throttle:10,1', 'uses' => 'GamesPublicController@scanPoint']);
     
     // Temp debug route - check users
     $router->get('debug/users', function () {
@@ -134,6 +139,41 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     // Single event export
     $router->get('events/{id}/export-excel', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@exportEventExcel']);
     $router->get('events/{id}/export-pdf', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@exportEventPdf']);
+
+    // ========== GAMES EVENT ROUTES ==========
+    $router->group(['prefix' => 'games/events'], function () use ($router) {
+        // Read-only routes (Admin, Receptionist, Supervisor)
+        $router->get('/', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@index']);
+        $router->get('/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@show']);
+        $router->get('/{id}/groups', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@groups']);
+        $router->get('/{id}/groups/{groupId}/participants', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@groupParticipants']);
+        $router->get('/{id}/point-qr', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'PointQrCodeController@index']);
+        $router->get('/{id}/point-qr/{qrId}/generate', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'PointQrCodeController@generateQr']);
+        $router->get('/{id}/dashboard/stats', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GamesDashboardController@stats']);
+        $router->get('/{id}/dashboard/group-rankings', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GamesDashboardController@groupRankings']);
+        $router->get('/{id}/dashboard/participant-rankings', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GamesDashboardController@participantRankings']);
+        $router->get('/{id}/dashboard/point-distribution', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GamesDashboardController@pointDistribution']);
+        $router->get('/{id}/transactions', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GamesDashboardController@transactions']);
+
+        // Write routes (Admin & Receptionist only)
+        $router->post('/', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@store']);
+        $router->put('/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@update']);
+        $router->delete('/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@destroy']);
+
+        // Groups management (Admin & Receptionist only)
+        $router->post('/{id}/groups', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@storeGroup']);
+        $router->put('/{id}/groups/{groupId}', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@updateGroup']);
+        $router->delete('/{id}/groups/{groupId}', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@destroyGroup']);
+        $router->get('/{id}/groups/{groupId}/qr', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@generateGroupQr']);
+
+        // Point QR Codes (Admin & Receptionist only)
+        $router->post('/{id}/point-qr', ['middleware' => 'role:admin,receptionist', 'uses' => 'PointQrCodeController@store']);
+        $router->put('/{id}/point-qr/{qrId}/status', ['middleware' => 'role:admin,receptionist', 'uses' => 'PointQrCodeController@updateStatus']);
+        $router->delete('/{id}/point-qr/{qrId}', ['middleware' => 'role:admin,receptionist', 'uses' => 'PointQrCodeController@destroy']);
+
+        // Export (Admin & Receptionist only)
+        $router->get('/{id}/transactions/export', ['middleware' => 'role:admin,receptionist', 'uses' => 'GamesDashboardController@exportTransactions']);
+    });
 });
 
 // Swagger UI route

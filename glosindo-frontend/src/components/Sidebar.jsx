@@ -12,7 +12,8 @@ import {
   Settings,
   LogOut,
   X,
-  FileText
+  FileText,
+  Trophy
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { LOGO, APP_NAME } from '../constants';
@@ -78,6 +79,14 @@ const navSections = [
         icon: FileText,
         badge: null,
         featureId: 'events',
+      },
+      {
+        label: 'Games Event',
+        to: '/games/events',
+        roles: ['admin', 'receptionist', 'supervisor'],
+        icon: Trophy,
+        badge: null,
+        featureId: null,
       },
     ]
   },

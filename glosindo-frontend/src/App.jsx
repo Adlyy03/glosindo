@@ -28,6 +28,13 @@ import EventListPage from './pages/events/EventListPage';
 import EventFormPage from './pages/events/EventFormPage';
 import EventDetailPage from './pages/events/EventDetailPage';
 
+// Games Event pages
+import GamesEventListPage from './pages/games/GamesEventListPage';
+import GamesEventFormPage from './pages/games/GamesEventFormPage';
+import GamesEventDetailPage from './pages/games/GamesEventDetailPage';
+import GamesPublicRegisterPage from './pages/games/GamesPublicRegisterPage';
+import GamesScanPointPage from './pages/games/GamesScanPointPage';
+
 const ROUTE_PRIORITY = [
   { path: '/dashboard', featureId: 'dashboard' },
   { path: '/check-in', featureId: 'checkin' },
@@ -160,6 +167,10 @@ function App() {
         <Route path="/event/:code/register" element={<PublicEventRegisterPage />} />
         <Route path="/events/:code/register" element={<PublicEventRegisterPage />} />
 
+        {/* Public Games Routes */}
+        <Route path="/games/register/:token" element={<GamesPublicRegisterPage />} />
+        <Route path="/games/scan-point" element={<GamesScanPointPage />} />
+
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
           <Route
@@ -182,6 +193,11 @@ function App() {
                       <Route path="/events/new" element={<FeatureGate featureId="events"><EventFormPage /></FeatureGate>} />
                       <Route path="/events/:id" element={<FeatureGate featureId="events"><EventDetailPage /></FeatureGate>} />
                       <Route path="/events/:id/edit" element={<FeatureGate featureId="events"><EventFormPage /></FeatureGate>} />
+                      {/* Games Events */}
+                      <Route path="/games/events" element={<GamesEventListPage />} />
+                      <Route path="/games/events/new" element={<GamesEventFormPage />} />
+                      <Route path="/games/events/:id" element={<GamesEventDetailPage />} />
+                      <Route path="/games/events/:id/edit" element={<GamesEventFormPage />} />
                       <Route element={<ProtectedRoute allowedRoles={['receptionist']} />}>
                         <Route path="/receptionist/check-in" element={<ReceptionistCheckInPage />} />
                         <Route path="/receptionist/active" element={<ReceptionistActivePage />} />
