@@ -4,7 +4,7 @@ import * as faceapi from 'face-api.js';
 import { Camera, RefreshCw, AlertTriangle, ScanLine } from 'lucide-react';
 import Button from './ui/Button';
 
-const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = true, silentMode = false }, ref) => {
+const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = true, silentMode = false, fullscreen = false }, ref) => {
   const webcamRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState(null);
@@ -102,7 +102,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full">
+    <div className={`flex flex-col items-center w-full ${fullscreen ? 'h-full' : 'gap-4'}`}>
       {error ? (
         <div className="w-full rounded-2xl bg-rose-50/90 border border-rose-200 p-6 text-center shadow-xs">
           <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
@@ -120,16 +120,24 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
           </Button>
         </div>
       ) : (
-        <div className="relative rounded-3xl overflow-hidden border-2 border-slate-800 bg-slate-95 shadow-2xl w-full max-w-md aspect-4/3 group select-none">
+        <div className={`relative overflow-hidden bg-black shadow-2xl group select-none ${
+          fullscreen 
+            ? 'w-full h-full border-0 rounded-none flex-1' 
+            : 'rounded-3xl border-2 border-slate-800 bg-slate-95 w-full max-w-md aspect-4/3'
+        }`}>
           {/* Live Video Feed */}
           <Webcam
             ref={webcamRef}
             audio={false}
             screenshotFormat="image/jpeg"
-            videoConstraints={{ facingMode: 'user', width: 640, height: 480 }}
+            videoConstraints={{ 
+              facingMode: 'user', 
+              width: fullscreen ? { ideal: 1920 } : 1280, 
+              height: fullscreen ? { ideal: 1080 } : 720 
+            }}
             onUserMediaError={handleUserMediaError}
             mirrored={false}
-            className="w-full h-full object-cover"
+            className={fullscreen ? 'absolute inset-0 w-full h-full object-cover' : 'w-full h-full object-cover'}
           />
 
           {/* Biometric Scanning Beam Overlay */}
@@ -143,7 +151,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
             {/* Oval Face Guide Frame */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div
-                className={`w-44 h-56 border-2 border-dashed rounded-[50%] transition-colors duration-300 ${
+                className={`w-64 h-80 border-2 border-dashed rounded-[50%] transition-colors duration-300 ${
                   scanning
                     ? 'border-brand-cyan shadow-[0_0_20px_rgba(14,165,233,0.5)]'
                     : 'border-white/60 shadow-inner'

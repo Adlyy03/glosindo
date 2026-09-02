@@ -13,8 +13,9 @@ import Badge from './ui/Badge';
  *   onNoMatch(descriptor)   — called when no match (new visitor), passes descriptor
  *   silentMode              — if true, no error alerts shown (for auto-scan mode)
  *   paused                  — if true, stop auto-scan (prevent spam during processing)
+ *   fullscreen              — if true, full viewport mode (hide badges/alerts)
  */
-const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false, paused = false }) => {
+const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false, paused = false, fullscreen = false }) => {
   const webcamRef = useRef(null);
   const { modelsLoaded, loading: modelsLoading, error: modelsError } = useFaceModels();
   const { loading: embeddingsLoading, matchFace, reload } = useFaceMatcher();
@@ -106,61 +107,69 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
   }
 
   return (
-    <div className="flex flex-col gap-5 w-full">
+    <div className={`flex flex-col w-full ${fullscreen ? 'h-full' : 'gap-5'}`}>
       {/* Webcam Stream */}
-      <WebcamCapture
-        ref={webcamRef}
-        disabled={!modelsLoaded || embeddingsLoading}
-        showButton={false}
-        silentMode={silentMode}
-      />
+      <div className={fullscreen ? 'flex-1 w-full h-full' : ''}>
+        <WebcamCapture
+          ref={webcamRef}
+          disabled={!modelsLoaded || embeddingsLoading}
+          showButton={false}
+          silentMode={silentMode}
+          fullscreen={fullscreen}
+        />
+      </div>
 
-      {/* Auto-scan status indicator */}
-      {scanning && (
-        <div className="max-w-md mx-auto w-full text-center">
-          <Badge variant="cyan" dot className="shadow-xs py-1.5 px-4">
-            Auto-Scan Aktif (Refresh 5s)
-          </Badge>
-        </div>
-      )}
+      {/* Hide badges/alerts in fullscreen mode */}
+      {!fullscreen && (
+        <>
+          {/* Auto-scan status indicator */}
+          {scanning && (
+            <div className="max-w-md mx-auto w-full text-center">
+              <Badge variant="cyan" dot className="shadow-xs py-1.5 px-4">
+                Auto-Scan Aktif (Refresh 5s)
+              </Badge>
+            </div>
+          )}
 
-      {/* Feedback Alerts */}
-      {result?.type === 'match' && (
-        <div className="rounded-2xl bg-emerald-50/90 border border-emerald-200 p-4 flex items-start gap-3.5 max-w-md mx-auto w-full shadow-md animate-scaleIn">
-          <div className="p-2 rounded-xl bg-emerald-500 text-white flex-shrink-0 mt-0.5">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-              Teridentifikasi
-            </span>
-            <h4 className="text-emerald-950 font-bold text-base mt-1 leading-tight">
-              {result.data.name}
-            </h4>
-            <p className="text-emerald-700 text-xs font-medium mt-0.5">
-              {result.data.company ? `Instansi: ${result.data.company}` : 'Tamu Terdaftar'}
-            </p>
-          </div>
-        </div>
-      )}
+          {/* Feedback Alerts */}
+          {result?.type === 'match' && (
+            <div className="rounded-2xl bg-emerald-50/90 border border-emerald-200 p-4 flex items-start gap-3.5 max-w-md mx-auto w-full shadow-md animate-scaleIn">
+              <div className="p-2 rounded-xl bg-emerald-500 text-white flex-shrink-0 mt-0.5">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                  Teridentifikasi
+                </span>
+                <h4 className="text-emerald-950 font-bold text-base mt-1 leading-tight">
+                  {result.data.name}
+                </h4>
+                <p className="text-emerald-700 text-xs font-medium mt-0.5">
+                  {result.data.company ? `Instansi: ${result.data.company}` : 'Tamu Terdaftar'}
+                </p>
+              </div>
+            </div>
+          )}
 
-      {result?.type === 'no_match' && (
-        <div className="rounded-2xl bg-amber-50/90 border border-amber-200 p-4 flex items-start gap-3.5 max-w-md mx-auto w-full shadow-md animate-scaleIn">
-          <div className="p-2 rounded-xl bg-amber-500 text-white flex-shrink-0 mt-0.5">
-            <UserX className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
-              Belum Terdaftar
-            </span>
-            <h4 className="text-amber-950 font-bold text-sm mt-1 leading-tight">
-              Wajah Tidak Dikenali Sistem
-            </h4>
-            <p className="text-amber-700 text-xs mt-0.5">
-              Silakan mendaftar via formulir registrasi tamu baru.
-            </p>
-          </div>
-        </div>
+          {result?.type === 'no_match' && (
+            <div className="rounded-2xl bg-amber-50/90 border border-amber-200 p-4 flex items-start gap-3.5 max-w-md mx-auto w-full shadow-md animate-scaleIn">
+              <div className="p-2 rounded-xl bg-amber-500 text-white flex-shrink-0 mt-0.5">
+                <UserX className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded-md">
+                  Belum Terdaftar
+                </span>
+                <h4 className="text-amber-950 font-bold text-sm mt-1 leading-tight">
+                  Wajah Tidak Dikenali Sistem
+                </h4>
+                <p className="text-amber-700 text-xs mt-0.5">
+                  Silakan mendaftar via formulir registrasi tamu baru.
+                </p>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

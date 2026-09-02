@@ -13,7 +13,8 @@ import {
   LogOut,
   X,
   FileText,
-  Trophy
+  Trophy,
+  BookUser
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { LOGO, APP_NAME } from '../constants';
@@ -35,6 +36,14 @@ const navSections = [
   {
     title: 'MANAJEMEN TAMU',
     items: [
+      {
+        label: 'Guest Visit Kiosk',
+        to: '/guest-visit?kiosk=true',
+        roles: ['admin', 'receptionist'],
+        icon: BookUser,
+        badge: null,
+        featureId: null,
+      },
       {
         label: 'Check-In Tamu',
         to: '/check-in',

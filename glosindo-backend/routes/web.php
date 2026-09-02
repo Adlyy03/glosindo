@@ -38,6 +38,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->get('games/register/{token}', 'GamesPublicController@getGroupInfo');
     $router->post('games/register/{token}', ['middleware' => 'throttle:10,1', 'uses' => 'GamesPublicController@register']);
     $router->post('games/scan-point', ['middleware' => 'throttle:10,1', 'uses' => 'GamesPublicController@scanPoint']);
+
+    // Public guest visit kiosk (rate limited: 10 requests per minute)
+    $router->post('public/guest-visit', ['middleware' => 'throttle:10,1', 'uses' => 'VisitController@publicGuestVisit']);
     
     // Temp debug route - check users
     $router->get('debug/users', function () {

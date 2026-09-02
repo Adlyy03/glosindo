@@ -422,4 +422,57 @@ class VisitController extends Controller
             'message' => 'Visit deleted successfully',
         ]);
     }
+
+    /**
+     * Public guest visit check-in (no auth required).
+     */
+    public function publicGuestVisit(Request $request)
+    {
+        $this->validate($request, [
+            'visitor_id' => 'nullable|exists:visitors,id',
+            'name'       => 'required_without:visitor_id|string|max:255',
+            'phone'      => 'required_without:visitor_id|string|max:50',
+            'purpose'    => 'required|string|max:255',
+            'meet_to'    => 'nullable|string|max:255',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            if ($request->visitor_id) {
+                $visitor = Visitor::find($request->visitor_id);
+                if (!$visitor) {
+                    return response()->json(['success' => false, 'message' => 'Visitor tidak ditemukan.'], 404);
+                }
+                
+                // Public kiosk: auto-checkout previous active visit if exists
+                $activeVisit = Visit::where('visitor_id', $visitor->id)->where('status', 'IN')->first();
+                if ($activeVisit) {
+                    $activeVisit->update([
+                        'check_out' => Carbon::now(),
+                        'status'    => 'OUT',
+                    ]);
+                    $activeVisit->audit('auto_checked_out', null, null, 'Auto checkout by public kiosk');
+                }
+            } else {
+                $visitor = Visitor::create(['name' => $request->name, 'phone' => $request->phone, 'company' => $request->company ?? null]);
+            }
+
+            $visit = Visit::create([
+                'visitor_id'      => $visitor->id,
+                'receptionist_id' => null,
+                'event_id'        => null,
+                'purpose'         => $request->purpose,
+                'meet_to'         => $request->meet_to ?? '-',
+                'check_in'        => Carbon::now(),
+                'status'          => 'IN',
+            ]);
+
+            $visit->audit('checked_in_public', null, $visit->toArray(), 'Public kiosk');
+            DB::commit();
+            return response()->json(['success' => true, 'message' => 'Check-in berhasil!', 'data' => $visit->load('visitor')], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Gagal: ' . $e->getMessage()], 500);
+        }
+    }
 }

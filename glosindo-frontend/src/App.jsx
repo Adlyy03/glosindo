@@ -34,6 +34,7 @@ import GamesEventFormPage from './pages/games/GamesEventFormPage';
 import GamesEventDetailPage from './pages/games/GamesEventDetailPage';
 import GamesPublicRegisterPage from './pages/games/GamesPublicRegisterPage';
 import GamesScanPointPage from './pages/games/GamesScanPointPage';
+import GuestVisitPage from './pages/GuestVisitPage';
 
 const ROUTE_PRIORITY = [
   { path: '/dashboard', featureId: 'dashboard' },
@@ -170,6 +171,10 @@ function App() {
         {/* Public Games Routes */}
         <Route path="/games/register/:token" element={<GamesPublicRegisterPage />} />
         <Route path="/games/scan-point" element={<GamesScanPointPage />} />
+
+        {/* Guest Visit Kiosk - Public */}
+        <Route path="/guest-visit" element={<GuestVisitPage />} />
+        <Route path="/kunjungan-tamu" element={<GuestVisitPage />} />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
