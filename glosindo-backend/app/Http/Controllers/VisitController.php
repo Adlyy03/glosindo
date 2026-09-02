@@ -429,11 +429,12 @@ class VisitController extends Controller
     public function publicGuestVisit(Request $request)
     {
         $this->validate($request, [
-            'visitor_id' => 'nullable|exists:visitors,id',
-            'name'       => 'required_without:visitor_id|string|max:255',
-            'phone'      => 'required_without:visitor_id|string|max:50',
-            'purpose'    => 'required|string|max:255',
-            'meet_to'    => 'nullable|string|max:255',
+            'visitor_id'      => 'nullable|exists:visitors,id',
+            'name'            => 'required_without:visitor_id|string|max:255',
+            'phone'           => 'required_without:visitor_id|string|max:50',
+            'purpose'         => 'required|string|max:255',
+            'meet_to'         => 'nullable|string|max:255',
+            'face_descriptor' => 'nullable|array',
         ]);
 
         DB::beginTransaction();
@@ -455,6 +456,14 @@ class VisitController extends Controller
                 }
             } else {
                 $visitor = Visitor::create(['name' => $request->name, 'phone' => $request->phone, 'company' => $request->company ?? null]);
+                
+                // Save face embedding if provided
+                if ($request->face_descriptor && is_array($request->face_descriptor)) {
+                    \App\Models\FaceEmbedding::create([
+                        'visitor_id'  => $visitor->id,
+                        'face_vector' => json_encode($request->face_descriptor),
+                    ]);
+                }
             }
 
             $visit = Visit::create([

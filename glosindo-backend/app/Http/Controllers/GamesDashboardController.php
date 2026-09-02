@@ -14,9 +14,9 @@ class GamesDashboardController extends Controller
     /**
      * Get dashboard statistics for a game event.
      */
-    public function stats($eventId)
+    public function stats($id)
     {
-        $event = GameEvent::with('groups')->find($eventId);
+        $event = GameEvent::with('groups')->find($id);
 
         if (!$event) {
             return response()->json([
@@ -33,10 +33,10 @@ class GamesDashboardController extends Controller
         $totalParticipants = GroupParticipant::whereIn('event_group_id', $groupIds)->count();
 
         // Total points
-        $totalPoints = PointTransaction::where('game_event_id', $eventId)->sum('points');
+        $totalPoints = PointTransaction::where('game_event_id', $id)->sum('points');
 
         // Total transactions
-        $totalTransactions = PointTransaction::where('game_event_id', $eventId)->count();
+        $totalTransactions = PointTransaction::where('game_event_id', $id)->count();
 
         return response()->json([
             'success' => true,
@@ -52,9 +52,9 @@ class GamesDashboardController extends Controller
     /**
      * Get group rankings.
      */
-    public function groupRankings($eventId)
+    public function groupRankings($id)
     {
-        $event = GameEvent::find($eventId);
+        $event = GameEvent::find($id);
 
         if (!$event) {
             return response()->json([
@@ -64,7 +64,7 @@ class GamesDashboardController extends Controller
         }
 
         // Ranking per kelompok berdasarkan total poin
-        $rankings = EventGroup::where('game_event_id', $eventId)
+        $rankings = EventGroup::where('event_groups.game_event_id', $id)
             ->select('event_groups.*')
             ->leftJoin('point_transactions', 'event_groups.id', '=', 'point_transactions.event_group_id')
             ->selectRaw('COALESCE(SUM(point_transactions.points), 0) as total_points')
@@ -91,9 +91,9 @@ class GamesDashboardController extends Controller
     /**
      * Get participant rankings.
      */
-    public function participantRankings(Request $request, $eventId)
+    public function participantRankings(Request $request, $id)
     {
-        $event = GameEvent::with('groups')->find($eventId);
+        $event = GameEvent::with('groups')->find($id);
 
         if (!$event) {
             return response()->json([
@@ -138,9 +138,9 @@ class GamesDashboardController extends Controller
     /**
      * Get point distribution chart data.
      */
-    public function pointDistribution($eventId)
+    public function pointDistribution($id)
     {
-        $event = GameEvent::with('groups')->find($eventId);
+        $event = GameEvent::with('groups')->find($id);
 
         if (!$event) {
             return response()->json([
@@ -150,7 +150,7 @@ class GamesDashboardController extends Controller
         }
 
         // Total poin per kelompok untuk chart
-        $distribution = EventGroup::where('game_event_id', $eventId)
+        $distribution = EventGroup::where('game_event_id', $id)
             ->select('event_groups.id', 'event_groups.name')
             ->leftJoin('point_transactions', 'event_groups.id', '=', 'point_transactions.event_group_id')
             ->selectRaw('COALESCE(SUM(point_transactions.points), 0) as total_points')
@@ -167,9 +167,9 @@ class GamesDashboardController extends Controller
     /**
      * Get transactions history.
      */
-    public function transactions(Request $request, $eventId)
+    public function transactions(Request $request, $id)
     {
-        $event = GameEvent::find($eventId);
+        $event = GameEvent::find($id);
 
         if (!$event) {
             return response()->json([
@@ -178,7 +178,7 @@ class GamesDashboardController extends Controller
             ], 404);
         }
 
-        $query = PointTransaction::where('game_event_id', $eventId)
+        $query = PointTransaction::where('game_event_id', $id)
             ->with([
                 'participant:id,event_group_id,name,phone',
                 'eventGroup:id,name',
@@ -216,9 +216,9 @@ class GamesDashboardController extends Controller
     /**
      * Export transactions to Excel.
      */
-    public function exportTransactions($eventId)
+    public function exportTransactions($id)
     {
-        $event = GameEvent::find($eventId);
+        $event = GameEvent::find($id);
 
         if (!$event) {
             return response()->json([
@@ -229,7 +229,7 @@ class GamesDashboardController extends Controller
 
         // TODO: Implement Excel export similar to EventController
         // For now return JSON for MVP
-        $transactions = PointTransaction::where('game_event_id', $eventId)
+        $transactions = PointTransaction::where('game_event_id', $id)
             ->with([
                 'participant:id,event_group_id,name,phone',
                 'eventGroup:id,name',

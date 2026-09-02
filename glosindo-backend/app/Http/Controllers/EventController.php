@@ -808,7 +808,7 @@ class EventController extends Controller
 
             // Find match in FaceEmbedding database
             $embeddings = FaceEmbedding::with('visitor:id,name,phone,email,company,position,photo')->get();
-            $threshold = 0.5; // matching threshold
+            $threshold = 0.3; // matching threshold
             $bestMatchVisitor = null;
             $minDistance = 999.0;
 

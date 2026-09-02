@@ -12,6 +12,7 @@ const GuestVisitPage = () => {
   
   const [step, setStep] = useState('idle'); // idle | scanning | form-new | form-existing | success
   const [visitor, setVisitor] = useState(null); // matched visitor or null for new
+  const [faceDescriptor, setFaceDescriptor] = useState(null); // Store face descriptor for new visitor
   const [formData, setFormData] = useState({
     purpose: '',
     name: '',
@@ -23,6 +24,7 @@ const GuestVisitPage = () => {
   const handleReset = () => {
     setStep('idle');
     setVisitor(null);
+    setFaceDescriptor(null);
     setFormData({ purpose: '', name: '', phone: '', meet_person: '' });
   };
 
@@ -34,12 +36,14 @@ const GuestVisitPage = () => {
   // Face matched = existing visitor
   const handleMatchFound = (matchedVisitor) => {
     setVisitor(matchedVisitor);
+    setFaceDescriptor(null);
     setStep('form-existing');
   };
 
-  // No match = new visitor
-  const handleNoMatch = () => {
+  // No match = new visitor, store descriptor
+  const handleNoMatch = (descriptor) => {
     setVisitor(null);
+    setFaceDescriptor(descriptor); // Save descriptor for later
     setStep('form-new');
   };
 
@@ -52,11 +56,26 @@ const GuestVisitPage = () => {
     }
 
     try {
-      await api.post('/public/guest-visit', {
+      const response = await api.post('/public/guest-visit', {
         name: formData.name,
         phone: formData.phone,
         purpose: formData.purpose,
+        face_descriptor: faceDescriptor, // Send face descriptor
       });
+
+      // If face descriptor exists, save to face_embeddings
+      if (faceDescriptor && response.data.data.visitor) {
+        const visitorId = response.data.data.visitor.id;
+        try {
+          await api.post(`/visitors/${visitorId}/face-embedding`, {
+            face_vector: faceDescriptor,
+          });
+        } catch (embError) {
+          console.error('Face embedding save failed:', embError);
+          // Continue anyway - visit was saved
+        }
+      }
+
       setStep('success');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Gagal menyimpan data');
@@ -289,7 +308,7 @@ const GuestVisitPage = () => {
             size="xl"
             icon={ArrowLeft}
             onClick={handleReset}
-            className="px-10 sm:px-12 py-5 sm:py-6 text-base sm:text-lg font-bold shadow-2xl bg-white text-emerald-600 hover:bg-emerald-50 border-2 border-white transition-all"
+            className="px-10 sm:px-12 py-5 sm:py-6 text-base sm:text-lg font-bold shadow-2xl bg-slate-800 text-white hover:bg-slate-900 border-2 border-slate-800 transition-all"
           >
             Kembali
           </Button>

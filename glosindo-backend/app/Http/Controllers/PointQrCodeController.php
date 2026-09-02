@@ -14,9 +14,9 @@ class PointQrCodeController extends Controller
     /**
      * Get all point QR codes for a game event.
      */
-    public function index($eventId)
+    public function index($id)
     {
-        $event = GameEvent::find($eventId);
+        $event = GameEvent::find($id);
 
         if (!$event) {
             return response()->json([
@@ -45,9 +45,9 @@ class PointQrCodeController extends Controller
     /**
      * Create a new point QR code.
      */
-    public function store(Request $request, $eventId)
+    public function store(Request $request, $id)
     {
-        $event = GameEvent::find($eventId);
+        $event = GameEvent::find($id);
 
         if (!$event) {
             return response()->json([
@@ -101,10 +101,10 @@ class PointQrCodeController extends Controller
     /**
      * Generate QR code image for a point QR.
      */
-    public function generateQr($eventId, $qrId)
+    public function generateQr($id, $qrId)
     {
         $qr = PointQrCode::where('id', $qrId)
-                        ->where('game_event_id', $eventId)
+                        ->where('game_event_id', $id)
                         ->with('gameEvent')
                         ->first();
 
@@ -151,10 +151,10 @@ class PointQrCodeController extends Controller
     /**
      * Update QR code status.
      */
-    public function updateStatus(Request $request, $eventId, $qrId)
+    public function updateStatus(Request $request, $id, $qrId)
     {
         $qr = PointQrCode::where('id', $qrId)
-                        ->where('game_event_id', $eventId)
+                        ->where('game_event_id', $id)
                         ->first();
 
         if (!$qr) {
@@ -197,10 +197,10 @@ class PointQrCodeController extends Controller
     /**
      * Delete a point QR code.
      */
-    public function destroy($eventId, $qrId)
+    public function destroy($id, $qrId)
     {
         $qr = PointQrCode::where('id', $qrId)
-                        ->where('game_event_id', $eventId)
+                        ->where('game_event_id', $id)
                         ->first();
 
         if (!$qr) {

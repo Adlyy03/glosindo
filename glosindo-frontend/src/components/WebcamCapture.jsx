@@ -151,7 +151,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
             {/* Oval Face Guide Frame */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div
-                className={`w-64 h-80 border-2 border-dashed rounded-[50%] transition-colors duration-300 ${
+                className={`w-80 h-96 border-2 border-dashed rounded-[50%] transition-colors duration-300 ${
                   scanning
                     ? 'border-brand-cyan shadow-[0_0_20px_rgba(14,165,233,0.5)]'
                     : 'border-white/60 shadow-inner'
