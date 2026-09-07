@@ -257,7 +257,7 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Contoh: Muhammad Adli"
+                  placeholder="Contoh: Budi Santoso"
                   className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-brand-cyan focus:border-brand-cyan bg-slate-50/50"
                 />
               </div>

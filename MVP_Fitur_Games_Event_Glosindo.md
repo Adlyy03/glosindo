@@ -6,6 +6,8 @@ Kamu adalah AI coding agent yang bertugas mengimplementasikan fitur baru bernama
 
 Tambahkan modul Games Event ke sistem yang sudah ada.
 
+
+
 Konsep utamanya:
 
 Event
