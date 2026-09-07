@@ -251,3 +251,6 @@ assert($event->is_finished === true);
 Existing events di DB:
 - Run `php artisan events:update-statuses` once setelah deploy
 - Cron akan sync status hourly after that
+    
+
+

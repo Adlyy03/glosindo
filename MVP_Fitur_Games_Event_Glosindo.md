@@ -50,7 +50,7 @@ Sebelum melakukan perubahan:
 14. Cek sistem QR Code yang sudah tersedia jika ada.
 15. Cek sistem registrasi tamu yang sudah ada.
 16. Cek permission middleware yang sudah ada.
-
+           
 Jangan langsung membuat file baru sebelum memahami struktur existing project.
 
 ---
