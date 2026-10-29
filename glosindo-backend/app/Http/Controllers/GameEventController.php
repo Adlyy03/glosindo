@@ -401,7 +401,8 @@ class GameEventController extends Controller
 
         try {
             // Generate URL untuk registration
-            $url = url("/games/register/{$group->register_token}");
+            $frontendUrl = env('FRONTEND_URL');
+            $url = $frontendUrl ? rtrim($frontendUrl, '/') . "/games/register/{$group->register_token}" : url("/games/register/{$group->register_token}");
 
             // Generate QR Code
             $qrCode = new QrCode($url);

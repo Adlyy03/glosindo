@@ -1,0 +1,14 @@
+vendor/
+node_modules/
+.git/
+.ddev/
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*
+*.log
+.env
+.env.local
+test_*.php
+test_*.json

@@ -31,11 +31,11 @@ class Handler extends ExceptionHandler
     {
         $response = $this->prepareJsonResponse($request, $exception);
 
-        $origin = $request->header('Origin') ?: '*';
+        $origin = $request->header('Origin') ?: env('CORS_ALLOWED_ORIGIN', 'http://103.134.221.200');
         $response->header('Access-Control-Allow-Origin', $origin);
-        $response->header('Access-Control-Allow-Methods', 'POST, GET, OPTIONS, PUT, DELETE, PATCH');
+        $response->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
         $response->header('Access-Control-Allow-Credentials', 'true');
-        $response->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+        $response->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-Custom-Header');
 
         return $response;
     }

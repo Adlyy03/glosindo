@@ -25,9 +25,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     // Authentication
     $router->post('login', 'AuthController@login');
     
-    // Public guest registration (rate limited: 10 requests per minute)
+        // Public guest registration (rate limited: 10 requests per minute)
     $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
-    $router->post('public-registration/register', ['middleware' => 'throttle:10,1', 'uses' => 'PublicRegistrationController@register']);
+        $router->post('public-registration/register', ['middleware' => 'throttle:10,1', 'uses' => 'PublicRegistrationController@register']);
 
     // Public event registration (rate limited: 10 requests per minute)
     $router->get('public/events/{code}', 'EventController@publicShow');
@@ -112,8 +112,7 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
 
     // Public Registration Settings (Admin & Receptionist only)
     $router->post('public-registration/toggle', ['middleware' => 'role:admin,receptionist', 'uses' => 'PublicRegistrationController@toggleStatus']);
-    $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
-
+    
     // Reports - Admin, Receptionist, Supervisor
     $router->get('reports/statistics', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReportController@statistics']);
     $router->get('reports/export-excel', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReportController@exportExcel']);
