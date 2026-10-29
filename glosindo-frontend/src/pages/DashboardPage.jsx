@@ -326,7 +326,7 @@ const DashboardPage = () => {
               Selamat datang, <span className="text-cyan-300">{user?.name || 'User'}</span>
             </h1>
             <p className="text-slate-200 text-xs sm:text-sm max-w-md mt-1 leading-relaxed">
-              Sistem buku tamu digital terintegrasi & manajemen event PT GLOSINDO.
+              Sistem buku tamu digital terintegrasi & manajemen event Global Media Pratama Solusindo.
             </p>
           </div>
 

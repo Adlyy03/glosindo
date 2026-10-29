@@ -20,7 +20,7 @@ const VisitorFormPage = ({ visitorToEdit, faceVectorPreset, onSuccess, onCancel 
   const [company, setCompany] = useState(visitorToEdit?.company || '');
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(
-    visitorToEdit?.photo ? (visitorToEdit.photo.startsWith('http') ? visitorToEdit.photo : `/storage/${visitorToEdit.photo}`) : null
+    visitorToEdit?.photo ? (visitorToEdit.photo.startsWith('http') ? visitorToEdit.photo : `${(import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api').replace('/api', '')}/storage/${visitorToEdit.photo}`) : null
   );
 
   const [faceVector, setFaceVector] = useState(

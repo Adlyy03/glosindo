@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.git/
+android/
+certs/
+*.log
+.env
+.env.local
+.env.production

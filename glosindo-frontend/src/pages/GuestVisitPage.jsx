@@ -16,7 +16,7 @@ import toast from 'react-hot-toast';
 import glosindoLogo from './logo-glosindo.webp';
 
 // Opsi keperluan singkat & umum untuk tamu
-const PURPOSE_OPTIONS = ['Meeting', 'Kunjungan Vendor', 'Pengiriman Barang', 'Interview', 'Lainnya'];
+const PURPOSE_OPTIONS = ['Meeting', 'Kunjungan Vendor', 'Pengiriman Barang', 'Interview', 'bayar wifi'];
 
 const GuestVisitPage = () => {
   const [step, setStep] = useState('idle'); // idle | scanning | form-new | form-existing | success
@@ -175,8 +175,8 @@ const GuestVisitPage = () => {
               <img src={glosindoLogo} alt="Logo Glosindo" className="h-full w-full object-contain" />
             </div>
             <div>
-              <span className="font-bold text-white text-base tracking-tight">PT GLOSINDO</span>
-              <p className="text-xs text-slate-400">Buku Tamu Digital</p>
+              <span className="font-bold text-white text-base tracking-tight">GLIDE GUESTBOOK</span>
+              <p className="text-xs text-slate-400">GLOSINDO Buku Tamu Digital</p>
             </div>
           </div>
 
@@ -206,7 +206,7 @@ const GuestVisitPage = () => {
                 Selamat Datang
               </h1>
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Silakan sentuh tombol di bawah untuk mulai check-in kunjungan Anda.
+                Silakan klik tombol di bawah untuk mulai check-in kunjungan Anda.
               </p>
             </div>
 
@@ -292,7 +292,7 @@ const GuestVisitPage = () => {
             <div className="h-8 w-8 rounded-lg bg-white p-1 flex items-center justify-center">
               <img src={glosindoLogo} alt="Glosindo" className="h-full w-full object-contain" />
             </div>
-            <span className="font-bold text-white text-sm">PT GLOSINDO</span>
+            <span className="font-bold text-white text-sm">GLIDE GUESTBOOK</span>
           </div>
           <span className="text-xs text-slate-400 font-mono">{formattedTime} WIB</span>
         </div>
