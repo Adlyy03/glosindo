@@ -42,51 +42,51 @@ const LandingPage = () => {
 
   const shouldReduceMotion = useReducedMotion();
 
-  // Hero carousel slides cycling through key features
+  // Hero carousel slides cycling through key face recognition & visitor features
   const heroSlides = [
     {
-      id: 'overview',
-      badge: 'Sistem Buku Tamu Digital',
-      badgeIcon: Sparkles,
-      prefix: 'Kelola Kunjungan dengan ',
-      highlight: 'Lebih Mudah dan Modern.',
-      desc: 'Sistem Buku Tamu Digital Glosindo membantu perusahaan mengelola data pengunjung secara praktis, cepat, dan terorganisir melalui teknologi digital.',
-      mockupTab: 'kiosk',
-    },
-    {
-      id: 'face-recognition',
-      badge: 'AI Biometrik Presisi',
+      id: 'face-main',
+      badge: 'Deteksi Wajah AI Biometrik',
       badgeIcon: ScanFace,
-      prefix: 'Identifikasi Tamu dengan ',
-      highlight: 'Pengenalan Wajah AI.',
-      desc: 'Verifikasi biometrik kilat kurang dari 1 detik untuk pengunjung terdaftar tanpa perlu mengantre di meja resepsionis dengan akurasi presisi 99.8%.',
+      prefix: 'Buku Tamu Cerdas dengan ',
+      highlight: 'Teknologi Deteksi Wajah.',
+      desc: 'Revolusi pencatatan buku tamu perusahaan menggunakan teknologi AI deteksi wajah instan tanpa antrean, tanpa sentuhan, dan terdata otomatis.',
       mockupTab: 'kiosk',
     },
     {
-      id: 'qr-code',
-      badge: 'Check-in Mandiri Praktis',
-      badgeIcon: QrCode,
-      prefix: 'Check-in Cepat Mandiri dengan ',
-      highlight: 'Pemindaian QR Code.',
-      desc: 'Cukup tunjukkan kode QR tanda masuk pengunjung ke kamera layar kiosk untuk konfirmasi kedatangan instan tanpa hambatan administrasi.',
+      id: 'face-speed',
+      badge: 'Verifikasi Kilat < 1 Detik',
+      badgeIcon: Sparkles,
+      prefix: 'Check-in Tamu Kilat dalam ',
+      highlight: 'Hitungan Kurang dari 1 Detik.',
+      desc: 'Cukup menghadap ke kamera kiosk, sistem pengenalan wajah langsung mengidentifikasi pengunjung terdaftar dan mencatat kedatangan secara real-time.',
       mockupTab: 'kiosk',
     },
     {
-      id: 'monitoring',
-      badge: 'Visibilitas Tamu Terpadu',
+      id: 'face-accuracy',
+      badge: 'Presisi Biometrik 99.8%',
+      badgeIcon: ShieldCheck,
+      prefix: 'Verifikasi Kedatangan Presisi ',
+      highlight: 'Tinggi & Bebas Manipulasi.',
+      desc: 'Didukung pencocokan vektor biometrik 128-titik wajah untuk menjamin keaslian tamu yang berkunjung dan mencegah pemalsuan data kehadiran.',
+      mockupTab: 'kiosk',
+    },
+    {
+      id: 'face-return',
+      badge: 'Auto-Match Tamu Langganan',
+      badgeIcon: UserCheck,
+      prefix: 'Kenali Tamu Langganan Otomatis ',
+      highlight: 'Tanpa Isi Ulang Formulir.',
+      desc: 'Pengunjung yang pernah terdaftar langsung dikenali saat kembali berkunjung, menghadirkan pengalaman resepsionis cerdas dan berkelas VIP.',
+      mockupTab: 'kiosk',
+    },
+    {
+      id: 'face-monitoring',
+      badge: 'Monitoring & Log Foto Wajah',
       badgeIcon: Activity,
-      prefix: 'Pantau Kehadiran dengan ',
-      highlight: 'Monitoring Real-Time.',
-      desc: 'Memudahkan petugas resepsionis & keamanan memantau data tamu aktif, waktu masuk, serta pihak yang dituju secara langsung dalam satu dasbor.',
-      mockupTab: 'dashboard',
-    },
-    {
-      id: 'reports',
-      badge: '100% Bebas Kertas (Paperless)',
-      badgeIcon: FileText,
-      prefix: 'Kelola Rekapitulasi dengan ',
-      highlight: 'Laporan Digital Terpadu.',
-      desc: 'Tinggalkan buku catatan fisik yang rawan hilang dengan arsip data kunjungan terenkripsi yang siap diekspor ke Excel dan PDF untuk kebutuhan audit.',
+      prefix: 'Riwayat Kunjungan Dilengkapi ',
+      highlight: 'Foto Wajah & Log Digital.',
+      desc: 'Petugas resepsionis dan keamanan memantau data tamu aktif lengkap dengan foto wajah kedatangan yang siap diekspor untuk audit resmi.',
       mockupTab: 'dashboard',
     },
   ];
@@ -173,44 +173,44 @@ const LandingPage = () => {
   const features = [
     {
       icon: ScanFace,
-      title: 'Face Recognition',
-      desc: 'Proses identifikasi pengunjung menggunakan teknologi pengenalan wajah secara instan dan akurat.',
-      badge: 'AI Biometrik',
+      title: 'Deteksi Wajah Biometrik AI',
+      desc: 'Pencocokan biometrik wajah instan kurang dari 1 detik dengan algoritma vision AI presisi tinggi untuk identifikasi tamu otomatis.',
+      badge: 'AI Biometrik Utama',
       color: 'from-blue-600 to-cyan-500',
     },
     {
-      icon: QrCode,
-      title: 'QR Code Check-in',
-      desc: 'Mempermudah proses pencatatan kunjungan menggunakan QR Code tanda masuk tanpa perlu antre.',
-      badge: 'Cepat & Praktis',
-      color: 'from-emerald-600 to-teal-500',
-    },
-    {
       icon: UserCheck,
-      title: 'Manual Check-in',
-      desc: 'Mendukung pencatatan pengunjung secara manual untuk tamu tanpa janji temu dengan verifikasi staf.',
-      badge: 'Fleksibel',
+      title: 'Auto-Recognition Tamu Langganan',
+      desc: 'Tamu yang pernah berkunjung langsung terdeteksi saat tiba di depan kamera tanpa perlu mengisi ulang data registrasi.',
+      badge: 'Cepat & Cerdas',
       color: 'from-indigo-600 to-blue-500',
     },
     {
-      icon: BookOpen,
-      title: 'Digital Guestbook',
-      desc: 'Semua data kunjungan tersimpan secara digital, aman, dan terorganisir rapi dalam database terpusat.',
-      badge: 'Paperless',
+      icon: ShieldCheck,
+      title: 'Log Foto Bukti Kedatangan',
+      desc: 'Setiap kedatangan tamu terekam otomatis dengan foto wajah aktual sebagai bukti otentik untuk kepatuhan SOP keamanan kantor.',
+      badge: 'Keamanan Tinggi',
+      color: 'from-emerald-600 to-teal-500',
+    },
+    {
+      icon: QrCode,
+      title: 'Dukungan QR Code & Kiosk',
+      desc: 'Menyediakan opsi alternatif pemindaian QR Code tiket undangan untuk fleksibilitas alur masuk acara atau kunjungan khusus.',
+      badge: 'Multi-Metode',
       color: 'from-amber-500 to-orange-500',
     },
     {
       icon: Activity,
-      title: 'Monitoring Pengunjung',
-      desc: 'Memudahkan petugas memantau aktivitas dan status kehadiran tamu di lingkungan kantor secara real-time.',
-      badge: 'Real-Time',
+      title: 'Monitoring Tamu Real-Time',
+      desc: 'Memudahkan staf resepsionis dan keamanan memantau daftar pengunjung aktif di gedung secara terpusat lengkap dengan foto wajah.',
+      badge: 'Real-Time Security',
       color: 'from-rose-500 to-pink-500',
     },
     {
       icon: FileText,
-      title: 'Laporan Kunjungan',
-      desc: 'Menyediakan rekapitulasi data kunjungan komprehensif (Excel & PDF) untuk kebutuhan audit dan administrasi.',
-      badge: 'Analitik & Ekspor',
+      title: 'Laporan Riwayat Digital & Audit',
+      desc: 'Rekapitulasi lengkap riwayat kunjungan beserta dokumentasi wajah yang siap diekspor ke format Excel dan PDF.',
+      badge: 'Audit & Paperless',
       color: 'from-violet-600 to-purple-500',
     },
   ];
@@ -218,50 +218,50 @@ const LandingPage = () => {
   const workflowSteps = [
     {
       step: '01',
-      title: 'Pengunjung Melakukan Registrasi',
-      desc: 'Tamu mendaftar mandiri via layar kiosk di lobi atau registrasi awal via link online sebelum hari kunjungan.',
+      title: 'Registrasi Identitas & Wajah',
+      desc: 'Pengunjung baru mendaftarkan data diri dan mengambil foto wajah (face enrollment) melalui layar kiosk lobi atau tautan mandiri.',
       icon: UserPlus,
     },
     {
       step: '02',
-      title: 'Verifikasi atau Check-In',
-      desc: 'Pengunjung melakukan verifikasi kilat menggunakan kamera pemindai wajah (face scan) atau pemindaian QR Code.',
+      title: 'Deteksi Wajah Cepat Saat Tiba',
+      desc: 'Tamu cukup berdiri dan menghadap ke kamera kiosk; sistem AI mendeteksi dan memvalidasi wajah dalam waktu kurang dari 1 detik.',
       icon: ScanFace,
     },
     {
       step: '03',
-      title: 'Petugas Memantau Data Kunjungan',
-      desc: 'Petugas resepsionis & keamanan memantau data tamu aktif, waktu masuk, dan pihak perusahaan yang dituju.',
+      title: 'Notifikasi & Pemantauan Resepsionis',
+      desc: 'Sistem mencatat kedatangan secara otomatis dan petugas front office memantau keberadaan tamu aktif di lingkungan kantor.',
       icon: Activity,
     },
     {
       step: '04',
-      title: 'Check-Out & Data Tersimpan',
-      desc: 'Pengunjung melakukan check-out saat selesai, seluruh riwayat tercatat permanen dan terenkripsi aman.',
+      title: 'Verifikasi Check-Out & Arsip Terenkripsi',
+      desc: 'Pengunjung mengakhiri kunjungan dengan verifikasi wajah cepat saat pulang, riwayat tersimpan permanen dan terenkripsi.',
       icon: ShieldCheck,
     },
   ];
 
   const benefits = [
     {
-      title: 'Proses Administrasi Lebih Praktis',
-      desc: 'Menghilangkan antrean tamu di meja resepsionis dan menggantikan buku fisik yang rawan terselip.',
+      title: 'Check-In 100% Bebas Sentuhan (Touchless)',
+      desc: 'Tamu tidak perlu menyentuh buku fisik atau pulpen bergantian, menghadirkan alur kedatangan yang higienis, cepat, dan modern.',
     },
     {
-      title: 'Data Pengunjung Lebih Terorganisir',
-      desc: 'Pencarian riwayat kunjungan dalam hitungan detik dengan filter tanggal, instansi, maupun nama tamu.',
+      title: 'Mencegah Manipulasi & Pemalsuan Data Tamu',
+      desc: 'Identitas pengunjung terikat langsung dengan verifikasi biometrik wajah asli, memastikan catatan kehadiran selalu valid dan akurat.',
     },
     {
-      title: 'Mengurangi Pencatatan Manual',
-      desc: 'Meminimalkan kesalahan pengetikan atau tulisan tangan yang sulit dibaca oleh petugas front office.',
+      title: 'Pelayanan Tamu Cepat Tanpa Antrean Meja Depan',
+      desc: 'Proses verifikasi wajah instan menghilangkan waktu tunggu lama di jam-jam sibuk kunjungan perusahaan.',
     },
     {
-      title: 'Mempermudah Monitoring Kunjungan',
-      desc: 'Visibilitas realtime terhadap jumlah tamu yang saat ini sedang berada di dalam gedung (active visitors).',
+      title: 'Bukti Visual Foto Wajah untuk SOP Keamanan',
+      desc: 'Setiap catatan kunjungan dilengkapi dokumentasi foto wajah resmi sebagai arsip visual untuk standar pengawasan gedung.',
     },
     {
-      title: 'Mendukung Keamanan & Ketertiban Perusahaan',
-      desc: 'Dilengkapi foto bukti kedatangan, identitas terverifikasi, dan log audit untuk kepatuhan SOP perusahaan.',
+      title: 'Transformasi Digital Ramah Lingkungan (Paperless)',
+      desc: 'Menggantikan tumpukan buku tamu kertas manual dengan arsip digital terorganisir yang mudah dicari kapan saja.',
     },
   ];
 
@@ -415,11 +415,11 @@ const LandingPage = () => {
                   GLOSINDO
                 </span>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-50 text-cyan-700 border border-cyan-200/70">
-                  Guestbook
+                  Guestbook AI
                 </span>
               </div>
               <p className="text-[10px] text-slate-500 hidden sm:block leading-none -mt-0.5 font-medium">
-                Digital Kiosk & Visitor Management
+                Buku Tamu Deteksi Wajah & Kiosk Digital
               </p>
             </div>
           </Link>
@@ -621,16 +621,16 @@ const LandingPage = () => {
                 className="pt-6 border-t border-slate-200/80 grid grid-cols-3 gap-4 max-w-md mx-auto lg:mx-0 text-left"
               >
                 <div>
-                  <div className="text-xl sm:text-2xl font-black text-slate-900">&lt; 1 Detik</div>
-                  <div className="text-[11px] text-slate-500 font-medium">Verifikasi Cepat</div>
+                  <div className="text-xl sm:text-2xl font-black text-slate-900">&lt; 0.8 Detik</div>
+                  <div className="text-[11px] text-slate-500 font-medium">Deteksi Wajah Cepat</div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-black text-cyan-600">100%</div>
-                  <div className="text-[11px] text-slate-500 font-medium">Bebas Kertas (Paperless)</div>
+                  <div className="text-xl sm:text-2xl font-black text-cyan-600">99.8%</div>
+                  <div className="text-[11px] text-slate-500 font-medium">Akurasi Biometrik AI</div>
                 </div>
                 <div>
-                  <div className="text-xl sm:text-2xl font-black text-emerald-600">Dual-Mode</div>
-                  <div className="text-[11px] text-slate-500 font-medium">Kiosk & Resepsionis</div>
+                  <div className="text-xl sm:text-2xl font-black text-emerald-600">100%</div>
+                  <div className="text-[11px] text-slate-500 font-medium">Touchless & Higienis</div>
                 </div>
               </motion.div>
             </motion.div>
@@ -879,24 +879,24 @@ const LandingPage = () => {
                 </div>
 
                 <h3 className="text-2xl font-bold mb-3 tracking-tight">
-                  Standar Keamanan Kantor Pintar
+                  Standar Keamanan Biometrik Kantor Pintar
                 </h3>
                 <p className="text-blue-100 text-sm leading-relaxed mb-6 font-normal">
-                  Menggabungkan kemudahan antarmuka kiosk mandiri untuk pengunjung dengan kontrol penuh di meja resepsionis untuk staf keamanan.
+                  Menggabungkan kamera pemindai wajah cerdas di lobi mandiri dengan kontrol pengawasan penuh di meja resepsionis dan pos keamanan.
                 </p>
 
                 <div className="space-y-3 pt-4 border-t border-white/10 text-xs">
                   <div className="flex items-center gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-cyan-300 flex-shrink-0" />
-                    <span>Penyimpanan Biometrik Terenkripsi Aman</span>
+                    <span>Pengenalan Wajah Real-Time Berakurasi 99.8%</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-cyan-300 flex-shrink-0" />
-                    <span>Otomatis Sinkronisasi Check-in & Check-out</span>
+                    <span>Pencatatan Waktu Presisi & Foto Wajah Resmi</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-cyan-300 flex-shrink-0" />
-                    <span>Mendukung Skenario Tamu Biasa & Event Khusus</span>
+                    <span>Otomatis Kenali Tamu Langganan Tanpa Isi Form Ulang</span>
                   </div>
                 </div>
 
@@ -925,21 +925,21 @@ const LandingPage = () => {
             >
               <motion.div variants={fadeUpVariant} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-brand-navy border border-blue-200/80 text-xs font-bold uppercase tracking-wider">
                 <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
-                <span>Tentang Sistem</span>
+                <span>Inovasi Deteksi Wajah AI</span>
               </motion.div>
 
               <motion.h2
                 variants={fadeUpVariant}
                 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight"
               >
-                Kenali Sistem Buku Tamu Glosindo
+                Kenali Sistem Buku Tamu Berbasis Deteksi Wajah
               </motion.h2>
 
               <motion.p
                 variants={fadeUpVariant}
                 className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal"
               >
-                Buku Tamu Glosindo merupakan sistem digital yang dirancang untuk mempermudah proses pencatatan, pengelolaan, dan pemantauan kunjungan tamu di lingkungan perusahaan.
+                Buku Tamu Glosindo merupakan solusi digital modern yang memanfaatkan teknologi kecerdasan buatan (Face Recognition AI) untuk mempermudah identifikasi, pencatatan, dan pemantauan kunjungan tamu secara otomatis, akurat, dan tanpa kontak fisik.
               </motion.p>
 
               <motion.div variants={fadeUpVariant} className="grid sm:grid-cols-2 gap-4 pt-2">
@@ -947,9 +947,9 @@ const LandingPage = () => {
                   <div className="w-8 h-8 rounded-lg bg-blue-100/80 text-blue-700 flex items-center justify-center font-bold">
                     1
                   </div>
-                  <h4 className="font-bold text-slate-900 text-sm">Efisiensi Tanpa Antrean</h4>
+                  <h4 className="font-bold text-slate-900 text-sm">Identifikasi Touchless & Presisi</h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Pengunjung dapat melakukan pencatatan mandiri melalui kiosk layar sentuh dalam waktu kurang dari satu menit.
+                    Tamu cukup menghadap kamera pemindai; sistem langsung mengenali pengunjung terdaftar dalam hitungan detik tanpa perlu menulis di buku tamu fisik.
                   </p>
                 </div>
 
@@ -957,9 +957,9 @@ const LandingPage = () => {
                   <div className="w-8 h-8 rounded-lg bg-cyan-100/80 text-cyan-700 flex items-center justify-center font-bold">
                     2
                   </div>
-                  <h4 className="font-bold text-slate-900 text-sm">Transparansi & Akurasi</h4>
+                  <h4 className="font-bold text-slate-900 text-sm">Keamanan & Dokumentasi Wajah Resmi</h4>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Setiap kedatangan tamu memiliki catatan waktu presisi, foto bukti, dan kontak pihak yang dikunjungi.
+                    Setiap kedatangan tamu terekam bersama foto wajah asli, stempel waktu presisi, dan instansi yang dituju, menghasilkan log audit yang tidak dapat dimanipulasi.
                   </p>
                 </div>
               </motion.div>
@@ -983,14 +983,14 @@ const LandingPage = () => {
             className="text-center max-w-2xl mx-auto mb-16 space-y-3"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-50 text-cyan-800 border border-cyan-200/80 text-xs font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
-              <span>Fitur Unggulan</span>
+              <ScanFace className="w-3.5 h-3.5 text-cyan-600" />
+              <span>Fitur Deteksi Wajah AI</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              Solusi Menyeluruh untuk Manajemen Tamu
+              Solusi Buku Tamu Cerdas Berbasis Pengenalan Wajah
             </h2>
             <p className="text-sm sm:text-base text-slate-600">
-              Didesain dengan teknologi modern untuk memberikan pengalaman kedatangan yang profesional bagi tamu dan memudahkan operasional staf.
+              Kombinasi teknologi vision AI dan manajemen tamu digital untuk proses penerimaan pengunjung yang cepat, akurat, dan tanpa sentuhan.
             </p>
           </motion.div>
 
@@ -1063,14 +1063,14 @@ const LandingPage = () => {
             className="text-center max-w-2xl mx-auto mb-16 space-y-3"
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200/80 text-xs font-bold uppercase tracking-wider">
-              <Clock className="w-3.5 h-3.5 text-blue-600" />
-              <span>Cara Kerja Sistem</span>
+              <ScanFace className="w-3.5 h-3.5 text-blue-600" />
+              <span>Alur Deteksi Wajah</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
-              Alur Penggunaan dalam 4 Langkah Praktis
+              Alur Kunjungan 4 Langkah dengan Deteksi Wajah
             </h2>
             <p className="text-sm sm:text-base text-slate-600">
-              Proses alur pencatatan dari saat pengunjung tiba hingga check-out berlangsung tertib, efisien, dan transparan.
+              Proses check-in cepat tanpa ribet dari saat tamu menghadap kamera lobi hingga check-out selesai.
             </p>
           </motion.div>
 
@@ -1146,15 +1146,15 @@ const LandingPage = () => {
             >
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 text-xs font-bold uppercase tracking-wider">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Nilai Tambah Perusahaan</span>
+                <span>Keunggulan Deteksi Wajah</span>
               </div>
 
               <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-tight">
-                Keunggulan Nyata untuk Lingkungan Kerja Anda
+                Standar Baru Penerimaan Tamu yang Akurat & Modern
               </h2>
 
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-normal">
-                Buku Tamu Glosindo bukan sekadar formulir digital, melainkan sarana peningkatan citra profesional kantor dan penguatan sistem keamanan gedung.
+                Bukan sekadar buku tamu biasa, melainkan sistem keamanan biometrik cerdas yang meningkatkan proteksi gedung dan citra profesional perusahaan.
               </p>
 
               <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3">
@@ -1163,8 +1163,8 @@ const LandingPage = () => {
                     <TrendingUp className="w-5 h-5 text-cyan-400" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 text-sm">Produktivitas Meningkat</h4>
-                    <p className="text-xs text-slate-500">Resepsionis fokus melayani tamu VIP tanpa beban administrasi kertas.</p>
+                    <h4 className="font-bold text-slate-900 text-sm">Resepsionis Bebas Antrean</h4>
+                    <p className="text-xs text-slate-500">Staf front office dapat fokus menyambut tamu penting dengan pelayanan prima tanpa kerepotan mencatat buku manual.</p>
                   </div>
                 </div>
               </div>
@@ -1251,16 +1251,16 @@ const LandingPage = () => {
 
             <div className="relative z-10 max-w-2xl mx-auto space-y-6">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-cyan-300 text-xs font-bold uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-cyan-300" />
-                Modernisasi Buku Tamu Sekarang
+                <ScanFace className="w-3.5 h-3.5 text-cyan-300" />
+                Buku Tamu Deteksi Wajah AI
               </span>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-                Mulai Transformasi Buku Tamu Menjadi Digital.
+                Mulai Gunakan Buku Tamu Deteksi Wajah di Kantor Anda.
               </h2>
 
               <p className="text-sm sm:text-base text-blue-100 leading-relaxed font-normal">
-                Optimalkan pengelolaan kunjungan dengan sistem Buku Tamu Glosindo. Nikmati kemudahan pencatatan biometrik dan monitoring terpadu.
+                Tingkatkan efisiensi, akurasi, dan citra modern kantor Anda dengan sistem buku tamu berteknologi AI pengenalan wajah dari Glosindo.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
@@ -1275,7 +1275,7 @@ const LandingPage = () => {
               </div>
 
               <div className="pt-6 text-xs text-blue-200/80 font-medium">
-                Solusi Perusahaan Terintegrasi • Aman • Andal
+                Solusi Perusahaan Terintegrasi • Biometrik AI • Aman & Andal
               </div>
             </div>
           </div>
@@ -1305,13 +1305,13 @@ const LandingPage = () => {
               </div>
 
               <p className="text-xs text-slate-400 leading-relaxed max-w-sm font-normal">
-                Sistem Buku Tamu Digital Glosindo menghadirkan pengelolaan kunjungan modern berbasis biometrik wajah dan kode QR untuk efisiensi, akurasi, dan ketertiban kantor perusahaan.
+                Sistem Buku Tamu Digital Glosindo menghadirkan pengelolaan kunjungan modern berbasis teknologi deteksi wajah (AI Face Recognition) untuk kecepatan, akurasi, dan keamanan kantor perusahaan.
               </p>
 
               <div className="text-xs text-slate-400 space-y-1 pt-1">
                 <div className="flex items-center gap-2 text-slate-300 font-semibold">
                   <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                  <span>Sistem Siap Operasional (Production Ready)</span>
+                  <span>Sistem Deteksi Wajah Siap Operasional (Production Ready)</span>
                 </div>
               </div>
             </div>
