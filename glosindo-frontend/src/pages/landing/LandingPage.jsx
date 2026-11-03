@@ -17,7 +17,7 @@ import {
   X,
   Building2,
   Phone,
-  Mail,
+  Globe,
   MapPin,
   Check,
   ChevronRight,
@@ -1362,18 +1362,32 @@ const LandingPage = () => {
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-200">
                 Informasi Kontak
               </h4>
-              <ul className="space-y-2.5 text-xs">
+              <ul className="space-y-3 text-xs">
                 <li className="flex items-start gap-2.5">
                   <MapPin className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
-                  <span>PT Global Media Pratama Solusindo (GLOSINDO), Indonesia</span>
-                </li>
-                <li className="flex items-center gap-2.5">
-                  <Mail className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                  <span>info@glosindo.com / support@glosindo.com</span>
+                  <div>
+                    <span className="font-semibold text-slate-300 block mb-0.5">PT Global Media Pratama Solusindo</span>
+                    <span className="text-slate-400 leading-relaxed block">
+                      Jl. Kapten Dasuki Bakri, Desa Cimayang, Kec. Pamijahan, Kabupaten Bogor, Jawa Barat 16810
+                    </span>
+                  </div>
                 </li>
                 <li className="flex items-center gap-2.5">
                   <Phone className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                  <span>Layanan Pelanggan & Helpdesk Glosindo</span>
+                  <a href="tel:02513100887" className="text-slate-300 hover:text-cyan-400 transition-colors font-medium">
+                    (0251) 3100887
+                  </a>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Globe className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                  <a
+                    href="https://glosindo.net.id/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-300 hover:text-cyan-400 transition-colors font-medium underline underline-offset-2"
+                  >
+                    glosindo.net.id
+                  </a>
                 </li>
               </ul>
             </div>
