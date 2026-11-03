@@ -545,9 +545,9 @@ const LandingPage = () => {
               animate="visible"
               className="lg:col-span-6 space-y-6 text-center lg:text-left"
             >
-              {/* Sliding Headline + Concise Feature Carousel (3 Detik Auto-Slide) */}
+              {/* Sliding Headline + Concise Feature Carousel (4 Detik Auto-Slide) */}
               <div
-                className="relative min-h-[300px] sm:min-h-[250px] lg:min-h-[270px] overflow-hidden flex flex-col justify-between"
+                className="relative min-h-[230px] sm:min-h-[190px] lg:min-h-[210px] overflow-hidden"
               >
                 <AnimatePresence mode="wait" custom={slideDirection}>
                   <motion.div
@@ -589,65 +589,6 @@ const LandingPage = () => {
                     </p>
                   </motion.div>
                 </AnimatePresence>
-
-                {/* 4-Second Active Auto-Progress Bar */}
-                <div className="w-full max-w-md mx-auto lg:mx-0 h-1 bg-slate-200/80 rounded-full overflow-hidden my-2">
-                  <motion.div
-                    key={currentSlide}
-                    initial={{ width: '0%' }}
-                    animate={{ width: '100%' }}
-                    transition={{ duration: 4.0, ease: 'linear' }}
-                    className="h-full bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-400 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.4)]"
-                  />
-                </div>
-
-                {/* Slide Navigation Controls & Interactive Dots */}
-                <div className="flex items-center justify-center lg:justify-start gap-3 pt-1">
-                  <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-full px-3 py-1.5 shadow-2xs">
-                    {heroSlides.map((slide, idx) => {
-                      const isActive = currentSlide === idx;
-                      return (
-                        <button
-                          key={slide.id}
-                          type="button"
-                          onClick={() => goToSlide(idx)}
-                          className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                            isActive
-                              ? 'w-7 bg-brand-navy shadow-xs'
-                              : 'w-2 bg-slate-300 hover:bg-slate-400'
-                          }`}
-                          aria-label={`Slide ${idx + 1}: ${slide.highlight}`}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {/* Prev / Next Arrows */}
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={prevSlide}
-                      className="w-8 h-8 rounded-full bg-white border border-slate-200/90 text-slate-600 hover:text-brand-navy hover:bg-slate-100 flex items-center justify-center transition-all shadow-2xs cursor-pointer active:scale-95"
-                      aria-label="Slide sebelumnya"
-                      title="Slide sebelumnya"
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={nextSlide}
-                      className="w-8 h-8 rounded-full bg-white border border-slate-200/90 text-slate-600 hover:text-brand-navy hover:bg-slate-100 flex items-center justify-center transition-all shadow-2xs cursor-pointer active:scale-95"
-                      aria-label="Slide berikutnya"
-                      title="Slide berikutnya"
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  <span className="text-[11px] font-mono text-slate-400 font-semibold pl-1 select-none">
-                    0{currentSlide + 1} / 0{heroSlides.length}
-                  </span>
-                </div>
               </div>
 
               {/* CTA Buttons */}
