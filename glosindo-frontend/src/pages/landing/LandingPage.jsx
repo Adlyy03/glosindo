@@ -91,12 +91,12 @@ const LandingPage = () => {
     },
   ];
 
-  // Auto-play timer for hero text slider: 3.5 detik (3500 ms), berjalan otomatis tanpa terhenti mouse
+  // Auto-play timer for hero text slider: 4 detik (4000 ms), berjalan otomatis tanpa terhenti mouse
   useEffect(() => {
     const timer = setInterval(() => {
       setSlideDirection(1);
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 3500);
+    }, 4000);
     return () => clearInterval(timer);
   }, [heroSlides.length]);
 
@@ -590,13 +590,13 @@ const LandingPage = () => {
                   </motion.div>
                 </AnimatePresence>
 
-                {/* 3.5-Second Active Auto-Progress Bar */}
+                {/* 4-Second Active Auto-Progress Bar */}
                 <div className="w-full max-w-md mx-auto lg:mx-0 h-1 bg-slate-200/80 rounded-full overflow-hidden my-2">
                   <motion.div
                     key={currentSlide}
                     initial={{ width: '0%' }}
                     animate={{ width: '100%' }}
-                    transition={{ duration: 3.5, ease: 'linear' }}
+                    transition={{ duration: 4.0, ease: 'linear' }}
                     className="h-full bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-400 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.4)]"
                   />
                 </div>
