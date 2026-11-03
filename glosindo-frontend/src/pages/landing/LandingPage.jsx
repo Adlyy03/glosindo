@@ -91,15 +91,14 @@ const LandingPage = () => {
     },
   ];
 
-  // Auto-play timer for hero text slider
+  // Auto-play timer for hero text slider: 3 detik (3000 ms), berjalan otomatis tanpa terhenti mouse
   useEffect(() => {
-    if (isPaused) return;
     const timer = setInterval(() => {
       setSlideDirection(1);
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 4500);
+    }, 3000);
     return () => clearInterval(timer);
-  }, [isPaused, heroSlides.length]);
+  }, [heroSlides.length]);
 
   // Sync interactive mockup tab with active slide
   useEffect(() => {
@@ -330,27 +329,23 @@ const LandingPage = () => {
 
   const textSlideVariants = {
     enter: (dir) => ({
-      x: shouldReduceMotion ? 0 : dir > 0 ? 35 : -35,
+      x: shouldReduceMotion ? 0 : dir > 0 ? 80 : -80,
       opacity: 0,
-      filter: shouldReduceMotion ? 'none' : 'blur(4px)',
     }),
     center: {
       x: 0,
       opacity: 1,
-      filter: 'blur(0px)',
       transition: {
-        x: { type: 'spring', stiffness: 280, damping: 26 },
-        opacity: { duration: 0.35 },
-        filter: { duration: 0.35 },
+        x: { type: 'spring', stiffness: 240, damping: 24 },
+        opacity: { duration: 0.3 },
       },
     },
     exit: (dir) => ({
-      x: shouldReduceMotion ? 0 : dir > 0 ? -35 : 35,
+      x: shouldReduceMotion ? 0 : dir > 0 ? -80 : 80,
       opacity: 0,
-      filter: shouldReduceMotion ? 'none' : 'blur(4px)',
       transition: {
-        duration: 0.25,
-        ease: [0.22, 1, 0.36, 1],
+        x: { type: 'spring', stiffness: 240, damping: 24 },
+        opacity: { duration: 0.25 },
       },
     }),
   };
@@ -550,11 +545,9 @@ const LandingPage = () => {
               animate="visible"
               className="lg:col-span-6 space-y-6 text-center lg:text-left"
             >
-              {/* Sliding Headline + Concise Feature Carousel */}
+              {/* Sliding Headline + Concise Feature Carousel (3 Detik Auto-Slide) */}
               <div
-                className="relative min-h-[300px] sm:min-h-[250px] lg:min-h-[270px] flex flex-col justify-between"
-                onMouseEnter={() => setIsPaused(true)}
-                onMouseLeave={() => setIsPaused(false)}
+                className="relative min-h-[300px] sm:min-h-[250px] lg:min-h-[270px] overflow-hidden flex flex-col justify-between"
               >
                 <AnimatePresence mode="wait" custom={slideDirection}>
                   <motion.div
@@ -597,8 +590,19 @@ const LandingPage = () => {
                   </motion.div>
                 </AnimatePresence>
 
+                {/* 3-Second Active Auto-Progress Bar */}
+                <div className="w-full max-w-md mx-auto lg:mx-0 h-1 bg-slate-200/80 rounded-full overflow-hidden my-2">
+                  <motion.div
+                    key={currentSlide}
+                    initial={{ width: '0%' }}
+                    animate={{ width: '100%' }}
+                    transition={{ duration: 3.0, ease: 'linear' }}
+                    className="h-full bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-400 rounded-full shadow-[0_0_8px_rgba(6,182,212,0.4)]"
+                  />
+                </div>
+
                 {/* Slide Navigation Controls & Interactive Dots */}
-                <div className="flex items-center justify-center lg:justify-start gap-3 pt-3">
+                <div className="flex items-center justify-center lg:justify-start gap-3 pt-1">
                   <div className="flex items-center gap-1.5 bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-full px-3 py-1.5 shadow-2xs">
                     {heroSlides.map((slide, idx) => {
                       const isActive = currentSlide === idx;
