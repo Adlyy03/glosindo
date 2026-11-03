@@ -1402,10 +1402,6 @@ const LandingPage = () => {
               <Link to="/login" className="text-slate-400 hover:text-slate-300 transition-colors cursor-pointer select-none">
                 Buku Tamu Digital v2.4
               </Link>
-              <span>•</span>
-              <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Server Aktif
-              </span>
             </div>
           </div>
         </div>
