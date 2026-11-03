@@ -7,34 +7,35 @@ import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import FeatureGate from './components/FeatureGate';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
-import CheckInCameraPage from './pages/CheckInCameraPage';
-import CheckInPage from './pages/CheckInPage';
-import QuickCheckInPage from './pages/QuickCheckInPage';
-import ActiveVisitorPage from './pages/ActiveVisitorPage';
-import VisitHistoryPage from './pages/VisitHistoryPage';
-import VisitorListPage from './pages/VisitorListPage';
-import AdminUsersPage from './pages/admin/AdminUsersPage';
-import AdminSettingsPage from './pages/admin/AdminSettingsPage';
-import ReceptionistCheckInPage from './pages/receptionist/ReceptionistCheckInPage';
-import ReceptionistActivePage from './pages/receptionist/ReceptionistActivePage';
-import ReceptionistHistoryPage from './pages/receptionist/ReceptionistHistoryPage';
-import ReceptionistVisitorPage from './pages/receptionist/ReceptionistVisitorPage';
-import PublicGuestRegisterPage from './pages/PublicGuestRegisterPage';
-import PublicEventRegisterPage from './pages/PublicEventRegisterPage';
-
-import EventListPage from './pages/events/EventListPage';
-import EventFormPage from './pages/events/EventFormPage';
-import EventDetailPage from './pages/events/EventDetailPage';
-
-// Games Event pages
-import GamesEventListPage from './pages/games/GamesEventListPage';
-import GamesEventFormPage from './pages/games/GamesEventFormPage';
-import GamesEventDetailPage from './pages/games/GamesEventDetailPage';
-import GamesPublicRegisterPage from './pages/games/GamesPublicRegisterPage';
-import GamesScanPointPage from './pages/games/GamesScanPointPage';
-import GuestVisitPage from './pages/GuestVisitPage';
+import {
+  LandingPage,
+  LoginPage,
+  DashboardPage,
+  CheckInCameraPage,
+  CheckInPage,
+  QuickCheckInPage,
+  ActiveVisitorPage,
+  VisitHistoryPage,
+  VisitorListPage,
+  GuestVisitPage,
+  PublicGuestRegisterPage,
+  PublicEventRegisterPage,
+  EventListPage,
+  EventFormPage,
+  EventDetailPage,
+  GamesEventListPage,
+  GamesEventFormPage,
+  GamesEventDetailPage,
+  GamesPublicRegisterPage,
+  GamesScanPointPage,
+  ReceptionistCheckInPage,
+  ReceptionistActivePage,
+  ReceptionistHistoryPage,
+  ReceptionistVisitorPage,
+  AdminUsersPage,
+  AdminSettingsPage,
+} from './pages';
+import PwaOfflineBanner from './components/PwaOfflineBanner';
 
 const ROUTE_PRIORITY = [
   { path: '/dashboard', featureId: 'dashboard' },
@@ -68,17 +69,17 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 1024);
   const [modelsLoaded, setModelsLoaded] = useState(false);
 
-  // Load face-api.js models on app init
+  // Load face-api.js models on app init (lightweight tiny models)
   useEffect(() => {
     const loadModels = async () => {
       try {
         const MODEL_URL = '/models';
         await Promise.all([
-          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
-          faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.faceLandmark68TinyNet.loadFromUri(MODEL_URL),
           faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
         ]);
-        console.log('Face-api.js models loaded successfully');
+        console.log('Face-api.js tiny biometric models loaded successfully');
         setModelsLoaded(true);
       } catch (error) {
         console.error('Failed to load face-api.js models:', error);
@@ -152,7 +153,14 @@ function App() {
         }}
       />
 
+      <PwaOfflineBanner />
+
       <Routes>
+        {/* Public Landing & Marketing */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/beranda" element={<LandingPage />} />
+        <Route path="/home" element={<LandingPage />} />
+
         {/* Public routes */}
         <Route
           path="/login"
@@ -172,9 +180,15 @@ function App() {
         <Route path="/games/register/:token" element={<GamesPublicRegisterPage />} />
         <Route path="/games/scan-point" element={<GamesScanPointPage />} />
 
-        {/* Guest Visit Kiosk - Public */}
-        <Route path="/guest-visit" element={<GuestVisitPage />} />
-        <Route path="/kunjungan-tamu" element={<GuestVisitPage />} />
+        {/* Guest Visit Kiosk - Admin / Staff Authenticated Only */}
+        <Route
+          path="/guest-visit"
+          element={isAuthenticated ? <GuestVisitPage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/kunjungan-tamu"
+          element={isAuthenticated ? <GuestVisitPage /> : <Navigate to="/login" replace />}
+        />
 
         {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
@@ -190,6 +204,7 @@ function App() {
                       <Route path="/dashboard" element={<FeatureGate featureId="dashboard"><DashboardPage /></FeatureGate>} />
                       <Route path="/check-in" element={<FeatureGate featureId="checkin"><CheckInCameraPage /></FeatureGate>} />
                       <Route path="/check-in/manual" element={<FeatureGate featureId="checkin"><CheckInPage /></FeatureGate>} />
+                      <Route path="/quick-check-in" element={<FeatureGate featureId="checkin"><QuickCheckInPage /></FeatureGate>} />
                       <Route path="/active-visitors" element={<FeatureGate featureId="active_visitors"><ActiveVisitorPage /></FeatureGate>} />
                       <Route path="/visit-history" element={<FeatureGate featureId="visit_history"><VisitHistoryPage /></FeatureGate>} />
                       <Route path="/visitors" element={<FeatureGate featureId="visitors"><VisitorListPage /></FeatureGate>} />
@@ -224,7 +239,7 @@ function App() {
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

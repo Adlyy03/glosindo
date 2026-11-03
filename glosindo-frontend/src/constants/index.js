@@ -1,6 +1,10 @@
-export const LOGO = '/src/assets/images/logo-glosindo.webp';
-export const LOGIN_ILLUSTRATION = '/src/assets/images/login-illustration.jpg';
-export const LOGIN_MASCOT = '/src/assets/images/login-mascot.png';
+import logoGlosindo from '../assets/images/logo-glosindo.png';
+import loginIllustration from '../assets/images/login-illustration.jpg';
+import loginMascot from '../assets/images/login-mascot.png';
+
+export const LOGO = logoGlosindo;
+export const LOGIN_ILLUSTRATION = loginIllustration;
+export const LOGIN_MASCOT = loginMascot;
 
 // Brand Colors (matching Tailwind config)
 export const COLORS = {

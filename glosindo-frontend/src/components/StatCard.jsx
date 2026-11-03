@@ -32,31 +32,31 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color = 'blue', loading 
   const s = colorMap[color] || colorMap.blue;
 
   return (
-    <div className={`bg-gradient-to-br ${s.gradient} text-white rounded-3xl p-6 shadow-xl ${s.glow} border border-white/10 relative overflow-hidden group select-none transition-all duration-200 hover:-translate-y-1`}>
+    <div className={`bg-gradient-to-br ${s.gradient} text-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl ${s.glow} border border-white/10 relative overflow-hidden group select-none transition-all duration-200 hover:-translate-y-1`}>
       {/* Decorative Orbs */}
       <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/5 pointer-events-none group-hover:scale-110 transition-transform" />
 
-      <div className="flex items-center justify-between relative z-10 mb-3">
-        <span className="text-xs font-extrabold uppercase tracking-wider text-slate-300">
+      <div className="flex items-center justify-between relative z-10 mb-2.5 sm:mb-3">
+        <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider text-slate-300 truncate mr-2">
           {title}
         </span>
         {Icon && (
-          <div className={`p-2.5 rounded-2xl border backdrop-blur-md ${s.iconBg} shadow-inner`}>
-            <Icon className="w-5 h-5" />
+          <div className={`p-2 sm:p-2.5 rounded-2xl border backdrop-blur-md ${s.iconBg} shadow-inner flex-shrink-0`}>
+            <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         )}
       </div>
 
       <div className="relative z-10">
         {loading ? (
-          <div className="h-9 w-24 bg-white/20 animate-pulse rounded-xl my-1" />
+          <div className="h-8 sm:h-9 w-20 sm:w-24 bg-white/20 animate-pulse rounded-xl my-1" />
         ) : (
-          <h3 className="text-3xl md:text-4xl font-black text-white tracking-tight leading-none">
+          <h3 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight leading-none">
             {value ?? '0'}
           </h3>
         )}
         {subtitle && (
-          <p className="text-xs text-slate-300 font-medium mt-2 truncate">
+          <p className="text-[11px] sm:text-xs text-slate-300 font-medium mt-1.5 sm:mt-2 truncate">
             {subtitle}
           </p>
         )}

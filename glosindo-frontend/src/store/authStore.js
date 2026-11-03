@@ -37,7 +37,10 @@ const useAuthStore = create(
        */
       logout: async () => {
         try {
-          await authService.logout();
+          const storedToken = localStorage.getItem('token');
+          if (storedToken) {
+            await authService.logout();
+          }
         } catch (_) {
           // Clear local state even if server logout fails
         } finally {
@@ -45,6 +48,15 @@ const useAuthStore = create(
           localStorage.removeItem('user');
           set({ token: null, user: null, isAuthenticated: false });
         }
+      },
+
+      /**
+       * Clear auth state locally without making server API calls
+       */
+      clearAuth: () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        set({ token: null, user: null, isAuthenticated: false });
       },
 
       /**

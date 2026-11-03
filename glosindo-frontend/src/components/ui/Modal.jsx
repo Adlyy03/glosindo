@@ -24,30 +24,31 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 animate-fadeIn">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} animate-scaleIn`}>
+      {/* Modal Card */}
+      <div className={`relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full ${sizeClasses[size]} animate-scaleIn max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] flex flex-col overflow-hidden`}>
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between p-5 border-b border-slate-200">
-            <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+          <div className="flex items-center justify-between p-4 sm:p-5 border-b border-slate-100 flex-shrink-0">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate pr-2">{title}</h3>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
+              aria-label="Tutup modal"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         )}
 
-        {/* Content */}
-        <div className="p-5">
+        {/* Content with Scrollable Area */}
+        <div className="p-4 sm:p-5 overflow-y-auto flex-1 overscroll-contain">
           {children}
         </div>
       </div>

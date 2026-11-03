@@ -4,6 +4,8 @@ const gamesEventService = {
   // Game Events
   getAll: (params) => api.get('/games/events', { params }),
   getById: (id) => api.get(`/games/events/${id}`),
+  getByEventId: (eventId) => api.get(`/games/events/event-link/${eventId}`),
+  linkToEvent: (eventId, data) => api.post(`/games/events/event-link/${eventId}`, data),
   create: (data) => api.post('/games/events', data),
   update: (id, data) => api.put(`/games/events/${id}`, data),
   delete: (id) => api.delete(`/games/events/${id}`),
@@ -15,6 +17,8 @@ const gamesEventService = {
   deleteGroup: (eventId, groupId) => api.delete(`/games/events/${eventId}/groups/${groupId}`),
   generateGroupQr: (eventId, groupId) => api.get(`/games/events/${eventId}/groups/${groupId}/qr`),
   getGroupParticipants: (eventId, groupId) => api.get(`/games/events/${eventId}/groups/${groupId}/participants`),
+  addParticipant: (eventId, groupId, data) => api.post(`/games/events/${eventId}/groups/${groupId}/participants`, data),
+  deleteParticipant: (eventId, groupId, participantId) => api.delete(`/games/events/${eventId}/groups/${groupId}/participants/${participantId}`),
 
   // Point QR Codes
   getPointQrs: (eventId) => api.get(`/games/events/${eventId}/point-qr`),

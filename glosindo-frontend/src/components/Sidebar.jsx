@@ -39,7 +39,7 @@ const navSections = [
       {
         label: 'Guest Visit Kiosk',
         to: '/guest-visit?kiosk=true',
-        roles: ['admin', 'receptionist'],
+        roles: ['admin', 'receptionist', 'supervisor'],
         icon: BookUser,
         badge: null,
         featureId: null,
@@ -47,7 +47,7 @@ const navSections = [
       {
         label: 'Check-In Tamu',
         to: '/check-in',
-        roles: ['admin', 'receptionist'],
+        roles: ['admin', 'receptionist', 'supervisor'],
         icon: Camera,
         badge: null,
         featureId: 'checkin',
@@ -177,7 +177,8 @@ const Sidebar = ({ isOpen, onClose }) => {
 
             <button
               onClick={onClose}
-              className="lg:hidden p-1.5 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors"
+              className="lg:hidden p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center cursor-pointer"
+              aria-label="Tutup menu sidebar"
             >
               <X className="w-5 h-5" />
             </button>
@@ -270,8 +271,9 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           <button
             onClick={handleLogout}
-            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-white/60 rounded-xl transition-all cursor-pointer ml-1 flex-shrink-0"
+            className="p-2.5 text-slate-400 hover:text-rose-600 hover:bg-white/60 rounded-xl transition-all cursor-pointer ml-1 flex-shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center"
             title="Logout"
+            aria-label="Logout"
           >
             <LogOut className="w-4 h-4" />
           </button>

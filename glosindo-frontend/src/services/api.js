@@ -1,13 +1,34 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
+const getBaseURL = () => {
+  if (typeof window !== 'undefined') {
+    // When served over HTTPS, route through the relative '/api' reverse proxy
+    // to prevent Mixed Content errors (browser blocking HTTP requests from HTTPS).
+    if (window.location.protocol === 'https:') {
+      return '/api';
+    }
+  }
+  return import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+};
+
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+export const getStorageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  if (typeof window !== 'undefined' && window.location.protocol === 'https:') {
+    return `/storage/${path.replace(/^\/?storage\//, '')}`;
+  }
+  const base = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace(/\/api\/?$/, '');
+  return `${base}/storage/${path.replace(/^\/?storage\//, '')}`;
+};
 
 // Request interceptor to add auth token
 api.interceptors.request.use(
@@ -21,68 +42,54 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Response interceptor to handle errors & session expiration
 api.interceptors.response.use(
   (response) => {
-    console.log('✅ API RESPONSE:', {
-      status: response.status,
-      url: response.config?.url,
-      data: response.data,
-    });
-
     return response;
   },
   (error) => {
-    console.error('❌ API ERROR:', {
-      message: error.message,
-      status: error.response?.status,
-      url: error.config?.url,
-      baseURL: error.config?.baseURL,
-      data: error.response?.data,
-    });
+    const url = error.config?.url || '';
+    const isAuthEndpoint = url.includes('/login') || url.includes('/logout');
 
-    if (error.response?.status === 401 && !error.config?.url?.includes('/login')) {
-      useAuthStore.getState().logout();
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+    // Avoid infinite redirect loop if 401 originated from login or logout endpoint
+    if (error.response?.status === 401 && !isAuthEndpoint) {
+      // Clear auth locally WITHOUT calling remote logout (calling API logout when 401 causes infinite loop)
+      const authStore = useAuthStore.getState();
+      if (typeof authStore.clearAuth === 'function') {
+        authStore.clearAuth();
+      } else {
+        useAuthStore.setState({ token: null, user: null, isAuthenticated: false });
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
 
       const publicPaths = [
+        '/',
+        '/beranda',
+        '/home',
         '/login',
         '/register',
         '/guest-register',
+        '/guest/register',
         '/registrasi-tamu',
-        '/guest-registration'
+        '/guest-registration',
+        '/event/',
+        '/events/',
+        '/games/'
       ];
 
-      const isPublicPath = publicPaths.some(
-        (p) => window.location.pathname.startsWith(p)
-      );
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      const isPublicPath =
+        currentPath === '/' ||
+        currentPath === '/beranda' ||
+        currentPath === '/home' ||
+        publicPaths.some((p) => p !== '/' && currentPath.startsWith(p));
 
-      if (!isPublicPath) {
+      if (!isPublicPath && typeof window !== 'undefined') {
         window.location.href = '/login';
       }
     }
 
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // Avoid redirect loop if the 401 error originated from the login endpoint
-    if (error.response?.status === 401 && !error.config?.url?.includes('/login')) {
-      useAuthStore.getState().logout();
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-
-      const publicPaths = ['/login', '/register', '/guest-register', '/registrasi-tamu', '/guest-registration'];
-      const isPublicPath = publicPaths.some((p) => window.location.pathname.startsWith(p));
-
-      if (!isPublicPath) {
-        window.location.href = '/login';
-      }
-    }
     return Promise.reject(error);
   }
 );

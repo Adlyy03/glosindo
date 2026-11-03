@@ -10,6 +10,20 @@ const faceService = {
   },
 
   /**
+   * Check if face matches an existing visitor via public endpoint (for kiosk)
+   * @param {Array|Float32Array} faceVector - 128-dimension float array
+   */
+  checkPublicFace: async (faceVector) => {
+    const vec = Array.isArray(faceVector) ? faceVector : Array.from(faceVector);
+    // Round floats to 4 decimals to reduce payload size
+    const compact = vec.map((v) => Math.round(v * 10000) / 10000);
+    const response = await api.post('/public/check-face', {
+      face_vector: compact,
+    });
+    return response.data;
+  },
+
+  /**
    * Check if face already registered (duplicate detection)
    * @param {Array} faceVector - 128-dimension float array
    */

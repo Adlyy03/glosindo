@@ -26,18 +26,18 @@ const AdminSettingsPage = () => {
   }, []);
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6 animate-fadeIn">
+    <div className="space-y-5 sm:space-y-6 animate-fadeIn w-full max-w-6xl mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-900 via-brand-navy to-slate-800 rounded-3xl p-6 md:p-8 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-slate-900 via-brand-navy to-slate-800 rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className="p-1.5 rounded-xl bg-white/10 text-cyan-300">
               <Settings className="w-5 h-5" />
             </span>
             <Badge variant="cyan">Admin Control</Badge>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">Konfigurasi Sistem & Layanan</h1>
-          <p className="mt-1 text-sm text-slate-300">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight">Konfigurasi Sistem & Layanan</h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-300">
             Kelola portal pendaftaran tamu publik dan pantau aktivitas sistem GLOSINDO.
           </p>
         </div>

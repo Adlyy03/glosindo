@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import FaceScanner from '../../components/FaceScanner';
 import visitorService from '../../services/visitorService';
 import visitService from '../../services/visitService';

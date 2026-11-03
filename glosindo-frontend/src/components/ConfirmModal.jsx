@@ -37,25 +37,26 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
   const styles = typeStyles[type] || typeStyles.danger;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full animate-scaleIn overflow-hidden border border-slate-200">
-        <div className="flex justify-center pt-8 pb-4">
-          <div className={`${styles.bgColor} rounded-2xl p-4 shadow-sm`}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-md w-full animate-scaleIn overflow-hidden border border-slate-200">
+        <div className="flex justify-center pt-6 sm:pt-8 pb-3 sm:pb-4">
+          <div className={`${styles.bgColor} rounded-2xl p-3.5 sm:p-4 shadow-sm`}>
             {styles.icon}
           </div>
         </div>
 
-        <div className="px-6 pb-6 text-center">
-          <h3 className="text-xl font-black text-slate-900 mb-2">{title}</h3>
-          <p className="text-xs md:text-sm text-slate-600 font-medium leading-relaxed">{message}</p>
+        <div className="px-5 sm:px-6 pb-5 sm:pb-6 text-center">
+          <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-1.5 sm:mb-2">{title}</h3>
+          <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">{message}</p>
         </div>
 
-        <div className="flex gap-3 px-6 pb-6">
+        <div className="flex gap-2.5 sm:gap-3 px-5 sm:px-6 pb-5 sm:pb-6">
           <Button
             variant="outline"
             size="md"
             fullWidth
             onClick={onClose}
+            className="min-h-[44px]"
           >
             {cancelText}
           </Button>
@@ -67,6 +68,7 @@ const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, confirmText 
               onConfirm();
               onClose();
             }}
+            className="min-h-[44px]"
           >
             {confirmText}
           </Button>

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import visitService from '../../services/visitService';
 import Badge from '../../components/ui/Badge';
 import { CalendarRange } from 'lucide-react';

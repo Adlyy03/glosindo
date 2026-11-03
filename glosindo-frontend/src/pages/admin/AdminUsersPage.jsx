@@ -187,33 +187,33 @@ const AdminUsersPage = () => {
   );
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-5">
+    <div className="space-y-5 sm:space-y-6 animate-fadeIn w-full max-w-7xl mx-auto">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-700 to-indigo-700 rounded-3xl p-6 md:p-8 text-white shadow-sm">
+      <div className="bg-gradient-to-r from-purple-700 to-indigo-700 rounded-2xl sm:rounded-3xl p-5 sm:p-6 md:p-8 text-white shadow-sm">
         <div className="flex items-center gap-3 mb-2">
           <Shield className="w-6 h-6" />
-          <h1 className="text-2xl md:text-3xl font-bold">Kelola Petugas</h1>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Kelola Petugas</h1>
         </div>
-        <p className="text-sm text-purple-100">
+        <p className="text-xs sm:text-sm text-purple-100">
           Manajemen akun admin, resepsionis, dan supervisor sistem
         </p>
       </div>
 
       {/* Actions Bar */}
       <Card className="p-4">
-        <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
               placeholder="Cari nama atau email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
+          <Button onClick={() => handleOpenModal()} className="flex items-center justify-center gap-2 w-full sm:w-auto">
             <UserPlus className="w-4 h-4" />
             Tambah Petugas
           </Button>
@@ -222,7 +222,8 @@ const AdminUsersPage = () => {
 
       {/* Users Table */}
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -291,6 +292,51 @@ const AdminUsersPage = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Cards View */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {loading ? (
+            <div className="p-8 text-center text-slate-500 text-xs">Memuat data petugas...</div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 text-xs">Tidak ada data petugas</div>
+          ) : (
+            filteredUsers.map((user) => (
+              <div key={user.id} className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-slate-900 text-sm">{user.name}</p>
+                    <p className="text-xs text-slate-500">{user.email}</p>
+                  </div>
+                  {getRoleBadge(user.role)}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1 border-t border-slate-100">
+                  <button
+                    onClick={() => handleOpenFeaturesModal(user)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-purple-50 text-purple-700 font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px]"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                    <span>Fitur</span>
+                  </button>
+                  <button
+                    onClick={() => handleOpenModal(user)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs flex items-center justify-center gap-1.5 min-h-[44px]"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(user)}
+                    className="p-2 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs flex items-center justify-center min-h-[44px] min-w-[44px]"
+                    title="Hapus"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </Card>
 

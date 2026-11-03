@@ -18,7 +18,7 @@ import {
   LogOut, LogIn, Hourglass, Building2, ArrowLeft, Pencil, RefreshCw,
   Camera, Zap, AlertCircle, ArrowRight, Copy, Check, ExternalLink,
   Search, UserPlus, Filter, ShieldCheck, Tag, Trash2, Mail, Phone, Briefcase,
-  FileSpreadsheet, FileText, BarChart3, PieChart
+  FileSpreadsheet, FileText, BarChart3, PieChart, Trophy
 } from 'lucide-react';
 import eventService from '../../services/eventService';
 import visitService from '../../services/visitService';
@@ -29,6 +29,7 @@ import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import FaceScanner from '../../components/FaceScanner';
 import SplashOverlay from '../../components/SplashOverlay';
+import GamesEventSection from '../../components/games/GamesEventSection';
 
 // Register ChartJS components
 ChartJS.register(
@@ -634,7 +635,7 @@ const EventDetailPage = () => {
       />
 
       {/* Tab Switcher */}
-      <div className="flex gap-2 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs w-fit">
+      <div className="flex flex-wrap gap-2 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs w-full sm:w-fit">
         <button
           onClick={() => setActiveTab('participants')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
@@ -644,8 +645,24 @@ const EventDetailPage = () => {
           }`}
         >
           <Users className="w-4 h-4" />
-          Daftar Peserta Event ({participants.length})
+          Daftar Peserta ({participants.length})
         </button>
+
+        <button
+          onClick={() => setActiveTab('games')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+            activeTab === 'games'
+              ? 'bg-amber-500 text-slate-950 shadow-sm'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+          }`}
+        >
+          <Trophy className="w-4 h-4 text-amber-500" />
+          Games & Poin Kelompok
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-extrabold">
+            QRIS Poin
+          </span>
+        </button>
+
         {!useAuthStore.getState().isFeatureDisabled('quick_checkin') && (
           <button
             onClick={() => setActiveTab('quickscan')}
@@ -694,17 +711,15 @@ const EventDetailPage = () => {
                 </select>
               </div>
 
-              {!isSupervisor && (
-                <Button
-                  variant="primary"
-                  size="md"
-                  icon={UserPlus}
-                  onClick={() => setAddModal(true)}
-                  className="w-full md:w-auto"
-                >
-                  Tambah Peserta Manual
-                </Button>
-              )}
+              <Button
+                variant="primary"
+                size="md"
+                icon={UserPlus}
+                onClick={() => setAddModal(true)}
+                className="w-full md:w-auto"
+              >
+                Tambah Peserta Manual
+              </Button>
             </div>
           </Card>
 
@@ -729,7 +744,7 @@ const EventDetailPage = () => {
                       <th className="px-6 py-4">Instansi & Jabatan</th>
                       <th className="px-6 py-4 text-center">Waktu Pendaftaran</th>
                       <th className="px-6 py-4 text-center">Status Kehadiran</th>
-                      {!isSupervisor && <th className="px-6 py-4 text-center">Aksi Kehadiran</th>}
+                      <th className="px-6 py-4 text-center">Aksi Kehadiran</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -780,7 +795,6 @@ const EventDetailPage = () => {
                           )}
                         </td>
 
-                        {!isSupervisor && (
                           <td className="px-6 py-4 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-1.5">
                               {item.status === 'registered' && (
@@ -832,7 +846,6 @@ const EventDetailPage = () => {
                               </button>
                             </div>
                           </td>
-                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -933,6 +946,17 @@ const EventDetailPage = () => {
               </p>
             </Card>
           </div>
+        </div>
+      )}
+
+      {/* ── Tab: Games & Sistem Poin Kelompok ── */}
+      {activeTab === 'games' && (
+        <div className="animate-fadeIn">
+          <GamesEventSection
+            eventId={event.id}
+            eventName={event.name}
+            isSupervisor={isSupervisor}
+          />
         </div>
       )}
 

@@ -145,20 +145,20 @@ const EventListPage = () => {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto space-y-6 animate-fadeIn">
+    <div className="space-y-5 sm:space-y-6 animate-fadeIn w-full max-w-7xl mx-auto">
       {/* Title */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Manajemen Event</h1>
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">Manajemen Event</h1>
             <Badge variant="navy">Entity Khusus</Badge>
           </div>
-          <p className="text-sm text-slate-500 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-500 max-w-2xl leading-relaxed">
             Kelola event perusahaan, link registrasi publik, dan data seluruh tamu/peserta event.
           </p>
         </div>
         {!isSupervisor && (
-          <Button variant="primary" icon={Plus} onClick={() => navigate('/events/new')}>
+          <Button variant="primary" icon={Plus} onClick={() => navigate('/events/new')} className="w-full sm:w-auto">
             Buat Event Baru
           </Button>
         )}
