@@ -904,7 +904,7 @@ const LandingPage = () => {
                 <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
                   <div>
                     <div className="text-[11px] text-blue-200 uppercase tracking-wider font-semibold">Dikembangkan oleh</div>
-                    <div className="text-sm font-bold text-white">PT GLOSINDO</div>
+                    <div className="text-sm font-bold text-white">GLOSINDO</div>
                   </div>
                   {isAuthenticated && (
                     <Link
