@@ -445,23 +445,15 @@ const LandingPage = () => {
             })}
           </nav>
 
-          {/* Desktop Action Buttons */}
+          {/* Desktop Action Buttons (Hanya muncul jika sudah login / authenticated) */}
           <div className="hidden lg:flex items-center gap-3">
-            {isAuthenticated ? (
+            {isAuthenticated && (
               <Link
                 to="/dashboard"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-navy hover:bg-blue-900 shadow-sm hover:shadow-md transition-all active:scale-98"
               >
                 <span>Dashboard ({user?.name?.split(' ')[0] || 'User'})</span>
                 <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            ) : (
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-navy hover:bg-blue-900 shadow-sm hover:shadow-md transition-all active:scale-98 group cursor-pointer"
-              >
-                <LogIn className="w-3.5 h-3.5 text-cyan-400 group-hover:scale-110 transition-transform" />
-                <span>Masuk</span>
               </Link>
             )}
           </div>
@@ -505,8 +497,8 @@ const LandingPage = () => {
               ))}
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
-              {isAuthenticated ? (
+            {isAuthenticated && (
+              <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
                 <Link
                   to="/dashboard"
                   className="w-full py-3 px-4 rounded-xl text-center text-xs font-bold text-white bg-brand-navy hover:bg-blue-900 flex items-center justify-center gap-2"
@@ -515,17 +507,8 @@ const LandingPage = () => {
                   <span>Dashboard</span>
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-              ) : (
-                <Link
-                  to="/login"
-                  className="w-full py-3 px-4 rounded-xl text-center text-xs font-bold text-white bg-brand-navy hover:bg-blue-900 flex items-center justify-center gap-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <LogIn className="w-4 h-4 text-cyan-400" />
-                  <span>Masuk</span>
-                </Link>
-              )}
-            </div>
+              </div>
+            )}
           </motion.div>
         )}
       </motion.header>
@@ -591,27 +574,38 @@ const LandingPage = () => {
                 </AnimatePresence>
               </div>
 
-              {/* CTA Buttons */}
+              {/* CTA Buttons (Tombol login disembunyikan dari publik) */}
               <motion.div
                 variants={fadeUpVariant}
                 className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2"
               >
-                <Link
-                  to={isAuthenticated ? "/dashboard" : "/login"}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-brand-navy hover:bg-blue-900 active:scale-98 text-white font-bold text-sm shadow-lg shadow-blue-950/20 hover:shadow-xl transition-all cursor-pointer group"
-                >
-                  <LogIn className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
-                  <span>{isAuthenticated ? "Dashboard" : "Masuk"}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                {isAuthenticated && (
+                  <Link
+                    to="/dashboard"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-brand-navy hover:bg-blue-900 active:scale-98 text-white font-bold text-sm shadow-lg shadow-blue-950/20 hover:shadow-xl transition-all cursor-pointer group"
+                  >
+                    <span>Dashboard</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                )}
 
                 <a
                   href="#fitur"
                   onClick={(e) => scrollToSection(e, 'fitur')}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-2xl bg-brand-navy hover:bg-blue-900 active:scale-98 text-white font-bold text-sm shadow-lg shadow-blue-950/20 hover:shadow-xl transition-all cursor-pointer group"
+                >
+                  <Eye className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform" />
+                  <span>Pelajari Fitur</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </a>
+
+                <a
+                  href="#cara-kerja"
+                  onClick={(e) => scrollToSection(e, 'cara-kerja')}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-white hover:bg-slate-100 active:scale-98 text-slate-700 hover:text-slate-900 font-bold text-sm border border-slate-200/90 shadow-2xs transition-all cursor-pointer"
                 >
-                  <Eye className="w-4 h-4 text-slate-500" />
-                  <span>Pelajari Fitur</span>
+                  <Clock className="w-4 h-4 text-slate-500" />
+                  <span>Cara Kerja</span>
                 </a>
               </motion.div>
 
@@ -803,9 +797,16 @@ const LandingPage = () => {
                       <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
                       Enkripsi Data SHA-256
                     </span>
-                    <Link to={isAuthenticated ? "/dashboard" : "/login"} className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1">
-                      {isAuthenticated ? "Dashboard" : "Masuk"} <ChevronRight className="w-3 h-3" />
-                    </Link>
+                    {isAuthenticated ? (
+                      <Link to="/dashboard" className="text-cyan-400 hover:text-cyan-300 font-bold flex items-center gap-1">
+                        Dashboard <ChevronRight className="w-3 h-3" />
+                      </Link>
+                    ) : (
+                      <span className="text-cyan-400 font-semibold flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span>Sistem Siap Operasi</span>
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -905,12 +906,14 @@ const LandingPage = () => {
                     <div className="text-[11px] text-blue-200 uppercase tracking-wider font-semibold">Dikembangkan oleh</div>
                     <div className="text-sm font-bold text-white">PT GLOSINDO</div>
                   </div>
-                  <Link
-                    to={isAuthenticated ? "/dashboard" : "/login"}
-                    className="px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs transition-colors"
-                  >
-                    {isAuthenticated ? "Dashboard" : "Masuk"}
-                  </Link>
+                  {isAuthenticated && (
+                    <Link
+                      to="/dashboard"
+                      className="px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -1264,14 +1267,25 @@ const LandingPage = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-4">
-                <Link
-                  to={isAuthenticated ? "/dashboard" : "/login"}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-extrabold text-sm shadow-xl transition-all active:scale-98 cursor-pointer group"
-                >
-                  <LogIn className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                  <span>{isAuthenticated ? "Dashboard" : "Masuk"}</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </Link>
+                {isAuthenticated ? (
+                  <Link
+                    to="/dashboard"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-extrabold text-sm shadow-xl transition-all active:scale-98 cursor-pointer group"
+                  >
+                    <span>Dashboard</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                ) : (
+                  <a
+                    href="#fitur"
+                    onClick={(e) => scrollToSection(e, 'fitur')}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-extrabold text-sm shadow-xl transition-all active:scale-98 cursor-pointer group"
+                  >
+                    <Eye className="w-4 h-4 text-slate-950" />
+                    <span>Pelajari Fitur Sistem</span>
+                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </a>
+                )}
               </div>
 
               <div className="pt-6 text-xs text-blue-200/80 font-medium">
@@ -1333,11 +1347,13 @@ const LandingPage = () => {
                     </a>
                   </li>
                 ))}
-                <li>
-                  <Link to="/login" className="hover:text-cyan-400 transition-colors">
-                    Masuk
-                  </Link>
-                </li>
+                {isAuthenticated && (
+                  <li>
+                    <Link to="/dashboard" className="text-cyan-400 hover:underline font-bold">
+                      Dashboard
+                    </Link>
+                  </li>
+                )}
               </ul>
             </div>
 
@@ -1369,7 +1385,9 @@ const LandingPage = () => {
               &copy; {new Date().getFullYear()} PT Global Media Pratama Solusindo. All rights reserved.
             </div>
             <div className="flex items-center gap-4 text-[11px]">
-              <span className="text-slate-400">Buku Tamu Digital v2.4</span>
+              <Link to="/login" className="text-slate-400 hover:text-slate-300 transition-colors cursor-pointer select-none">
+                Buku Tamu Digital v2.4
+              </Link>
               <span>•</span>
               <span className="text-emerald-400 font-semibold flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Server Aktif
