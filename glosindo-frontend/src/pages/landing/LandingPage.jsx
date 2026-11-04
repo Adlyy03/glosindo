@@ -1289,7 +1289,7 @@ const LandingPage = () => {
               </div>
 
               <div className="pt-6 text-xs text-blue-200/80 font-medium">
-                Solusi Perusahaan Terintegrasi • Biometrik AI • Aman & Andal
+                Solusi Perusahaan Terintegrasi • Biometrik AI
               </div>
             </div>
           </div>
@@ -1325,7 +1325,7 @@ const LandingPage = () => {
               <div className="text-xs text-slate-400 space-y-1 pt-1">
                 <div className="flex items-center gap-2 text-slate-300 font-semibold">
                   <ShieldCheck className="w-4 h-4 text-cyan-400" />
-                  <span>Sistem Deteksi Wajah Siap Operasional (Production Ready)</span>
+                  <span>Sistem Deteksi Wajah Siap Operasional</span>
                 </div>
               </div>
             </div>
@@ -1400,7 +1400,7 @@ const LandingPage = () => {
             </div>
             <div className="flex items-center gap-4 text-[11px]">
               <Link to="/login" className="text-slate-400 hover:text-slate-300 transition-colors cursor-pointer select-none">
-                Buku Tamu Digital v2.4
+                Buku Tamu Digital 
               </Link>
             </div>
           </div>
