@@ -34,6 +34,8 @@ import {
   ReceptionistVisitorPage,
   AdminUsersPage,
   AdminSettingsPage,
+  AdminReservationPage,
+  PublicReservationPage,
 } from './pages';
 import PwaOfflineBanner from './components/PwaOfflineBanner';
 
@@ -180,6 +182,9 @@ function App() {
         <Route path="/games/register/:token" element={<GamesPublicRegisterPage />} />
         <Route path="/games/scan-point" element={<GamesScanPointPage />} />
 
+        {/* Public Pre-Registration Reservation */}
+        <Route path="/reservasi/:token" element={<PublicReservationPage />} />
+
         {/* Guest Visit Kiosk - Admin / Staff Authenticated Only */}
         <Route
           path="/guest-visit"
@@ -208,6 +213,8 @@ function App() {
                       <Route path="/active-visitors" element={<FeatureGate featureId="active_visitors"><ActiveVisitorPage /></FeatureGate>} />
                       <Route path="/visit-history" element={<FeatureGate featureId="visit_history"><VisitHistoryPage /></FeatureGate>} />
                       <Route path="/visitors" element={<FeatureGate featureId="visitors"><VisitorListPage /></FeatureGate>} />
+                      <Route path="/reservations/invitations" element={<AdminReservationPage />} />
+                      <Route path="/reservations" element={<AdminReservationPage />} />
                       {/* Events */}
                       <Route path="/events" element={<FeatureGate featureId="events"><EventListPage /></FeatureGate>} />
                       <Route path="/events/new" element={<FeatureGate featureId="events"><EventFormPage /></FeatureGate>} />

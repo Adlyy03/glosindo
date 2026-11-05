@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\GameEvent;
+use App\Models\Event;
 use App\Models\EventGroup;
 use App\Models\GroupParticipant;
 use App\Models\PointQrCode;
@@ -265,7 +266,8 @@ class GameEventController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
+            'color' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -280,6 +282,7 @@ class GameEventController extends Controller
             $group = EventGroup::create([
                 'game_event_id' => $event->id,
                 'name'          => $request->name,
+                'color'         => $request->color ?: 'blue',
             ]);
 
             $group->audit('created', null, $group->toArray(), 'Event group created');
@@ -312,7 +315,8 @@ class GameEventController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
+            'color' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -325,7 +329,11 @@ class GameEventController extends Controller
 
         try {
             $oldValues = $group->toArray();
-            $group->update(['name' => $request->name]);
+            $updateData = ['name' => $request->name];
+            if ($request->has('color')) {
+                $updateData['color'] = $request->color;
+            }
+            $group->update($updateData);
             $group->audit('updated', $oldValues, $group->toArray(), 'Event group updated');
 
             return response()->json([
@@ -462,5 +470,200 @@ class GameEventController extends Controller
             'success' => true,
             'data'    => $participants,
         ]);
+    }
+
+    /**
+     * Get game event linked to an event.
+     */
+    public function getByEventId($eventId)
+    {
+        $event = Event::find($eventId);
+        if (!$event) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Event tidak ditemukan',
+            ], 404);
+        }
+
+        $gameEvent = GameEvent::where('event_id', $event->id)
+            ->with(['groups' => function ($q) {
+                $q->orderBy('name', 'asc');
+            }, 'pointQrCodes' => function ($q) {
+                $q->orderBy('point_value', 'asc');
+            }])
+            ->first();
+
+        if ($gameEvent) {
+            $gameEvent->groups->transform(function ($group) {
+                $group->participants_count = $group->participants()->count();
+                $group->total_points = (int) $group->transactions()->sum('points');
+                return $group;
+            });
+            $gameEvent->pointQrCodes->transform(function ($qr) {
+                $qr->scan_count = $qr->transactions()->count();
+                return $qr;
+            });
+            $gameEvent->total_points = (int) $gameEvent->transactions()->sum('points');
+            $gameEvent->total_participants = (int) GroupParticipant::whereIn('event_group_id', $gameEvent->groups->pluck('id'))->count();
+            $gameEvent->total_transactions = (int) $gameEvent->transactions()->count();
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $gameEvent,
+        ]);
+    }
+
+    /**
+     * Link or create a game event for a standard event.
+     */
+    public function linkToEvent(Request $request, $eventId)
+    {
+        $event = Event::find($eventId);
+        if (!$event) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Event tidak ditemukan',
+            ], 404);
+        }
+
+        $gameEvent = GameEvent::where('event_id', $event->id)->first();
+        if (!$gameEvent) {
+            $gameEvent = GameEvent::create([
+                'event_id'    => $event->id,
+                'name'        => $request->name ?: ('Games: ' . $event->name),
+                'description' => $request->description ?: ($event->description ?: 'Sistem point & kompetisi games untuk ' . $event->name),
+                'start_date'  => $event->start_date ?: $event->event_date,
+                'end_date'    => $event->end_date ?: $event->start_date ?: $event->event_date,
+                'status'      => 'active',
+                'created_by'  => auth()->id(),
+            ]);
+
+            // Create default groups (Merah, Biru, Hijau, Kuning)
+            $defaultGroups = [
+                ['name' => 'Tim Merah', 'color' => 'red'],
+                ['name' => 'Tim Biru', 'color' => 'blue'],
+                ['name' => 'Tim Hijau', 'color' => 'emerald'],
+                ['name' => 'Tim Emas', 'color' => 'amber'],
+            ];
+
+            foreach ($defaultGroups as $grp) {
+                EventGroup::create([
+                    'game_event_id' => $gameEvent->id,
+                    'name'          => $grp['name'],
+                    'color'         => $grp['color'],
+                ]);
+            }
+
+            // Create default QRIS Point checkpoints
+            $defaultPoints = [
+                ['value' => 10, 'title' => 'Pos 1: Check-In & Yel-yel Tim'],
+                ['value' => 25, 'title' => 'Pos 2: Mini Games Ketangkasan'],
+                ['value' => 50, 'title' => 'Pos 3: Quiz Wawasan & Kolaborasi'],
+                ['value' => 100, 'title' => 'Pos 4: Tantangan Utama Games'],
+            ];
+
+            foreach ($defaultPoints as $dp) {
+                PointQrCode::create([
+                    'game_event_id' => $gameEvent->id,
+                    'point_value'   => $dp['value'],
+                    'title'         => $dp['title'],
+                    'status'        => 'active',
+                ]);
+            }
+        }
+
+        return $this->getByEventId($eventId);
+    }
+
+    /**
+     * Add a participant manually to a group (by panitia/admin).
+     */
+    public function storeParticipant(Request $request, $id, $groupId)
+    {
+        $group = EventGroup::where('id', $groupId)->where('game_event_id', $id)->first();
+        if (!$group) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Kelompok tidak ditemukan',
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'name'  => 'required|string|max:255',
+            'phone' => 'required|string|max:30',
+            'email' => 'nullable|email|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $exists = GroupParticipant::where('event_group_id', $group->id)
+                                  ->where('phone', $request->phone)
+                                  ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Nomor telepon sudah terdaftar di kelompok ini',
+            ], 400);
+        }
+
+        try {
+            $participant = GroupParticipant::create([
+                'event_group_id' => $group->id,
+                'name'           => $request->name,
+                'phone'          => $request->phone,
+                'email'          => $request->email,
+                'registered_at'  => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Peserta berhasil ditambahkan ke ' . $group->name,
+                'data'    => $participant,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menambahkan peserta: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a participant from a group.
+     */
+    public function destroyParticipant($id, $groupId, $participantId)
+    {
+        $participant = GroupParticipant::where('id', $participantId)
+                                      ->where('event_group_id', $groupId)
+                                      ->first();
+
+        if (!$participant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Peserta tidak ditemukan',
+            ], 404);
+        }
+
+        try {
+            $participant->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Peserta berhasil dihapus dari kelompok',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus peserta: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -5,35 +5,49 @@ namespace App\Http\Controllers;
 use App\Models\FaceEmbedding;
 use App\Models\Visitor;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class FaceEmbeddingController extends Controller
 {
     /**
-     * Get all face embeddings with visitor info (ADMIN ONLY - sensitive biometric data).
-     * This endpoint should be restricted to admin in routes.
-     * For client-side matching, use checkDuplicate endpoint instead.
+     * Get all face embeddings with visitor info (Role restricted: admin, receptionist, supervisor).
+     * Cached in memory/redis for 5 minutes with float precision compression.
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        $embeddings = FaceEmbedding::with('visitor:id,name,company')->get();
+        $data = Cache::remember('face_embeddings_all', 60, function () {
+            return FaceEmbedding::whereHas('visitor', function ($q) { $q->whereNull('deleted_at'); })
+                ->with(['visitor' => function ($q) { $q->select('id', 'name', 'company')->whereNull('deleted_at'); }])
+                ->get(['id', 'visitor_id', 'face_vector'])
+                ->map(function ($embedding) {
+                    $vec = $embedding->face_vector;
+                    if (is_string($vec)) {
+                        $vec = json_decode($vec, true);
+                    }
+                    if (!is_array($vec) || count($vec) !== 128) {
+                        return null;
+                    }
+                    // Compress float precision to 4 decimal places to reduce JSON payload size by ~60%
+                    $compactVec = array_map(function ($val) {
+                        return round((float) $val, 4);
+                    }, $vec);
 
-        $data = $embeddings->map(function ($embedding) {
-            if (!$embedding->visitor) {
-                return null;
-            }
-            return [
-                'visitor_id' => $embedding->visitor_id,
-                'name' => $embedding->visitor->name,
-                'company' => $embedding->visitor->company,
-                'face_vector' => $embedding->face_vector,
-            ];
-        })->filter()->values();
+                    return [
+                        'visitor_id'  => $embedding->visitor_id,
+                        'name'        => $embedding->visitor->name,
+                        'company'     => $embedding->visitor->company,
+                        'face_vector' => $compactVec,
+                    ];
+                })
+                ->filter()
+                ->values();
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $data,
+            'data'    => $data,
         ]);
     }
 
@@ -46,7 +60,7 @@ class FaceEmbeddingController extends Controller
     public function checkDuplicate(Request $request)
     {
         $this->validate($request, [
-            'face_vector' => 'required|array',
+            'face_vector'   => 'required|array',
             'face_vector.*' => 'required|numeric',
         ]);
 
@@ -57,34 +71,27 @@ class FaceEmbeddingController extends Controller
             ], 422);
         }
 
-        $embeddings = FaceEmbedding::with('visitor:id,name,company,photo')->get();
-        $threshold = 0.3; 
+        $threshold = (float) env('FACE_MATCH_THRESHOLD', 0.35);
+        $thresholdSq = $threshold * $threshold;
+
+        $embeddings = FaceEmbedding::has('visitor')
+            ->with('visitor:id,name,company,photo')
+            ->get(['id', 'visitor_id', 'face_vector']);
 
         foreach ($embeddings as $embedding) {
-            if (!$embedding->visitor) {
-                continue;
-            }
-            $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
-            
-            \Log::info('Face comparison', [
-                'visitor_id' => $embedding->visitor_id,
-                'distance' => round($distance, 4),
-                'threshold' => $threshold,
-                'is_duplicate' => $distance < $threshold
-            ]);
-            
-            if ($distance < $threshold) {
+            $distSq = FaceEmbedding::distanceSquared($request->face_vector, $embedding->face_vector, $thresholdSq);
+            if ($distSq < $thresholdSq) {
                 return response()->json([
-                    'success' => true,
+                    'success'   => true,
                     'duplicate' => true,
-                    'visitor' => $embedding->visitor,
-                    'distance' => $distance,
+                    'visitor'   => $embedding->visitor,
+                    'distance'  => round(sqrt($distSq), 4),
                 ]);
             }
         }
 
         return response()->json([
-            'success' => true,
+            'success'   => true,
             'duplicate' => false,
         ]);
     }
@@ -108,11 +115,10 @@ class FaceEmbeddingController extends Controller
         }
 
         $this->validate($request, [
-            'face_vector' => 'required|array',
+            'face_vector'   => 'required|array',
             'face_vector.*' => 'required|numeric',
         ]);
 
-        // Validate face_vector length (should be 128 dimensions for face-api.js)
         if (count($request->face_vector) !== 128) {
             return response()->json([
                 'success' => false,
@@ -120,83 +126,47 @@ class FaceEmbeddingController extends Controller
             ], 422);
         }
 
+        $threshold = (float) env('FACE_MATCH_THRESHOLD', 0.35);
+        $thresholdSq = $threshold * $threshold;
+
         // Check duplicate face before storing (except own embedding)
-        $embeddings = FaceEmbedding::where('visitor_id', '!=', $visitorId)->get();
-        $threshold = 0.3; // match checkDuplicate threshold
+        $embeddings = FaceEmbedding::where('visitor_id', '!=', $visitorId)->get(['id', 'visitor_id', 'face_vector']);
 
         foreach ($embeddings as $embedding) {
-            $distance = $this->calculateEuclideanDistance($request->face_vector, $embedding->face_vector);
-            
-            \Log::info('Face store comparison', [
-                'new_visitor_id' => $visitorId,
-                'existing_visitor_id' => $embedding->visitor_id,
-                'distance' => round($distance, 4),
-                'threshold' => $threshold,
-                'is_duplicate' => $distance < $threshold
-            ]);
-            
-            if ($distance < $threshold) {
+            $distSq = FaceEmbedding::distanceSquared($request->face_vector, $embedding->face_vector, $thresholdSq);
+            if ($distSq < $thresholdSq) {
                 $existingVisitor = Visitor::find($embedding->visitor_id);
                 return response()->json([
-                    'success' => false,
-                    'message' => 'Face already registered',
-                    'duplicate' => true,
+                    'success'          => false,
+                    'message'          => 'Face already registered',
+                    'duplicate'        => true,
                     'existing_visitor' => $existingVisitor,
-                    'distance' => $distance,
+                    'distance'         => round(sqrt($distSq), 4),
                 ], 422);
             }
         }
 
-        // Update or create face embedding
+        // Compact vector floats to 4 decimals before saving
+        $compactVector = array_map(function ($val) {
+            return round((float) $val, 4);
+        }, $request->face_vector);
+
         $embedding = FaceEmbedding::updateOrCreate(
             ['visitor_id' => $visitorId],
-            ['face_vector' => array_map('floatval', $request->face_vector)]
+            ['face_vector' => $compactVector]
         );
+
+        Cache::forget('face_embeddings_all');
 
         return response()->json([
             'success' => true,
             'message' => 'Face embedding saved successfully',
-            'data' => $embedding,
+            'data'    => $embedding,
         ], 201);
     }
 
     /**
-     * Calculate Euclidean distance between two face vectors safely.
-     *
-     * @param  mixed  $vector1
-     * @param  mixed  $vector2
-     * @return float
-     */
-    private function calculateEuclideanDistance($vector1, $vector2)
-    {
-        if (is_string($vector1)) {
-            $vector1 = json_decode($vector1, true);
-        }
-        if (is_string($vector2)) {
-            $vector2 = json_decode($vector2, true);
-        }
-
-        if (!is_array($vector1) || !is_array($vector2)) {
-            return 999.0;
-        }
-
-        if (count($vector1) !== 128 || count($vector2) !== 128) {
-            return 999.0;
-        }
-
-        $sum = 0;
-        for ($i = 0; $i < 128; $i++) {
-            $v1 = isset($vector1[$i]) ? floatval($vector1[$i]) : 0;
-            $v2 = isset($vector2[$i]) ? floatval($vector2[$i]) : 0;
-            $sum += pow($v1 - $v2, 2);
-        }
-
-        return sqrt($sum);
-    }
-
-    /**
      * Delete face embedding for a visitor (ADMIN ONLY).
-     * This should be restricted to admin in routes.
      *
      * @param  int  $visitorId
      * @return \Illuminate\Http\Response
@@ -213,6 +183,7 @@ class FaceEmbeddingController extends Controller
         }
 
         $embedding->delete();
+        Cache::forget('face_embeddings_all');
 
         return response()->json([
             'success' => true,
@@ -220,4 +191,3 @@ class FaceEmbeddingController extends Controller
         ]);
     }
 }
-

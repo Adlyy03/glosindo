@@ -113,8 +113,8 @@ class UserController extends Controller
             ], 404);
         }
 
-        // Prevent self role change
-        if (auth()->id() === $user->id && $request->has('role')) {
+        // Prevent self role change to a different role
+        if ((int) auth()->id() === (int) $user->id && $request->has('role') && $request->role !== $user->role) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot change your own role',
@@ -166,7 +166,7 @@ class UserController extends Controller
         }
 
         // Prevent self deletion
-        if (auth()->id() === $user->id) {
+        if ((int) auth()->id() === (int) $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Cannot delete your own account',

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Visitor;
 use App\Models\FaceEmbedding;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 
 class VisitorController extends Controller
 {
@@ -172,7 +174,8 @@ class VisitorController extends Controller
         // Handle photo upload
         if ($request->hasFile('photo')) {
             $photo = $request->file('photo');
-            $filename = time() . '_' . $photo->getClientOriginalName();
+            $ext = strtolower($photo->getClientOriginalExtension() ?: 'jpg');
+            $filename = time() . '_' . Str::random(16) . '.' . $ext;
             $path = $photo->storeAs('visitors', $filename, 'public');
             $data['photo'] = $path;
         }
@@ -278,7 +281,8 @@ class VisitorController extends Controller
             }
 
             $photo = $request->file('photo');
-            $filename = time() . '_' . $photo->getClientOriginalName();
+            $ext = strtolower($photo->getClientOriginalExtension() ?: 'jpg');
+            $filename = time() . '_' . Str::random(16) . '.' . $ext;
             $storageDir = storage_path('app/public/visitors');
             if (!is_dir($storageDir)) {
                 @mkdir($storageDir, 0755, true);
@@ -366,6 +370,10 @@ class VisitorController extends Controller
         }
 
         // Soft-delete active and associated visits of deleted visitor
+        // Permanently delete biometric face embedding and clear cache
+        FaceEmbedding::where('visitor_id', $visitor->id)->delete();
+        Cache::forget('face_embeddings_all');
+
         $visitor->visits()->delete();
 
         $visitor->delete();

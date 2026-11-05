@@ -21,6 +21,8 @@ class PointQrCode extends Model
     protected $fillable = [
         'game_event_id',
         'point_value',
+        'title',
+        'description',
         'token',
         'status',
     ];
@@ -37,7 +39,7 @@ class PointQrCode extends Model
     /**
      * Valid point values (MVP requirement).
      */
-    public const VALID_POINT_VALUES = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+    public const VALID_POINT_VALUES = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90, 100, 150, 200, 250, 500];
 
     /**
      * Boot the model.

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { UserPlus, Edit2, Trash2, Shield, Search, Settings, Lock, Unlock } from 'lucide-react';
 import toast from 'react-hot-toast';
+import useAuthStore from '../../store/authStore';
 import userService from '../../services/userService';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
@@ -17,6 +18,7 @@ const AVAILABLE_FEATURES = [
 ];
 
 const AdminUsersPage = () => {
+  const { user: authUser } = useAuthStore();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -116,6 +118,10 @@ const AdminUsersPage = () => {
   };
 
   const handleDelete = async (user) => {
+    if (authUser && String(authUser.id) === String(user.id)) {
+      toast.error('Tidak dapat menghapus akun Anda sendiri yang sedang aktif.');
+      return;
+    }
     if (!window.confirm(`Hapus petugas ${user.name}?`)) return;
 
     try {
@@ -259,6 +265,11 @@ const AdminUsersPage = () => {
                   <tr key={user.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-sm font-medium text-slate-900">
                       {user.name}
+                      {String(authUser?.id) === String(user.id) && (
+                        <span className="ml-2 text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                          Anda
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">{user.email}</td>
                     <td className="px-4 py-3 text-sm">{getRoleBadge(user.role)}</td>
@@ -278,13 +289,22 @@ const AdminUsersPage = () => {
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleDelete(user)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                          title="Hapus"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {String(authUser?.id) !== String(user.id) ? (
+                          <button
+                            onClick={() => handleDelete(user)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                            title="Hapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <span
+                            className="p-2 text-slate-300 cursor-not-allowed"
+                            title="Akun Anda yang sedang aktif tidak dapat dihapus"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -326,13 +346,22 @@ const AdminUsersPage = () => {
                     <Edit2 className="w-3.5 h-3.5" />
                     <span>Edit</span>
                   </button>
-                  <button
-                    onClick={() => handleDelete(user)}
-                    className="p-2 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs flex items-center justify-center min-h-[44px] min-w-[44px]"
-                    title="Hapus"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {String(authUser?.id) !== String(user.id) ? (
+                    <button
+                      onClick={() => handleDelete(user)}
+                      className="p-2 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs flex items-center justify-center min-h-[44px] min-w-[44px]"
+                      title="Hapus"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <span
+                      className="p-2 rounded-xl bg-slate-100 text-slate-300 font-bold text-xs flex items-center justify-center min-h-[44px] min-w-[44px] cursor-not-allowed"
+                      title="Akun Anda yang sedang aktif tidak dapat dihapus"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </span>
+                  )}
                 </div>
               </div>
             ))

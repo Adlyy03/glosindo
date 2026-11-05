@@ -14,7 +14,8 @@ import {
   X,
   FileText,
   Trophy,
-  BookUser
+  BookUser,
+  CalendarCheck
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { LOGO, APP_NAME } from '../constants';
@@ -67,6 +68,14 @@ const navSections = [
         icon: History,
         badge: null,
         featureId: 'visit_history',
+      },
+      {
+        label: 'Undangan Reservasi',
+        to: '/reservations/invitations',
+        roles: ['admin', 'receptionist', 'supervisor'],
+        icon: CalendarCheck,
+        badge: null,
+        featureId: null,
       },
       {
         label: 'Data Tamu',

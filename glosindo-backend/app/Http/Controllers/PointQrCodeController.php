@@ -57,7 +57,9 @@ class PointQrCodeController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'point_value' => 'required|integer|in:10,20,30,40,50,60,70,80,90,100',
+            'point_value' => 'required|integer|min:1|max:1000',
+            'title'       => 'nullable|string|max:150',
+            'description' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -69,10 +71,10 @@ class PointQrCodeController extends Controller
         }
 
         // Additional validation
-        if (!PointQrCode::isValidPointValue($request->point_value)) {
+        if ($request->point_value <= 0 || $request->point_value > 1000) {
             return response()->json([
                 'success' => false,
-                'message' => 'Nilai poin tidak valid. Harus 10, 20, 30, ..., 100',
+                'message' => 'Nilai poin tidak valid. Harus antara 1 sampai 1000',
             ], 422);
         }
 
@@ -80,6 +82,8 @@ class PointQrCodeController extends Controller
             $qr = PointQrCode::create([
                 'game_event_id' => $event->id,
                 'point_value'   => $request->point_value,
+                'title'         => $request->title ?: ('Pos Poin ' . $request->point_value),
+                'description'   => $request->description,
                 'status'        => 'active',
             ]);
 
@@ -135,6 +139,8 @@ class PointQrCodeController extends Controller
                 'data'    => [
                     'qr_code'     => 'data:image/png;base64,' . $qrBase64,
                     'token'       => $qr->token,
+                    'title'       => $qr->title ?: ('Pos Poin ' . $qr->point_value),
+                    'description' => $qr->description,
                     'point_value' => $qr->point_value,
                     'event_name'  => $qr->gameEvent->name,
                     'status'      => $qr->status,

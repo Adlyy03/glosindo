@@ -1,0 +1,88 @@
+services:
+
+  # ─── MySQL Database ─────────────────────────────────────────────────────────
+  glosindo-db:
+    image: mysql:8.0
+    container_name: glosindo-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: glosindo_root
+      MYSQL_DATABASE: glosindo
+      MYSQL_USER: glosindo_user
+      MYSQL_PASSWORD: glosindo_pass
+    ports:
+      - "3310:3306"
+    volumes:
+      - glosindo_db_data:/var/lib/mysql
+      - ./glosindo.sql:/docker-entrypoint-initdb.d/glosindo.sql:ro
+    networks:
+      - glosindo-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pglosindo_root"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ─── Backend (Laravel Lumen + PHP-FPM + Nginx) ──────────────────────────────
+  glosindo-backend:
+    build:
+      context: ./glosindo-backend
+      dockerfile: Dockerfile
+    container_name: glosindo-backend
+    restart: unless-stopped
+    environment:
+      APP_NAME: Glosindo
+      APP_ENV: production
+      APP_KEY: base64:UKlmgTNZqPQHhzVeAsX4vOtRw7ySfJbIcDn2eM3pk8Y=
+      APP_DEBUG: "false"
+      APP_URL: http://localhost:8100
+      APP_TIMEZONE: Asia/Jakarta
+      LOG_CHANNEL: stderr
+      DB_CONNECTION: mysql
+      DB_HOST: glosindo-db
+      DB_PORT: 3306
+      DB_DATABASE: glosindo
+      DB_USERNAME: glosindo_user
+      DB_PASSWORD: glosindo_pass
+      JWT_SECRET: STbVhdIycX586PdqhOSGGuBa84eSjw3KFOyqHwwDjQJv2M43cwjteahkVvzvtEfZ
+      JWT_TTL: 1440
+      CORS_ALLOWED_ORIGIN: http://localhost:8101
+      CACHE_DRIVER: file
+      QUEUE_CONNECTION: sync
+    ports:
+      - "8100:80"
+    volumes:
+      - glosindo_storage:/var/www/html/storage/app/public
+    networks:
+      - glosindo-network
+    depends_on:
+      glosindo-db:
+        condition: service_healthy
+
+  # ─── Frontend (React + Vite Build + Nginx) ───────────────────────────────────
+  glosindo-frontend:
+    build:
+      context: ./glosindo-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8100/api
+    container_name: glosindo-frontend
+    restart: unless-stopped
+    ports:
+      - "8101:80"
+    networks:
+      - glosindo-network
+    depends_on:
+      - glosindo-backend
+
+volumes:
+  glosindo_db_data:
+    name: glosindo_db_data
+  glosindo_storage:
+    name: glosindo_storage
+
+networks:
+  glosindo-network:
+    name: glosindo-network
+    driver: bridge

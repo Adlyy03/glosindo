@@ -806,19 +806,24 @@ class EventController extends Controller
                 ], 422);
             }
 
-            // Find match in FaceEmbedding database
-            $embeddings = FaceEmbedding::with('visitor:id,name,phone,email,company,position,photo')->get();
-            $threshold = 0.3; // matching threshold
+            // Find match in FaceEmbedding database using cached embeddings & early exit
+            $embeddings = \Illuminate\Support\Facades\Cache::remember('face_embeddings_all', 300, function () {
+                return FaceEmbedding::has('visitor')
+                    ->with('visitor:id,name,phone,email,company,position,photo')
+                    ->get(['id', 'visitor_id', 'face_vector']);
+            });
+
+            $threshold = (float) env('FACE_MATCH_THRESHOLD', 0.40);
+            $minDistSq = $threshold * $threshold;
             $bestMatchVisitor = null;
-            $minDistance = 999.0;
 
             foreach ($embeddings as $embedding) {
                 if (!$embedding->visitor) {
                     continue;
                 }
-                $dist = $this->calculateEuclideanDistance($faceVector, $embedding->face_vector);
-                if ($dist < $threshold && $dist < $minDistance) {
-                    $minDistance = $dist;
+                $distSq = FaceEmbedding::distanceSquared($faceVector, $embedding->face_vector, $minDistSq);
+                if ($distSq < $minDistSq) {
+                    $minDistSq = $distSq;
                     $bestMatchVisitor = $embedding->visitor;
                 }
             }

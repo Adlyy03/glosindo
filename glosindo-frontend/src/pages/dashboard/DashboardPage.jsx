@@ -334,6 +334,15 @@ const DashboardPage = () => {
             <Button
               variant="outline"
               size="sm"
+              icon={CalendarCheck}
+              onClick={() => navigate('/reservations/invitations')}
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs sm:text-sm py-2 px-3.5"
+            >
+              Undangan Reservasi
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               icon={CalendarRange}
               onClick={() => navigate('/events')}
               className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs sm:text-sm py-2 px-3.5"
@@ -354,7 +363,17 @@ const DashboardPage = () => {
       </div>
 
       {/* Quick Navigation Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <Link to="/reservations/invitations">
+          <Card hover className="p-3.5 sm:p-5 text-center bg-white border border-blue-200/80 rounded-2xl shadow-xs hover:shadow-md transition-all bg-blue-50/20 h-full">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-blue-100 rounded-2xl flex items-center justify-center">
+              <CalendarCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+            </div>
+            <p className="text-xs font-bold text-slate-900">Reservasi</p>
+            <p className="text-[10px] text-blue-600 font-semibold">Pre-Registration</p>
+          </Card>
+        </Link>
+
         <Link to="/check-in">
           <Card hover className="p-3.5 sm:p-5 text-center bg-white border border-slate-200 rounded-2xl shadow-xs hover:shadow-md transition-all h-full">
             <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 bg-blue-100 rounded-2xl flex items-center justify-center">

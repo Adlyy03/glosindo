@@ -18,6 +18,7 @@ export { default as VisitorListPage } from './visitors/VisitorListPage';
 // Kiosk & Public Guest Registration
 export { default as GuestVisitPage } from './kiosk/GuestVisitPage';
 export { default as PublicGuestRegisterPage } from './kiosk/PublicGuestRegisterPage';
+export { default as PublicReservationPage } from './kiosk/PublicReservationPage';
 
 // Events Management
 export { default as EventListPage } from './events/EventListPage';
@@ -39,10 +40,10 @@ export { default as ReceptionistCheckInPage } from './receptionist/ReceptionistC
 export { default as ReceptionistHistoryPage } from './receptionist/ReceptionistHistoryPage';
 export { default as ReceptionistVisitorPage } from './receptionist/ReceptionistVisitorPage';
 
-// Admin
+// Admin & Management
 export { default as AdminSettingsPage } from './admin/AdminSettingsPage';
 export { default as AdminUsersPage } from './admin/AdminUsersPage';
+export { default as AdminReservationPage } from './admin/AdminReservationPage';
 
 // Reports & Analytics
 export { default as ReportsPage } from './reports/ReportsPage';
-

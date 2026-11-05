@@ -1,24 +1,92 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Camera, CheckCircle, AlertTriangle, ArrowRight, UserPlus, Info, ShieldCheck } from 'lucide-react';
+import {
+  Camera,
+  CheckCircle,
+  AlertTriangle,
+  ArrowRight,
+  UserPlus,
+  Info,
+  ShieldCheck,
+  CheckCircle2,
+  Building2,
+  Clock,
+  Sparkles,
+  QrCode
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 import FaceScanner from '../../components/FaceScanner';
 import Card, { CardHeader } from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
+import reservationService from '../../services/reservationService';
 
 const CheckInCameraPage = () => {
   const [matchedVisitor, setMatchedVisitor] = useState(null);
   const [noMatchDetected, setNoMatchDetected] = useState(false);
   const [reloadSignal, setReloadSignal] = useState(0);
-  const navigate = useNavigate();
+  const [checkingReservation, setCheckingReservation] = useState(false);
+  const [reservationSuccess, setReservationSuccess] = useState(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
 
-  const handleMatchFound = (visitor) => {
+  const navigate = useNavigate();
+  const resetTimerRef = useRef(null);
+
+  const handleMatchFound = async (visitor) => {
     const normalizedVisitor = {
       ...visitor,
       id: visitor.id || visitor.visitor_id,
     };
-    setMatchedVisitor(normalizedVisitor);
+
     setNoMatchDetected(false);
+    setDuplicateWarning(null);
+
+    // 1. If currently showing reservation success, ignore subsequent scans
+    if (reservationSuccess || checkingReservation) {
+      return;
+    }
+
+    setCheckingReservation(true);
+    try {
+      // 2. Query auto check-in for active pre-registration
+      const res = await reservationService.autoCheckIn({ visitor_id: normalizedVisitor.id });
+
+      if (res.success && res.checked_in) {
+        // Active reservation found and auto check-in confirmed!
+        setReservationSuccess(res.data);
+        setMatchedVisitor(normalizedVisitor);
+        toast.success(`Check-In Reservasi Berhasil! Selamat datang, ${res.data.visitor?.name || normalizedVisitor.name}.`, {
+          duration: 5000,
+          icon: '✅',
+        });
+
+        // Auto reset kiosk after 6 seconds for the next visitor
+        if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+        resetTimerRef.current = setTimeout(() => {
+          handleDismissSuccess();
+        }, 6000);
+        return;
+      }
+    } catch (err) {
+      const data = err.response?.data;
+      if (data?.already_checked_in) {
+        // Prevent double check-in
+        setDuplicateWarning(data.message || 'Tamu ini sudah melakukan check-in hari ini.');
+        toast.error(data.message || 'Check-in ganda ditolak.', { duration: 5000 });
+        return;
+      } else if (data?.is_expired) {
+        toast('Reservasi telah kedaluwarsa. Mengarahkan ke form manual...', { icon: '⚠️' });
+        navigate('/check-in/manual', { state: { visitor: normalizedVisitor } });
+        return;
+      } else {
+        // No active reservation found: fallback to regular manual check-in form
+        setMatchedVisitor(normalizedVisitor);
+        navigate('/check-in/manual', { state: { visitor: normalizedVisitor } });
+        return;
+      }
+    } finally {
+      setCheckingReservation(false);
+    }
   };
 
   const handleNoMatch = () => {
@@ -26,10 +94,12 @@ const CheckInCameraPage = () => {
     setNoMatchDetected(true);
   };
 
-  useEffect(() => {
-    if (!matchedVisitor) return;
-    navigate('/check-in/manual', { state: { visitor: matchedVisitor } });
-  }, [matchedVisitor, navigate]);
+  const handleDismissSuccess = () => {
+    if (resetTimerRef.current) clearTimeout(resetTimerRef.current);
+    setReservationSuccess(null);
+    setMatchedVisitor(null);
+    setReloadSignal((prev) => prev + 1);
+  };
 
   return (
     <div className="space-y-5 sm:space-y-6 animate-fadeIn w-full max-w-7xl mx-auto">
@@ -77,31 +147,84 @@ const CheckInCameraPage = () => {
             onMatchFound={handleMatchFound}
             onNoMatch={handleNoMatch}
             reloadSignal={reloadSignal}
+            paused={!!reservationSuccess || checkingReservation}
           />
         </Card>
 
         {/* Right Info & Status Column */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-5">
-          {/* Realtime Status Card */}
-          {matchedVisitor ? (
-            <div className="bg-emerald-500 text-white rounded-3xl p-6 shadow-xl space-y-4 animate-scaleIn">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle className="w-6 h-6 text-emerald-200" />
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
-                  Teridentifikasi
+          {/* Reservation Auto-CheckIn Success Card */}
+          {reservationSuccess ? (
+            <div className="bg-emerald-600 text-white rounded-3xl p-6 shadow-xl space-y-4 animate-scaleIn border border-emerald-500">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-6 h-6 text-emerald-200" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
+                    Check-In Berhasil
+                  </span>
+                </div>
+                <span className="text-[11px] bg-emerald-700/80 text-emerald-100 px-2 py-0.5 rounded-full font-mono">
+                  {reservationSuccess.reservation?.reservation_code}
                 </span>
               </div>
+
               <div>
-                <h3 className="text-2xl font-black leading-tight">{matchedVisitor.name}</h3>
+                <h3 className="text-2xl font-black leading-tight">
+                  {reservationSuccess.visitor?.name || matchedVisitor?.name}
+                </h3>
                 <p className="text-sm text-emerald-100 mt-1 font-medium">
-                  {matchedVisitor.company || 'Instansi tidak diisi'}
+                  {reservationSuccess.visitor?.company || matchedVisitor?.company || 'Tamu Kunjungan'}
                 </p>
               </div>
-              <Link to="/check-in/manual" className="block pt-2">
-                <Button variant="emerald" size="lg" fullWidth icon={ArrowRight}>
-                  Lanjut ke Form Check-In
+
+              <div className="bg-emerald-700/60 rounded-2xl p-3.5 text-xs text-emerald-50 space-y-1.5 border border-emerald-500/40">
+                <div className="flex justify-between">
+                  <span className="text-emerald-200">Keperluan:</span>
+                  <span className="font-semibold text-right">{reservationSuccess.reservation?.purpose || '-'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-emerald-200">Menemui:</span>
+                  <span className="font-semibold text-right">{reservationSuccess.reservation?.meet_to || '-'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-emerald-200">Waktu Masuk:</span>
+                  <span className="font-semibold text-right">
+                    {new Date(reservationSuccess.visit?.check_in).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                  </span>
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-2">
+                <Button
+                  variant="secondary"
+                  size="md"
+                  fullWidth
+                  onClick={handleDismissSuccess}
+                  className="bg-white text-emerald-800 hover:bg-emerald-50 font-bold border-0"
+                >
+                  Selesai
                 </Button>
-              </Link>
+              </div>
+            </div>
+          ) : duplicateWarning ? (
+            <div className="bg-amber-500 text-white rounded-3xl p-6 shadow-xl space-y-3 animate-scaleIn">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-6 h-6 text-amber-200" />
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-100">
+                  Check-In Ganda Ditolak
+                </span>
+              </div>
+              <p className="text-sm font-medium text-amber-50 leading-relaxed">
+                {duplicateWarning}
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setDuplicateWarning(null)}
+                className="bg-white/90 text-amber-900 font-bold hover:bg-white text-xs mt-2"
+              >
+                Pindai Ulang
+              </Button>
             </div>
           ) : noMatchDetected ? (
             <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 shadow-md space-y-4 animate-scaleIn">
@@ -127,7 +250,7 @@ const CheckInCameraPage = () => {
               </div>
               <h3 className="text-slate-900 font-bold text-base mb-1">Menunggu Pemindaian</h3>
               <p className="text-slate-500 text-xs leading-relaxed">
-                Posisikan wajah di tengah lingkaran bingkai kamera untuk verifikasi.
+                Posisikan wajah di tengah lingkaran bingkai kamera untuk verifikasi dan auto check-in.
               </p>
             </Card>
           )}
@@ -151,7 +274,7 @@ const CheckInCameraPage = () => {
                 <span className="w-5 h-5 rounded-full bg-brand-navy/10 text-brand-navy text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                   2
                 </span>
-                <span>Lepaskan kacamata hitam atau penutup wajah berlebih.</span>
+                <span>Tamu dengan reservasi online otomatis check-in instan tanpa perlu isi form.</span>
               </li>
               <li className="flex items-start gap-2.5">
                 <span className="w-5 h-5 rounded-full bg-brand-navy/10 text-brand-navy text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">

@@ -87,6 +87,14 @@ class Visit extends Model
     }
 
     /**
+     * Get the reservation associated with this visit.
+     */
+    public function reservation()
+    {
+        return $this->hasOne(Reservation::class, 'visit_id');
+    }
+
+    /**
      * Scope a query to only include active visits (status IN).
      *
      * @param  \Illuminate\Database\Eloquent\Builder  $query

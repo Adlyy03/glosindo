@@ -17,6 +17,7 @@ class EventGroup extends Model
         'game_event_id',
         'name',
         'code',
+        'color',
         'register_token',
     ];
 

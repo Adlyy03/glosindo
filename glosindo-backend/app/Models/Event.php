@@ -196,6 +196,14 @@ class Event extends Model
     }
 
     /**
+     * Get the game event attached to this event.
+     */
+    public function gameEvent()
+    {
+        return $this->hasOne(GameEvent::class, 'event_id');
+    }
+
+    /**
      * Get all visits for this event.
      */
     public function visits()

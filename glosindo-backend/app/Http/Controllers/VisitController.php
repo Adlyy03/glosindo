@@ -442,6 +442,7 @@ class VisitController extends Controller
             if ($request->visitor_id) {
                 $visitor = Visitor::find($request->visitor_id);
                 if (!$visitor) {
+                    DB::rollBack();
                     return response()->json(['success' => false, 'message' => 'Visitor tidak ditemukan.'], 404);
                 }
                 
@@ -455,14 +456,24 @@ class VisitController extends Controller
                     $activeVisit->audit('auto_checked_out', null, null, 'Auto checkout by public kiosk');
                 }
             } else {
-                $visitor = Visitor::create(['name' => $request->name, 'phone' => $request->phone, 'company' => $request->company ?? null]);
+                $visitor = !empty($request->phone) ? Visitor::where('phone', $request->phone)->first() : null;
+                if (!$visitor) {
+                    $visitor = Visitor::create(['name' => $request->name, 'phone' => $request->phone, 'company' => $request->company ?? null]);
+                } else {
+                    $visitor->update(['name' => $request->name, 'company' => $request->company ?? $visitor->company]);
+                }
                 
                 // Save face embedding if provided
-                if ($request->face_descriptor && is_array($request->face_descriptor)) {
-                    \App\Models\FaceEmbedding::create([
-                        'visitor_id'  => $visitor->id,
-                        'face_vector' => json_encode($request->face_descriptor),
-                    ]);
+                if ($request->face_descriptor && is_array($request->face_descriptor) && count($request->face_descriptor) === 128) {
+                    $compactVector = array_map(function ($val) {
+                        return round((float) $val, 4);
+                    }, $request->face_descriptor);
+
+                    \App\Models\FaceEmbedding::updateOrCreate(
+                        ['visitor_id' => $visitor->id],
+                        ['face_vector' => $compactVector]
+                    );
+                    \Illuminate\Support\Facades\Cache::forget('face_embeddings_all');
                 }
             }
 
@@ -483,5 +494,74 @@ class VisitController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Gagal: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Check if a captured face vector matches an existing visitor (public kiosk - secure, no full dump).
+     */
+    public function publicCheckFace(Request $request)
+    {
+        $this->validate($request, [
+            'face_vector'   => 'required|array',
+            'face_vector.*' => 'required|numeric',
+        ]);
+
+        if (count($request->face_vector) !== 128) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Face vector harus berisi tepat 128 dimensi',
+            ], 422);
+        }
+
+        $threshold = (float) env('FACE_MATCH_THRESHOLD', 0.45);
+        $thresholdSq = $threshold * $threshold;
+
+        // Retrieve cached embeddings or query DB
+        $embeddings = \Illuminate\Support\Facades\Cache::remember('face_embeddings_all', 60, function () {
+            return \App\Models\FaceEmbedding::whereHas('visitor', function ($q) { $q->whereNull('deleted_at'); })
+                ->with(['visitor' => function ($q) { $q->select('id', 'name', 'company', 'phone')->whereNull('deleted_at'); }])
+                ->get(['id', 'visitor_id', 'face_vector']);
+        });
+
+        $bestMatch = null;
+        $bestDistSq = $thresholdSq;
+
+        foreach ($embeddings as $embedding) {
+            if (!$embedding->visitor) {
+                continue;
+            }
+
+            $distSq = \App\Models\FaceEmbedding::distanceSquared(
+                $request->face_vector,
+                $embedding->face_vector,
+                $bestDistSq
+            );
+
+            if ($distSq < $bestDistSq) {
+                $bestDistSq = $distSq;
+                $bestMatch = $embedding->visitor;
+            }
+        }
+
+        if ($bestMatch) {
+            return response()->json([
+                'success'  => true,
+                'matched'  => true,
+                'distance' => round(sqrt($bestDistSq), 4),
+                'visitor'  => [
+                    'id'         => $bestMatch->id,
+                    'visitor_id' => $bestMatch->id,
+                    'name'       => $bestMatch->name,
+                    'company'    => $bestMatch->company,
+                    'phone'      => $bestMatch->phone,
+                ],
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'matched' => false,
+            'message' => 'Wajah tidak dikenali atau belum terdaftar',
+        ]);
     }
 }

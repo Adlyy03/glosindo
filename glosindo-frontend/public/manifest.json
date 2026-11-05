@@ -1,0 +1,53 @@
+{
+  "name": "GLOSINDO - Digital Guestbook Kiosk",
+  "short_name": "GLOSINDO",
+  "description": "Sistem Buku Tamu Digital & Kiosk Mandiri PT Global Media Pratama Solusindo",
+  "start_url": "/guest-visit?kiosk=true&source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#1e3a8a",
+  "orientation": "any",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Kiosk Kunjungan Tamu",
+      "short_name": "Kiosk",
+      "url": "/guest-visit?kiosk=true",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Check-In Wajah",
+      "short_name": "Check-In",
+      "url": "/check-in",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Dashboard Admin",
+      "short_name": "Dashboard",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
+

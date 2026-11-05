@@ -1,341 +1,213 @@
-# GLOSINDO Digital Guestbook
+# 🌐 GLOSINDO - GLIDE Digital Guestbook System
 
-Sistem manajemen tamu dengan face recognition, event management, laporan visit history.
+**PT Global Media Pratama Solusindo**
+
+Sistem buku tamu digital mandiri (kiosk) dan manajemen pengunjung cerdas terintegrasi berbasis **Biometric Face Recognition (AI)**, **Event Management**, **Gamification Scan Point**, serta **Laporan & Analitik Kunjungan**.
 
 ---
 
 ## 📋 Tech Stack
 
-**Backend:**
-- Lumen 10 (Laravel micro-framework)
-- PHP 8.1+
-- MySQL 8.0+
-- JWT Auth (tymon/jwt-auth)
-- PhpSpreadsheet (export Excel)
-- Dompdf (export PDF)
+### Backend
+- **Framework:** Lumen 10 (Laravel Micro-framework)
+- **Runtime:** PHP 8.1+
+- **Database:** MySQL 8.0+
+- **Authentication:** JWT Auth (`tymon/jwt-auth`)
+- **Export Data:** `phpoffice/phpspreadsheet` (Excel), `barryvdh/laravel-dompdf` (PDF)
 
-**Frontend:**
-- React 18
-- Vite
-- TailwindCSS
-- face-api.js
-- Zustand (state management)
-- React Router v6
-- Recharts
-
----
-
-## 🚀 Instalasi
-
-Lihat panduan lengkap di **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**
-
-### Utils Documentation
-
-📖 **[Frontend Utils Documentation](./glosindo-frontend/src/utils/README.md)**
-- Datetime (timezone-aware)
-- Validation (phone/email/form)
-- Loading components
-
-📖 **[Event Status Logic](./EVENT_STATUS_LOGIC.md)**
-- Auto-update event status (scheduled → active → finished)
-- Real-time computed status attributes
-
-### Quick Start
-
-### 1. Clone Repository
-
-```bash
-git clone <repo-url>
-cd glosindo
-```
-
-### 2. Backend Setup
-
-```bash
-cd glosindo-backend
-
-# Install dependencies
-composer install
-
-# Copy env
-cp .env.example .env
-
-# Generate key
-php artisan key:generate
-
-# Generate JWT secret
-php artisan jwt:secret
-
-# Setup database di .env
-# DB_DATABASE=
-# DB_USERNAME=
-# DB_PASSWORD=
-
-# Run migration
-php artisan migrate
-
-# (Optional) Seed data awal
-php artisan db:seed
-
-# Clear cache
-php artisan cache:clear
-```
-
-### 3. Frontend Setup
-
-```bash
-cd glosindo-frontend
-
-# Install dependencies
-npm install
-
-# Copy env
-cp .env.example .env
-# Edit .env: VITE_API_URL=http://localhost:8000/api
-
-# Copy face-api models ke /public/models
-# Download dari: https://github.com/justadudewhohacks/face-api.js-models
-# Folder models wajib ada:
-#   - ssd_mobilenetv1
-#   - face_landmark_68
-#   - face_recognition
-
-# Jalanin dev server
-npm run dev
-```
-
-### 4. Config `.env` Backend
-
-```env
-APP_NAME=GLOSINDO
-APP_ENV=local
-APP_KEY=base64:...
-APP_DEBUG=true
-APP_URL=http://localhost:8000
-APP_TIMEZONE=Asia/Jakarta
-
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=glosindo_db
-DB_USERNAME=root
-DB_PASSWORD=
-
-JWT_SECRET=...
-JWT_TTL=1440
-
-CORS_ALLOWED_ORIGIN=http://localhost:5173
-```
-
-### 5. Config Frontend
-
-File `glosindo-frontend/.env`:
-
-```env
-VITE_API_URL=http://localhost:8000/api
-```
-
-**Production:**
-```env
-VITE_API_URL=https://yourdomain.com/api
-```
-
----
-
-## ▶️ Cara Jalanin
-
-### Backend (Lumen)
-
-```bash
-cd glosindo-backend
-php -S localhost:8000 -t public
-```
-
-Atau pake Laragon: tambah virtual host manual.
-
-### Frontend (React + Vite)
-
-```bash
-cd glosindo-frontend
-npm run dev
-```
-
-Akses: `http://localhost:5173`
-
----
-
-## 🔑 Default Login
-
-```
-Email: admin@glosindo.com
-Password: password
-```
-
-(Seeder: `database/seeders/UserSeeder.php`)
-
----
-
-## 📦 Depedencies Backend
-
-```json
-{
-  "php": "^8.1",
-  "laravel/lumen-framework": "^10.0",
-  "tymon/jwt-auth": "^2.0",
-  "phpoffice/phpspreadsheet": "^1.29",
-  "dompdf/dompdf": "^2.0",
-  "barryvdh/laravel-dompdf": "^2.0"
-}
-```
-
-### Install via Composer
-
-```bash
-composer require tymon/jwt-auth
-composer require phpoffice/phpspreadsheet
-composer require dompdf/dompdf
-composer require barryvdh/laravel-dompdf
-```
-
----
-
-## 📦 Depedencies Frontend
-
-```json
-{
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
-  "react-router-dom": "^6.20.0",
-  "zustand": "^4.4.0",
-  "face-api.js": "^0.22.2",
-  "axios": "^1.6.0",
-  "react-hot-toast": "^2.4.1",
-  "recharts": "^2.10.0",
-  "lucide-react": "^0.292.0",
-  "dayjs": "^1.11.10"
-}
-```
-
-### Install via npm
-
-```bash
-npm install react react-dom react-router-dom zustand axios
-npm install face-api.js react-hot-toast recharts lucide-react dayjs
-```
-
----
-
-## 📁 Struktur Project
-
-```
-glosindo/
-├── glosindo-backend/         # Backend Lumen
-│   ├── app/
-│   │   ├── Http/
-│   │   │   ├── Controllers/  # API controllers
-│   │   │   └── Middleware/   # JWT, Role, CORS
-│   │   ├── Models/           # User, Visitor, Visit, Event, EventParticipant, FaceEmbedding
-│   │   └── Traits/           # Auditable
-│   ├── database/
-│   │   ├── migrations/       # Schema DB (14 files)
-│   │   └── seeders/          # Data awal
-│   ├── routes/web.php        # API routes
-│   └── .env
-│
-├── glosindo-frontend/        # Frontend React
-│   ├── public/
-│   │   └── models/           # face-api.js models (wajib!)
-│   ├── src/
-│   │   ├── components/       # UI components
-│   │   ├── pages/            # Pages
-│   │   ├── services/         # API service
-│   │   ├── store/            # Zustand store
-│   │   └── App.jsx
-│   └── .env
-│
-├── DATABASE_SCHEMA.md        # 📊 Database documentation
-└── README.md
-```
+### Frontend
+- **Framework:** React 18 + Vite
+- **Styling:** Tailwind CSS
+- **Biometrik / Face Recognition:** `face-api.js` (TensorFlow.js based)
+- **State Management:** Zustand
+- **Routing:** React Router v6
+- **Icons & UI:** `lucide-react`, `react-hot-toast`, `recharts`
+- **Mobile Support:** Capacitor Android (`com.glosindo.app`)
 
 ---
 
 ## 🎯 Fitur Utama
 
-- ✅ Face recognition check-in/out
-- ✅ Manajemen visitor (CRUD)
-- ✅ Visit history & reporting (Excel/PDF)
-- ✅ Event management
-- ✅ Dashboard analytics
-- ✅ Role-based access (Admin, Receptionist, Supervisor)
-- ✅ Feature toggle per user (admin bisa disable fitur per role)
-- ✅ Quick check-in di event detail
+- 👤 **Kiosk Kunjungan Mandiri (GLIDE Guestbook):** Layar sentuh kiosk ramah tamu dengan pemindaian biometrik wajah instan, verifikasi otomatis tamu terdaftar, dan form pendaftaran tamu baru cepat.
+- 🌐 **Pendaftaran Tamu Publik (Online):** Portal publik bagi tamu untuk mendaftar mandiri sebelum hadir ke kantor atau pabrik.
+- 🎪 **Event & Public Event Registration:** Manajemen acara perusahaan dengan portal registrasi mandiri via kode event unik.
+- 🎮 **Gamification & Scan Point:** Sistem game pameran/acara dengan scan QR point, token registrasi peserta, dan pencatatan aktivitas pengunjung.
+- ⚡ **Face Recognition Check-In / Out:** Deteksi wajah cepat dan pencocokan embedding vector 128-dimensi secara real-time.
+- 📊 **Dashboard Analitik & Tamu Aktif:** Monitoring total tamu harian, tamu sedang aktif di gedung, dan riwayat kunjungan.
+- 📑 **Export Laporan Komprehensif:** Unduh laporan kunjungan harian/bulanan ke format PDF dan Microsoft Excel.
+- 🛡️ **Multi-Role & Feature Access Gate:** Pembagian hak akses granular (Admin, Resepsionis, Supervisor) dengan kontrol aktif/nonaktif fitur per role.
+- 📱 **Aplikasi Mobile (Android):** Kompatibel dengan perangkat tablet / smartphone berbasis Android via Capacitor.
 
 ---
 
-## 📊 Database Schema
+## 🗺️ Panduan Rute (Routing System)
 
-Lihat dokumentasi lengkap di **[DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)**
+### Rute Publik & Kiosk
+| Path | Deskripsi | Akses |
+|------|-----------|-------|
+| `/guest-visit` / `/kunjungan-tamu` | Kiosk Mandiri Wajah (GLIDE Guestbook) | Publik (Kiosk) |
+| `/register` / `/registrasi-tamu` | Form Pendaftaran Tamu Mandiri Publik | Publik |
+| `/event/:code/register` | Pendaftaran Peserta Acara / Event | Publik |
+| `/games/register/:token` | Registrasi Peserta Game Event | Publik |
+| `/games/scan-point` | Terminal Pindai Poin Gamification Event | Publik |
+| `/login` | Halaman Masuk Petugas / Admin | Publik |
 
-**Key Tables:**
-- `visitors` - Master tamu (satu ID untuk semua event & regular visit)
-- `event_participants` - Snapshot peserta per event (UNIQUE phone per event)
-- `visits` - Check-in/out log (regular + event)
-- `events` - Event management
-- `face_embeddings` - Face vector 128-float (one-to-one dengan visitor)
+### Rute Petugas / Resepsionis
+| Path | Deskripsi | Role |
+|------|-----------|------|
+| `/receptionist/check-in` | Check-in Tamu Cepat oleh Resepsionis | Receptionist |
+| `/receptionist/active` | Daftar Tamu Aktif Saat Ini | Receptionist |
+| `/receptionist/history` | Riwayat Kunjungan Resepsionis | Receptionist |
+| `/receptionist/visitors` | Direktori Master Tamu | Receptionist |
 
-**Recent Fixes (2026-08-21):**
-- ✅ UNIQUE constraint `event_participants(event_id, phone)` - no duplicate registration
-- ✅ Performance indexes: visits, events, audit_logs
-- ✅ Phone index di visitors table
+### Rute Dashboard & Admin
+| Path | Deskripsi | Role |
+|------|-----------|------|
+| `/dashboard` | Dashboard Statistik & Grafik Kunjungan | Admin, Receptionist |
+| `/check-in` | Pemindai Kamera Check-In Petugas | Admin, Receptionist |
+| `/check-in/manual` | Form Check-In Manual Petugas | Admin, Receptionist |
+| `/active-visitors` | Monitoring Tamu yang Belum Check-Out | Admin, Receptionist |
+| `/visit-history` | Riwayat Kunjungan & Export Data | Admin, Receptionist |
+| `/visitors` | Database Master Tamu & Embedding Wajah | Admin, Receptionist |
+| `/events` | Manajemen Acara & Daftar Peserta | Admin |
+| `/games/events` | Manajemen Event Gamification & Titik Scan | Admin |
+| `/users` | Kelola Akun Petugas & Hak Akses | Admin Only |
+| `/settings` | Konfigurasi Sistem & Fitur Portal Publik | Admin Only |
+
+---
+
+## 🚀 Panduan Instalasi & Menjalankan
+
+### 1. Prasyarat Sistem
+- PHP >= 8.1 dengan ekstensi `pdo_mysql`, `mbstring`, `gd`
+- Composer
+- Node.js >= 18.x & npm
+- MySQL / MariaDB (e.g. Laragon / XAMPP)
+
+### 2. Setup Backend (Lumen)
+
+```bash
+cd glosindo-backend
+
+# 1. Install dependensi
+composer install
+
+# 2. Buat konfigurasi .env
+cp .env.example .env
+
+# 3. Generate kunci JWT
+php artisan jwt:secret
+
+# 4. Sesuaikan konfigurasi database di file .env:
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=glosindo_db
+# DB_USERNAME=root
+# DB_PASSWORD=
+
+# 5. Jalankan migrasi & seeder awal
+php artisan migrate
+php artisan db:seed
+
+# 6. Jalankan backend server
+php -S localhost:8000 -t public
+```
+
+### 3. Setup Frontend (React + Vite)
+
+```bash
+cd glosindo-frontend
+
+# 1. Install paket npm
+npm install
+
+# 2. Buat file .env
+cp .env.example .env
+# Pastikan VITE_API_URL mengarah ke backend:
+# VITE_API_URL=http://localhost:8000/api
+
+# 3. Pastikan model AI face-api.js ada di folder:
+# glosindo-frontend/public/models/
+# - ssd_mobilenetv1_model-weights_manifest.json (dan shards)
+# - face_landmark_68_model-weights_manifest.json (dan shards)
+# - face_recognition_model-weights_manifest.json (dan shards)
+
+# 4. Jalankan dev server
+npm run dev
+```
+
+Akses web browser di: **`http://localhost:5173`**
+
+---
+
+## 🔑 Akun Default (Seeder)
+
+```text
+Admin:
+Email    : admin@glosindo.com
+Password : password (atau Admin123!)
+
+Resepsionis:
+Email    : receptionist@glosindo.com
+Password : password (atau Recep123!)
+```
+
+*(Dapat dikonfigurasi melalui seeder `database/seeders/UserSeeder.php`)*
+
+---
+
+## 📁 Struktur Direktori
+
+```text
+glosindo/
+├── glosindo-backend/             # REST API Lumen Micro-framework
+│   ├── app/
+│   │   ├── Http/
+│   │   │   ├── Controllers/      # Controller API (Visitor, Event, Games, Kiosk, Report)
+│   │   │   └── Middleware/       # JWT, Role-Based Access, CORS
+│   │   ├── Models/               # Model Eloquent (Visitor, Visit, Event, Participant, Game)
+│   │   └── Traits/               # Audit Log & Helpers
+│   ├── database/
+│   │   ├── migrations/           # Skema Tabel Database
+│   │   └── seeders/              # Data Awal Sistem
+│   └── routes/web.php            # Definisi Rute API
+│
+├── glosindo-frontend/            # Frontend SPA React + Vite
+│   ├── public/
+│   │   └── models/               # Model Bobot Neural Network face-api.js
+│   ├── src/
+│   │   ├── assets/               # Gambar, Ilustrasi, dan Logo Glosindo
+│   │   ├── components/           # Komponen UI (Navbar, Sidebar, FaceScanner, Modal)
+│   │   ├── pages/                # Halaman Aplikasi & Kiosk
+│   │   │   ├── GuestVisitPage.jsx # Terminal Kiosk Mandiri (GLIDE)
+│   │   │   ├── admin/            # Halaman Pengaturan & Manajemen Petugas
+│   │   │   ├── events/           # Halaman Kelola Acara
+│   │   │   ├── games/            # Halaman Game & Scan Point
+│   │   │   └── receptionist/     # Halaman Kerja Resepsionis
+│   │   ├── services/             # Axios API Client Modules
+│   │   ├── store/                # Zustand State Stores (Auth, Visitor, UI)
+│   │   └── utils/                # Helper Waktu, Validasi & Face Utils
+│   └── vite.config.js
+│
+├── DATABASE_SCHEMA.md            # Dokumentasi Detail Tabel & Relasi DB
+└── README.md                     # Dokumentasi Utama Proyek
+```
 
 ---
 
 ## 🛠️ Troubleshooting
 
-### Face API Model Not Found
-
-Download dari: https://github.com/justadudewhohacks/face-api.js-models
-
-Copy ke `glosindo-frontend/public/models/`:
-- ssd_mobilenetv1/
-- face_landmark_68_model-weights_manifest.json
-- face_recognition_model-weights_manifest.json
-
-### CORS Error
-
-Update `CORS_ALLOWED_ORIGIN` di `.env` backend:
-
-```env
-CORS_ALLOWED_ORIGIN=http://localhost:5173
-```
-
-### JWT Token Invalid
-
-Re-generate JWT secret:
-
-```bash
-php artisan jwt:secret
-```
-
-Clear cache:
-
-```bash
-php artisan cache:clear
-```
-
-### Migration Error
-
-Drop database & re-run:
-
-```bash
-php artisan migrate:fresh --seed
-```
+- **Model Face-api Tidak Terload:**  
+  Pastikan file manifest dan shard model telah ditempatkan di direktori `glosindo-frontend/public/models/`.
+- **CORS Error Saat Request API:**  
+  Periksa variabel `CORS_ALLOWED_ORIGIN` di `.env` backend agar menyertakan URL frontend (contoh: `http://localhost:5173`).
+- **Token JWT Invalid / Expired:**  
+  Jalankan `php artisan jwt:secret` dan pastikan konfigurasi `JWT_TTL` di `.env` sesuai kebutuhan.
+- **Build Produksi:**  
+  Jalankan `npm run build` di dalam folder `glosindo-frontend` untuk menghasilkan bundle statis pada direktori `dist/`.
 
 ---
 
-## 📝 Notes
+## 📝 Lisensi & Hak Cipta
 
-- Face embedding: 128-float vector disimpan di DB (JSON)
-- Photo visitor: `storage/app/public/visitors/`
-- Export report: Excel & PDF via controller backend
-- Admin bisa on/off fitur per user via Kelola Petugas
+© 2026 **PT Global Media Pratama Solusindo (GLOSINDO)**. All rights reserved.

@@ -22,42 +22,34 @@ $router->options('{any:.*}', function () {
 
 // Public routes
 $router->group(['prefix' => 'api'], function () use ($router) {
-    // Authentication
-    $router->post('login', 'AuthController@login');
+    // Authentication (rate limited: 10 attempts per minute to prevent brute force)
+    $router->post('login', ['middleware' => 'throttle:10,1', 'uses' => 'AuthController@login']);
     
-        // Public guest registration (rate limited: 10 requests per minute)
+        // Public guest registration (rate limited: 60 requests per minute)
     $router->get('public-registration/status', 'PublicRegistrationController@checkStatus');
-        $router->post('public-registration/register', ['middleware' => 'throttle:10,1', 'uses' => 'PublicRegistrationController@register']);
+        $router->post('public-registration/register', ['middleware' => 'throttle:60,1', 'uses' => 'PublicRegistrationController@register']);
 
-    // Public event registration (rate limited: 10 requests per minute)
+    // Public event registration (rate limited: 60 requests per minute)
     $router->get('public/events/{code}', 'EventController@publicShow');
-    $router->post('public/events/{code}/check-face', ['middleware' => 'throttle:10,1', 'uses' => 'EventController@publicCheckFace']);
-    $router->post('public/events/{code}/register', ['middleware' => 'throttle:10,1', 'uses' => 'EventController@publicRegister']);
+    $router->post('public/events/{code}/check-face', ['middleware' => 'throttle:60,1', 'uses' => 'EventController@publicCheckFace']);
+    $router->post('public/events/{code}/register', ['middleware' => 'throttle:60,1', 'uses' => 'EventController@publicRegister']);
 
-    // Public games registration & scan (rate limited: 10 requests per minute)
+    // Public games registration & scan (rate limited: 60 requests per minute)
     $router->get('games/register/{token}', 'GamesPublicController@getGroupInfo');
-    $router->post('games/register/{token}', ['middleware' => 'throttle:10,1', 'uses' => 'GamesPublicController@register']);
-    $router->post('games/scan-point', ['middleware' => 'throttle:10,1', 'uses' => 'GamesPublicController@scanPoint']);
+    $router->post('games/register/{token}', ['middleware' => 'throttle:60,1', 'uses' => 'GamesPublicController@register']);
+    $router->post('games/scan-point', ['middleware' => 'throttle:60,1', 'uses' => 'GamesPublicController@scanPoint']);
 
-    // Public guest visit kiosk (rate limited: 10 requests per minute)
-    $router->post('public/guest-visit', ['middleware' => 'throttle:10,1', 'uses' => 'VisitController@publicGuestVisit']);
+    // Public guest visit kiosk (rate limited: 60 requests per minute)
+    $router->post('public/check-face', ['middleware' => 'throttle:60,1', 'uses' => 'VisitController@publicCheckFace']);
+    $router->post('public/guest-visit', ['middleware' => 'throttle:60,1', 'uses' => 'VisitController@publicGuestVisit']);
+
+    // Public Pre-Registration (Face Biometric Auto-Approved Reservations)
+    $router->get('public/reservations/{token}', 'PublicReservationController@getInvitation');
+    $router->post('public/reservations/{token}/check-face', ['middleware' => 'throttle:60,1', 'uses' => 'PublicReservationController@checkFace']);
+    $router->post('public/reservations/{token}/submit', ['middleware' => 'throttle:60,1', 'uses' => 'PublicReservationController@submitReservation']);
+    $router->post('public/reservations/auto-checkin', ['middleware' => 'throttle:60,1', 'uses' => 'PublicReservationController@autoCheckIn']);
     
-    // Temp debug route - check users
-    $router->get('debug/users', function () {
-        $users = \App\Models\User::all();
-        return response()->json([
-            'count' => $users->count(),
-            'users' => $users->map(function($u) {
-                return [
-                    'id' => $u->id,
-                    'name' => $u->name,
-                    'email' => $u->email,
-                    'role' => $u->role,
-                    'password_hash' => substr($u->password, 0, 20) . '...',
-                ];
-            }),
-        ]);
-    });
+
 });
 
 // Protected routes (require JWT token)
@@ -76,28 +68,40 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
         $router->delete('users/{id}', 'UserController@destroy');
     });
 
-    // Visitors - Supervisor get read-only access
+    // Visitors
     $router->get('visitors', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitorController@index']);
-    $router->post('visitors', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitorController@store']);
+    $router->post('visitors', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitorController@store']);
     $router->get('visitors/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitorController@show']);
-    $router->put('visitors/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitorController@update']);
-    $router->post('visitors/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitorController@update']);
+    $router->put('visitors/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitorController@update']);
+    $router->post('visitors/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitorController@update']);
     $router->delete('visitors/{id}', ['middleware' => 'role:admin', 'uses' => 'VisitorController@destroy']);
 
     // Face Embeddings
-    $router->get('face-embeddings', ['middleware' => 'role:admin,receptionist', 'uses' => 'FaceEmbeddingController@index']);
+    $router->get('face-embeddings', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'FaceEmbeddingController@index']);
     $router->post('face-embeddings/check-duplicate', 'FaceEmbeddingController@checkDuplicate');
     $router->post('visitors/{visitorId}/face-embedding', 'FaceEmbeddingController@store');
     $router->delete('visitors/{visitorId}/face-embedding', ['middleware' => 'role:admin', 'uses' => 'FaceEmbeddingController@destroy']);
 
-    // Visits (ownership handled in controller) - Supervisor get read-only access
+    // Visits (ownership handled in controller)
     $router->get('visits', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@index']);
     $router->get('visits/active', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@active']);
     $router->get('visits/history', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@history']);
-    $router->post('visits', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitController@store']);
+    $router->post('visits', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@store']);
     $router->get('visits/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@show']);
-    $router->put('visits/{id}/checkout', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitController@checkout']);
+    $router->put('visits/{id}/checkout', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'VisitController@checkout']);
     $router->delete('visits/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'VisitController@destroy']);
+
+    // Reservation Invitations & Pre-Registration Management
+    $router->get('reservations/stats', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReservationInvitationController@stats']);
+    $router->get('reservations/invitations', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReservationInvitationController@index']);
+    $router->post('reservations/invitations', ['middleware' => 'role:admin,receptionist', 'uses' => 'ReservationInvitationController@store']);
+    $router->get('reservations/invitations/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReservationInvitationController@show']);
+    $router->put('reservations/invitations/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'ReservationInvitationController@update']);
+    $router->put('reservations/invitations/{id}/toggle-status', ['middleware' => 'role:admin,receptionist', 'uses' => 'ReservationInvitationController@toggleStatus']);
+    $router->delete('reservations/invitations/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'ReservationInvitationController@destroy']);
+    $router->get('reservations', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReservationInvitationController@reservationsList']);
+    $router->get('reservations/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'ReservationInvitationController@reservationDetail']);
+    $router->delete('reservations/{id}', ['middleware' => 'role:admin,receptionist', 'uses' => 'ReservationInvitationController@destroyReservation']);
 
     // Dashboard - Admin & Supervisor
     $router->group(['middleware' => 'role:admin,supervisor'], function () use ($router) {
@@ -133,9 +137,9 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
 
     // Event participants
     $router->get('events/{id}/participants', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@participants']);
-    $router->post('events/{id}/participants', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@storeParticipant']);
-    $router->post('events/{id}/participants/{participantId}/check-in', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@checkInParticipant']);
-    $router->post('events/{id}/participants/{participantId}/check-out', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@checkOutParticipant']);
+    $router->post('events/{id}/participants', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@storeParticipant']);
+    $router->post('events/{id}/participants/{participantId}/check-in', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@checkInParticipant']);
+    $router->post('events/{id}/participants/{participantId}/check-out', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'EventController@checkOutParticipant']);
     $router->delete('events/{id}/participants/{participantId}', ['middleware' => 'role:admin,receptionist', 'uses' => 'EventController@destroyParticipant']);
 
     // Single event export
@@ -146,9 +150,13 @@ $router->group(['prefix' => 'api', 'middleware' => 'jwt.auth'], function () use 
     $router->group(['prefix' => 'games/events'], function () use ($router) {
         // Read-only routes (Admin, Receptionist, Supervisor)
         $router->get('/', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@index']);
+        $router->get('/event-link/{eventId}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@getByEventId']);
+        $router->post('/event-link/{eventId}', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@linkToEvent']);
         $router->get('/{id}', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@show']);
         $router->get('/{id}/groups', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@groups']);
         $router->get('/{id}/groups/{groupId}/participants', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GameEventController@groupParticipants']);
+        $router->post('/{id}/groups/{groupId}/participants', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@storeParticipant']);
+        $router->delete('/{id}/groups/{groupId}/participants/{participantId}', ['middleware' => 'role:admin,receptionist', 'uses' => 'GameEventController@destroyParticipant']);
         $router->get('/{id}/point-qr', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'PointQrCodeController@index']);
         $router->get('/{id}/point-qr/{qrId}/generate', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'PointQrCodeController@generateQr']);
         $router->get('/{id}/dashboard/stats', ['middleware' => 'role:admin,receptionist,supervisor', 'uses' => 'GamesDashboardController@stats']);

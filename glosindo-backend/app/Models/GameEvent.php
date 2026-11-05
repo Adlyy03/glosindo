@@ -19,6 +19,7 @@ class GameEvent extends Model
      * @var array
      */
     protected $fillable = [
+        'event_id',
         'name',
         'description',
         'start_date',
@@ -47,6 +48,14 @@ class GameEvent extends Model
                 $event->status = 'draft';
             }
         });
+    }
+
+    /**
+     * Get the standard event this games event belongs to.
+     */
+    public function event()
+    {
+        return $this->belongsTo(Event::class, 'event_id');
     }
 
     /**
