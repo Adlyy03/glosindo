@@ -19,6 +19,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
   useImperativeHandle(ref, () => ({
     captureDescriptor,
     getVideoElement: () => webcamRef.current?.video || null,
+    getScreenshot: () => webcamRef.current?.getScreenshot() || null,
   }));
 
   // Resolusi 640x480 ideal: inisialisasi webcam super cepat (<300ms) & rendah beban CPU/GPU

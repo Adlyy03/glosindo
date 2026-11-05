@@ -487,6 +487,16 @@ class VisitController extends Controller
                 'status'          => 'IN',
             ]);
 
+            // Sync reservation status if matching today's reservation
+            \App\Models\Reservation::where('visitor_id', $visitor->id)
+                ->where('status', 'APPROVED')
+                ->whereDate('scheduled_date', Carbon::today())
+                ->update([
+                    'status' => 'CHECKED_IN',
+                    'checked_in_at' => Carbon::now(),
+                    'visit_id' => $visit->id,
+                ]);
+
             $visit->audit('checked_in_public', null, $visit->toArray(), 'Public kiosk');
             DB::commit();
             return response()->json(['success' => true, 'message' => 'Check-in berhasil!', 'data' => $visit->load('visitor')], 201);

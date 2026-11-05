@@ -1,40 +1,56 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import Webcam from 'react-webcam';
-import * as faceapi from 'face-api.js';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Camera,
+  ArrowLeft,
   CheckCircle2,
   AlertCircle,
-  Building2,
+  User,
+  Phone,
+  Mail,
+  Building,
+  Briefcase,
   Calendar,
   Clock,
-  UserCheck,
   Shield,
-  Upload,
-  RefreshCw,
-  Download,
   Copy,
-  ChevronRight,
-  Info,
-  Lock
+  Download,
+  RotateCcw,
+  Sparkles,
 } from 'lucide-react';
-import toast from 'react-hot-toast';
-import reservationService from '../../services/reservationService';
-import Card from '../../components/ui/Card';
+import FaceScanner from '../../components/FaceScanner';
 import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import { LOGO, APP_NAME } from '../../constants';
+import useFaceModels from '../../hooks/useFaceModels';
+import useFaceMatcher from '../../hooks/useFaceMatcher';
+import reservationService from '../../services/reservationService';
+import toast from 'react-hot-toast';
+import { LOGO as glosindoLogo } from '../../constants';
+
+// Opsi keperluan singkat & umum
+const PURPOSE_OPTIONS = ['Meeting', 'Kunjungan Vendor', 'Pengiriman Barang', 'Interview', 'Urusan Bisnis'];
 
 const PublicReservationPage = () => {
   const { token } = useParams();
+  const navigate = useNavigate();
 
-  // Verification & Invitation state
-  const [loading, setLoading] = useState(true);
+  // Preload face models in background on idle screen
+  useFaceModels();
+  useFaceMatcher();
+
+  // Step state: 'loading' | 'idle' | 'scanning' | 'form' | 'success' | 'invalid'
+  const [step, setStep] = useState('loading');
   const [invitation, setInvitation] = useState(null);
-  const [tokenError, setTokenError] = useState(null);
+  const [invalidReason, setInvalidReason] = useState(null);
 
-  // Form states
+  // Biometrics & Photo state
+  const [faceDescriptor, setFaceDescriptor] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+
+  // Clock
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Form inputs
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -43,52 +59,57 @@ const PublicReservationPage = () => {
   const [meetTo, setMeetTo] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('09:00');
-  const [biometricConsent, setBiometricConsent] = useState(false);
+  const [biometricConsent, setBiometricConsent] = useState(true);
 
-  // Camera & Face states
-  const [showCamera, setShowCamera] = useState(false);
-  const [cameraMode, setCameraMode] = useState('webcam'); // 'webcam' | 'manual_upload'
-  const [photoPreview, setPhotoPreview] = useState(null);
-  const [photoFile, setPhotoFile] = useState(null);
-  const [faceVector, setFaceVector] = useState(null);
-  const [scanningFace, setScanningFace] = useState(false);
-  const [faceQualityScore, setFaceQualityScore] = useState(null);
-  const [cameraError, setCameraError] = useState(null);
-
-  // Submission & Success state
+  // Submitting & Success
   const [submitting, setSubmitting] = useState(false);
-  const [successData, setSuccessData] = useState(null);
+  const [reservationResult, setReservationResult] = useState(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
-  const webcamRef = useRef(null);
+  // Digital clock interval
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
-  // Load and validate invitation token
+  // Fetch & validate invitation token on load
   useEffect(() => {
     const fetchInvitation = async () => {
-      setLoading(true);
-      setTokenError(null);
+      setStep('loading');
       try {
         const res = await reservationService.getPublicInvitation(token);
-        if (res.success && res.data) {
+        if (res && res.success && res.data) {
           const inv = res.data;
           setInvitation(inv);
 
           if (!inv.is_valid) {
-            setTokenError(inv.invalid_reason || 'Link undangan sudah tidak berlaku.');
+            setInvalidReason(inv.invalid_reason || 'Link undangan sudah tidak berlaku.');
+            setStep('invalid');
           } else {
-            // Pre-fill form fields with invitation defaults
+            // Pre-fill form fields from invitation defaults
             if (inv.company_name) setCompany(inv.company_name);
             if (inv.guest_name) setName(inv.guest_name);
             if (inv.purpose) setPurpose(inv.purpose);
             if (inv.meet_to) setMeetTo(inv.meet_to);
             if (inv.scheduled_date) setScheduledDate(inv.scheduled_date);
             if (inv.scheduled_time) setScheduledTime(inv.scheduled_time);
+
+            // Default to today if no scheduled date set in invitation
+            if (!inv.scheduled_date) {
+              const todayStr = new Date().toISOString().split('T')[0];
+              setScheduledDate(todayStr);
+            }
+
+            setStep('idle');
           }
+        } else {
+          setInvalidReason('Link undangan tidak ditemukan.');
+          setStep('invalid');
         }
       } catch (err) {
         const msg = err.response?.data?.message || 'Link undangan tidak valid atau tidak ditemukan.';
-        setTokenError(msg);
-      } finally {
-        setLoading(false);
+        setInvalidReason(msg);
+        setStep('invalid');
       }
     };
 
@@ -97,86 +118,52 @@ const PublicReservationPage = () => {
     }
   }, [token]);
 
-  // Handle Photo file upload fallback
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('Ukuran foto maksimal 5MB');
-        return;
-      }
-      setPhotoFile(file);
-      setPhotoPreview(URL.createObjectURL(file));
-      setFaceVector(null);
-      setFaceQualityScore(null);
-      setShowCamera(false);
-      toast.success('Foto selfie berhasil diunggah.');
+  // Format date and time
+  const formattedTime = currentTime.toLocaleTimeString('id-ID', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const formattedDate = currentTime.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
+  // Reset to idle
+  const handleReset = useCallback(() => {
+    setStep('idle');
+  }, []);
+
+  // Handler when face is matched or captured
+  const handleMatchFound = (matchedVisitor, photo) => {
+    if (photo) {
+      setPhotoPreview(photo);
+      setPhotoFile(photo);
     }
-  };
-
-  // Capture face from live webcam and extract 128-d descriptor
-  const handleCaptureFace = async () => {
-    if (!webcamRef.current) return;
-    setScanningFace(true);
-
-    try {
-      const imageSrc = webcamRef.current.getScreenshot();
-      if (!imageSrc) {
-        throw new Error('Gagal mengambil gambar dari kamera.');
-      }
-
-      setPhotoPreview(imageSrc);
-      setPhotoFile(imageSrc);
-
-      // Attempt AI face detection if face-api models are available
-      const video = webcamRef.current?.video;
-      const isModelReady = faceapi.nets.tinyFaceDetector?.isLoaded || faceapi.nets.ssdMobilenetv1?.isLoaded;
-
-      if (video && isModelReady) {
-        let detection = null;
-        if (faceapi.nets.tinyFaceDetector?.isLoaded) {
-          detection = await faceapi
-            .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }))
-            .withFaceLandmarks(true)
-            .withFaceDescriptor();
-        } else {
-          detection = await faceapi
-            .detectSingleFace(video)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
-        }
-
-        if (detection && detection.descriptor) {
-          const vector = Array.from(detection.descriptor);
-          setFaceVector(vector);
-          setFaceQualityScore(Math.round(detection.detection.score * 100));
-          toast.success('Biometrik wajah berhasil terdeteksi & terverifikasi!');
-          setShowCamera(false);
-        } else {
-          toast.error('Wajah tidak terdeteksi dengan jelas. Pastikan pencahayaan cukup dan wajah berada di tengah lingkaran.');
-        }
-      } else {
-        // Fallback without face-api
-        toast.success('Foto berhasil diambil.');
-        setShowCamera(false);
-      }
-    } catch (err) {
-      console.error('Face capture error:', err);
-      toast.error('Gagal mengambil foto: ' + err.message);
-    } finally {
-      setScanningFace(false);
+    // Auto fill if matched visitor details are present
+    if (matchedVisitor) {
+      if (matchedVisitor.name && !name) setName(matchedVisitor.name);
+      if (matchedVisitor.phone && !phone) setPhone(matchedVisitor.phone);
+      if (matchedVisitor.company && !company) setCompany(matchedVisitor.company);
     }
+    toast.success('Wajah berhasil dipindai!');
+    setStep('form');
   };
 
-  const handleRetakePhoto = () => {
-    setPhotoPreview(null);
-    setPhotoFile(null);
-    setFaceVector(null);
-    setFaceQualityScore(null);
-    setShowCamera(true);
+  const handleNoMatch = (descriptor, photo) => {
+    if (descriptor) {
+      setFaceDescriptor(descriptor);
+    }
+    if (photo) {
+      setPhotoPreview(photo);
+      setPhotoFile(photo);
+    }
+    toast.success('Wajah berhasil dipindai!');
+    setStep('form');
   };
 
-  // Form Submit Handler
+  // Submit reservation form
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -193,7 +180,7 @@ const PublicReservationPage = () => {
       return;
     }
     if (!meetTo.trim()) {
-      toast.error('Nama yang ingin ditemui wajib diisi');
+      toast.error('Pihak yang ingin ditemui wajib diisi');
       return;
     }
     if (!scheduledDate) {
@@ -201,7 +188,7 @@ const PublicReservationPage = () => {
       return;
     }
     if (!biometricConsent) {
-      toast.error('Harap centang persetujuan pemrosesan biometrik wajah');
+      toast.error('Persetujuan pemrosesan biometrik wajah wajib dicentang');
       return;
     }
 
@@ -215,494 +202,667 @@ const PublicReservationPage = () => {
       formData.append('purpose', purpose.trim());
       formData.append('meet_to', meetTo.trim());
       formData.append('scheduled_date', scheduledDate);
-      formData.append('scheduled_time', scheduledTime || '09:00');
+      if (scheduledTime) formData.append('scheduled_time', scheduledTime);
       formData.append('biometric_consent', '1');
 
-      // Photo upload
-      if (photoFile instanceof File) {
-        formData.append('photo', photoFile);
-      } else if (typeof photoFile === 'string' && photoFile.startsWith('data:image')) {
-        formData.append('photo', photoFile);
+      if (faceDescriptor && Array.isArray(faceDescriptor)) {
+        formData.append('face_vector', JSON.stringify(faceDescriptor));
       }
 
-      // Biometric face vector
-      if (faceVector && Array.isArray(faceVector) && faceVector.length === 128) {
-        formData.append('face_vector', JSON.stringify(faceVector));
+      if (photoFile) {
+        formData.append('photo', photoFile);
       }
 
       const res = await reservationService.submitPublicReservation(token, formData);
-
-      if (res.success && res.data) {
-        setSuccessData(res.data);
-        toast.success('Reservasi berhasil dan otomatis disetujui!', { duration: 5000 });
+      if (res && res.success) {
+        setReservationResult(res.data);
+        setStep('success');
+        toast.success('Reservasi berhasil & otomatis disetujui!');
+      } else {
+        toast.error(res?.message || 'Gagal memproses reservasi.');
       }
     } catch (err) {
-      const msg = err.response?.data?.message || 'Gagal mengirim formulir reservasi.';
-      toast.error(msg, { duration: 5000 });
+      toast.error(err.response?.data?.message || 'Gagal mengirimkan reservasi.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  // 1. Loading State
-  if (loading) {
+  // Copy code helper
+  const handleCopyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(true);
+    toast.success('Kode reservasi berhasil disalin!');
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  // ==========================================
+  // 0. LOADING SCREEN
+  // ==========================================
+  if (step === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="text-center space-y-3">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="text-sm font-semibold text-slate-600">Memvalidasi link undangan reservasi...</p>
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center font-sans">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm text-slate-400">Memverifikasi undangan reservasi...</p>
         </div>
       </div>
     );
   }
 
-  // 2. Token Error State (Invalid / Expired / Quota Full)
-  if (tokenError || !invitation) {
+  // ==========================================
+  // INVALID TOKEN SCREEN
+  // ==========================================
+  if (step === 'invalid') {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 text-center space-y-4 border border-slate-200">
-          <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto border border-rose-200">
-            <AlertCircle className="w-8 h-8" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">Undangan Tidak Tersedia</h2>
-            <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-              {tokenError || 'Link reservasi tidak dapat diakses atau telah kedaluwarsa.'}
-            </p>
-          </div>
-          <div className="pt-2">
-            <p className="text-xs text-slate-400">
-              Jika Anda merasa ini adalah kesalahan, silakan hubungi pihak yang mengundang atau resepsionis kantor.
-            </p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  // 3. Success Screen (Auto Approved Receipt)
-  if (successData) {
-    const { reservation, visitor, qr_code, check_in_guide } = successData;
-
-    return (
-      <div className="min-h-screen bg-slate-50 py-10 px-4 flex items-center justify-center">
-        <div className="max-w-xl w-full space-y-5 animate-scaleIn">
-          {/* Header Card */}
-          <Card className="p-6 sm:p-8 text-center space-y-4 border border-emerald-200 bg-white shadow-xs">
-            <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mx-auto border border-emerald-200">
-              <CheckCircle2 className="w-10 h-10" />
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-cyan-500 selection:text-white relative overflow-hidden font-sans">
+        <header className="relative z-10 w-full px-4 sm:px-10 py-4 sm:py-5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white p-1 sm:p-1.5 shadow-sm flex items-center justify-center flex-shrink-0">
+              <img src={glosindoLogo} alt="Logo Glosindo" className="h-full w-full object-contain" />
             </div>
-
             <div>
-              <Badge color="green" className="mb-2">AUTO APPROVED</Badge>
-              <h1 className="text-2xl font-extrabold text-slate-900">Reservasi Kunjungan Berhasil!</h1>
-              <p className="text-sm text-slate-500 mt-1">
-                Data Anda dan biometrik wajah telah tersimpan. Tidak memerlukan persetujuan manual admin.
+              <span className="font-bold text-white text-sm sm:text-base tracking-tight block leading-tight">GLIDE GUESTBOOK</span>
+              <p className="text-[11px] sm:text-xs text-slate-400 leading-tight">GLOSINDO Buku Tamu Digital</p>
+            </div>
+          </div>
+          <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
+            <span className="text-white font-semibold">{formattedTime} WIB</span>
+          </div>
+        </header>
+
+        <main className="relative z-10 flex-1 max-w-xl w-full mx-auto px-6 flex flex-col items-center justify-center text-center">
+          <div className="w-full bg-slate-900/70 border border-slate-800/80 rounded-3xl p-8 sm:p-12 shadow-2xl backdrop-blur-md space-y-6">
+            <div className="w-16 h-16 rounded-full bg-rose-500/10 border border-rose-500/30 flex items-center justify-center mx-auto text-rose-400">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Undangan Tidak Berlaku
+              </h1>
+              <p className="text-slate-300 text-sm leading-relaxed">
+                {invalidReason || 'Link undangan ini tidak dapat digunakan atau sudah kedaluwarsa.'}
               </p>
             </div>
+            <p className="text-xs text-slate-500">
+              Silakan hubungi staf atau admin yang mengundang Anda untuk mendapatkan link baru.
+            </p>
+          </div>
+        </main>
 
-            {/* QR Code Container */}
-            {qr_code && (
-              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 inline-block mx-auto">
+        <footer className="relative z-10 w-full py-4 text-center text-xs text-slate-500">
+          PT Global Media Pratama Solusindo
+        </footer>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 1. BERANDA (IDENTIK DENGAN KIOSK CHECK-IN)
+  // ==========================================
+  if (step === 'idle') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-cyan-500 selection:text-white relative overflow-hidden font-sans">
+        {/* Glow halus */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
+
+        {/* Header minimalis identik Kiosk: Tombol Kembali, Logo & Jam */}
+        <header className="relative z-10 w-full px-4 sm:px-10 py-4 sm:py-5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/');
+                }
+              }}
+              className="inline-flex items-center justify-center gap-1.5 w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 active:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 backdrop-blur-md text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
+              title="Kembali"
+              aria-label="Kembali"
+            >
+              <ArrowLeft className="w-4 h-4 text-slate-300 flex-shrink-0" />
+              <span className="hidden sm:inline">Kembali</span>
+            </button>
+
+            <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-white p-1 sm:p-1.5 shadow-sm flex items-center justify-center flex-shrink-0">
+              <img src={glosindoLogo} alt="Logo Glosindo" className="h-full w-full object-contain" />
+            </div>
+            <div>
+              <span className="font-bold text-white text-sm sm:text-base tracking-tight block leading-tight">GLIDE GUESTBOOK</span>
+              <p className="text-[11px] sm:text-xs text-slate-400 leading-tight">GLOSINDO Buku Tamu Digital</p>
+            </div>
+          </div>
+
+          <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
+            <span className="hidden sm:inline">{formattedDate} • </span>
+            <span className="text-white font-semibold">{formattedTime} WIB</span>
+          </div>
+        </header>
+
+        {/* Konten Utama Terpusat (SAMA PERSIS DENGAN KIOSK) */}
+        <main className="relative z-10 flex-1 max-w-xl w-full mx-auto px-6 flex flex-col items-center justify-center text-center">
+          <div className="w-full bg-slate-900/70 border border-slate-800/80 rounded-3xl p-8 sm:p-12 shadow-2xl backdrop-blur-md space-y-8">
+            {/* Logo Utama */}
+            <div className="flex justify-center">
+              <div className="p-3.5 bg-white rounded-2xl shadow-md">
                 <img
-                  src={qr_code}
-                  alt={`QR ${reservation.reservation_code}`}
-                  className="w-52 h-52 sm:w-60 sm:h-60 mx-auto object-contain rounded-xl"
+                  src={glosindoLogo}
+                  alt="Logo Glosindo"
+                  className="h-14 sm:h-16 w-auto object-contain"
                 />
-                <p className="text-xs font-mono font-bold text-blue-700 mt-2 tracking-wider">
-                  {reservation.reservation_code}
-                </p>
-              </div>
-            )}
-
-            {/* Summary Details */}
-            <div className="text-left bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2 text-xs">
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500">Nama Tamu</span>
-                <span className="font-bold text-slate-900">{visitor.name}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500">Instansi</span>
-                <span className="font-semibold text-slate-800">{visitor.company || '-'}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500">Tanggal Kunjungan</span>
-                <span className="font-semibold text-slate-800">
-                  {new Date(reservation.scheduled_date).toLocaleDateString('id-ID', { dateStyle: 'full' })}
-                </span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500">Jam Kunjungan</span>
-                <span className="font-semibold text-slate-800">{reservation.scheduled_time || '09:00'} WIB</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-slate-200/60">
-                <span className="text-slate-500">Tujuan</span>
-                <span className="font-semibold text-slate-800">{reservation.purpose}</span>
-              </div>
-              <div className="flex justify-between py-1">
-                <span className="text-slate-500">Menemui</span>
-                <span className="font-semibold text-slate-800">{reservation.meet_to}</span>
               </div>
             </div>
 
-            {/* Check-In Instructions */}
-            <div className="bg-blue-50/60 text-blue-900 rounded-xl p-3.5 text-xs text-left border border-blue-200/80 space-y-1">
-              <p className="font-bold flex items-center gap-1.5">
-                <Info className="w-4 h-4 text-blue-600" />
-                Panduan Kedatangan di Kantor:
-              </p>
-              <p className="text-slate-600 leading-relaxed">
-                {check_in_guide}
+            {/* Judul & Penjelasan */}
+            <div className="space-y-2">
+              {invitation && (invitation.company_name || invitation.guest_name) && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-950/80 border border-blue-700/50 text-blue-300 text-xs font-medium mb-1">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Undangan: {invitation.company_name || invitation.guest_name}</span>
+                </div>
+              )}
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Selamat Datang
+              </h1>
+              <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+                Silakan klik tombol di bawah untuk mulai registrasi reservasi kunjungan Anda.
               </p>
             </div>
 
-            <div className="pt-2 flex flex-col sm:flex-row gap-2.5">
-              <Button
-                variant="secondary"
-                onClick={() => window.print()}
-                className="flex-1 flex items-center justify-center gap-2"
+            {/* Tombol Aksi Utama yang Identik */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setStep('scanning')}
+                className="w-full py-5 px-8 bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white rounded-2xl font-bold text-lg sm:text-xl shadow-lg shadow-blue-600/30 hover:shadow-blue-600/50 active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-3 cursor-pointer"
               >
-                <Download className="w-4 h-4" />
-                Cetak / Simpan Tiket
-              </Button>
+                <Camera className="w-6 h-6 text-white" />
+                <span>Mulai Registrasi</span>
+              </button>
+              <p className="text-xs text-slate-400 mt-3">
+                Kamera akan memindai wajah Anda secara otomatis
+              </p>
             </div>
-          </Card>
+          </div>
+        </main>
+
+        {/* Footer ringkas */}
+        <footer className="relative z-10 w-full py-4 text-center text-xs text-slate-500">
+          PT Global Media Pratama Solusindo
+        </footer>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 2. PEMINDAIAN KAMERA (IDENTIK DENGAN KIOSK)
+  // ==========================================
+  if (step === 'scanning') {
+    return (
+      <div className="fixed inset-0 h-[100dvh] w-full bg-slate-950 flex flex-col overflow-hidden z-50 font-sans select-none">
+        {/* Top bar pemindaian */}
+        <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/85 via-black/45 to-transparent px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between pt-[max(14px,env(safe-area-inset-top,14px))] pointer-events-auto">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-white p-1 flex items-center justify-center shadow-md">
+              <img src={glosindoLogo} alt="Glosindo" className="h-full w-full object-contain" />
+            </div>
+            <div>
+              <span className="text-white font-bold text-sm tracking-tight block">Pindai Wajah Tamu</span>
+              <span className="text-[10px] text-cyan-400 font-medium block">Pendaftaran Biometrik Reservasi</span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleReset}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 text-white border border-white/20 backdrop-blur-md text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Batal</span>
+          </button>
+        </div>
+
+        {/* Kamera Preview Area */}
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
+          <FaceScanner
+            onMatchFound={handleMatchFound}
+            onNoMatch={handleNoMatch}
+            silentMode={false}
+            fullscreen={true}
+          />
+        </div>
+
+        {/* Petunjuk Bawah */}
+        <div className="absolute bottom-6 sm:bottom-8 inset-x-0 z-30 flex flex-col items-center gap-2.5 px-4 pb-[env(safe-area-inset-bottom,0px)] pointer-events-auto">
+          <div className="px-5 py-2.5 rounded-2xl bg-slate-950/80 border border-white/15 backdrop-blur-md shadow-2xl text-center max-w-[90vw] sm:max-w-md pointer-events-none">
+            <p className="text-xs sm:text-sm text-white/95 font-medium tracking-wide">
+              Posisikan wajah Anda di dalam lingkaran
+            </p>
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              Wajah akan didaftarkan untuk auto check-in saat Anda tiba di kantor
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setStep('form')}
+            className="text-xs text-cyan-400 hover:text-cyan-300 font-medium py-1 px-3 rounded-lg bg-slate-900/60 border border-cyan-400/30 backdrop-blur-md transition-all cursor-pointer active:scale-95"
+          >
+            Atau lewati & isi formulir secara manual →
+          </button>
         </div>
       </div>
     );
   }
 
-  // 4. Main Reservation Form
-  return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4 sm:px-6">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Brand Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-slate-200 text-xs font-semibold text-slate-700 shadow-2xs">
-            <Shield className="w-3.5 h-3.5 text-blue-600" />
-            <span>Sistem Buku Tamu Resmi GLOSINDO</span>
+  // ==========================================
+  // 3. FORM RESERVASI TAMU (DARK KIOSK THEME)
+  // ==========================================
+  if (step === 'form') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative overflow-y-auto font-sans">
+        {/* Header Ringkas */}
+        <div className="max-w-xl w-full mx-auto flex items-center justify-between pb-3">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center justify-center gap-1.5 w-7 h-7 sm:w-auto sm:h-auto sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/70 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 mr-1"
+              title="Batal dan kembali ke awal"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+              <span className="hidden sm:inline">Kembali</span>
+            </button>
+            <div className="h-8 w-8 rounded-lg bg-white p-1 flex items-center justify-center">
+              <img src={glosindoLogo} alt="Glosindo" className="h-full w-full object-contain" />
+            </div>
+            <span className="font-bold text-white text-sm">GLIDE GUESTBOOK</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Formulir Pra-Registrasi Tamu
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-            Lengkapi data dan verifikasi wajah untuk mendapatkan persetujuan otomatis (Auto Approved) & akses express check-in.
-          </p>
+          <span className="text-xs text-slate-400 font-mono">{formattedTime} WIB</span>
         </div>
 
-        {/* Invitation Info Banner */}
-        <Card className="p-4 sm:p-5 border border-blue-200 bg-blue-50/40">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-600 text-white rounded-xl shrink-0">
-              <Building2 className="w-5 h-5" />
+        {/* Kartu Form */}
+        <div className="w-full max-w-xl mx-auto my-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+          <div className="border-b border-slate-800 pb-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-white">Formulir Reservasi</h2>
+              <p className="text-xs text-slate-400 mt-1">
+                Lengkapi formulir untuk persetujuan otomatis (Auto Approved):
+              </p>
             </div>
-            <div className="space-y-1 text-xs sm:text-sm flex-1">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-700">Undangan Kunjungan</span>
-                <Badge variant="blue">Kuota Tersedia</Badge>
-              </div>
-              <p className="font-bold text-slate-900 text-base">{invitation.company_name}</p>
-              <div className="flex items-center gap-4 text-xs text-slate-600 pt-0.5 flex-wrap">
-                <span className="flex items-center gap-1 font-medium">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  {invitation.scheduled_date_formatted || invitation.scheduled_date}
-                </span>
-                <span className="flex items-center gap-1 font-medium">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" />
-                  {invitation.scheduled_time || '09:00'} WIB
-                </span>
-                {invitation.meet_to && (
-                  <span className="flex items-center gap-1 font-medium text-slate-700">
-                    Host: {invitation.meet_to}
-                  </span>
+
+            {/* Status Wajah */}
+            {faceDescriptor || photoPreview ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-400 text-xs font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span>Wajah Siap</span>
+                {photoPreview && (
+                  <img
+                    src={photoPreview}
+                    alt="Preview"
+                    className="w-6 h-6 rounded-full object-cover border border-emerald-500"
+                  />
                 )}
               </div>
-            </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setStep('scanning')}
+                className="text-xs text-cyan-400 hover:text-cyan-300 border border-cyan-500/40 px-2.5 py-1 rounded-lg"
+              >
+                + Pindai Wajah
+              </button>
+            )}
           </div>
-        </Card>
 
-        {/* Form Container */}
-        <Card className="p-6 sm:p-8 border border-slate-200/90 shadow-xs">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Step 1: Personal Data */}
-            <div className="space-y-4">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">1</span>
-                Informasi Data Diri
-              </h2>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                  Nama Lengkap <span className="text-rose-500">*</span>
-                </label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Nama Lengkap */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Nama Lengkap <span className="text-rose-400">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <User className="w-4 h-4" />
+                </div>
                 <input
                   type="text"
                   required
-                  placeholder="Masukkan nama lengkap sesuai identitas"
+                  placeholder="Nama Lengkap Anda"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
                 />
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Nomor WhatsApp / HP <span className="text-rose-500">*</span>
-                  </label>
+            {/* Baris No HP & Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Nomor WhatsApp / HP <span className="text-rose-400">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Phone className="w-4 h-4" />
+                  </div>
                   <input
                     type="tel"
                     required
-                    placeholder="Contoh: 081234567890"
+                    placeholder="08xxxxxxxxxx"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Email (Opsional)
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="nama@perusahaan.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                  Instansi / Perusahaan
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Email <span className="text-slate-500 font-normal">(opsional)</span>
                 </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="email"
+                    placeholder="nama@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Instansi / Perusahaan */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Instansi / Perusahaan
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Building className="w-4 h-4" />
+                </div>
                 <input
                   type="text"
-                  placeholder="Nama perusahaan atau instansi Anda"
+                  placeholder="Nama instansi / PT / perorangan"
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
                 />
               </div>
             </div>
 
-            {/* Step 2: Visit Details */}
-            <div className="space-y-4 pt-2">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">2</span>
-                Rincian Kunjungan
-              </h2>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                  Tujuan / Keperluan Kunjungan <span className="text-rose-500">*</span>
-                </label>
+            {/* Keperluan Kunjungan */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Keperluan Kunjungan <span className="text-rose-400">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Briefcase className="w-4 h-4" />
+                </div>
                 <input
                   type="text"
                   required
-                  placeholder="Contoh: Rapat Koordinasi / Pengiriman Barang"
+                  placeholder="Contoh: Meeting Proyek / Kunjungan Kerja"
                   value={purpose}
                   onChange={(e) => setPurpose(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
                 />
               </div>
+              <div className="flex flex-wrap gap-1.5 mt-2">
+                {PURPOSE_OPTIONS.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setPurpose(item)}
+                    className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                  Nama Orang / Staf yang Ditemui <span className="text-rose-500">*</span>
-                </label>
+            {/* Bertemu Siapa */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                Nama Orang Yang Ingin Ditemui <span className="text-rose-400">*</span>
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <User className="w-4 h-4" />
+                </div>
                 <input
                   type="text"
                   required
-                  placeholder="Nama pejabat atau staf Glosindo yang ingin ditemui"
+                  placeholder="Nama staf atau pejabat yang dituju"
                   value={meetTo}
                   onChange={(e) => setMeetTo(e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 text-sm"
                 />
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Tanggal Kunjungan <span className="text-rose-500">*</span>
-                  </label>
+            {/* Jadwal: Tanggal & Jam */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Tanggal Kunjungan <span className="text-rose-400">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Calendar className="w-4 h-4" />
+                  </div>
                   <input
                     type="date"
                     required
                     value={scheduledDate}
                     onChange={(e) => setScheduledDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-blue-500 text-sm"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase mb-1">
-                    Perkiraan Jam Tiba
-                  </label>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  Perkiraan Jam Kunjungan
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Clock className="w-4 h-4" />
+                  </div>
                   <input
                     type="time"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-blue-500 text-sm"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Step 3: Biometric Face Registration */}
-            <div className="space-y-4 pt-2">
-              <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100 flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">3</span>
-                Pendaftaran Biometrik Wajah
-              </h2>
-
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Pendaftaran wajah memungkinkan sistem mengenali Anda secara instan di kiosk pintu masuk tanpa antre atau isi formulir ulang.
-              </p>
-
-              {/* Camera Container / Photo Preview */}
-              <div className="bg-slate-900 text-white rounded-2xl p-4 sm:p-5 relative overflow-hidden border border-slate-800">
-                {showCamera ? (
-                  <div className="space-y-3">
-                    <div className="relative aspect-4/3 max-w-sm mx-auto rounded-xl overflow-hidden bg-black">
-                      <Webcam
-                        ref={webcamRef}
-                        audio={false}
-                        screenshotFormat="image/jpeg"
-                        videoConstraints={{ facingMode: 'user', width: 640, height: 480 }}
-                        className="w-full h-full object-cover"
-                      />
-
-                      {/* Oval face guide overlay */}
-                      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                        <div className="w-48 h-60 border-2 border-dashed border-blue-400 rounded-full" />
-                      </div>
-
-                      <div className="absolute bottom-2 inset-x-0 text-center">
-                        <span className="text-[11px] bg-slate-900/80 px-2.5 py-1 rounded-full text-slate-200">
-                          Posisikan wajah Anda di dalam lingkaran
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 justify-center pt-1">
-                      <Button
-                        type="button"
-                        onClick={handleCaptureFace}
-                        disabled={scanningFace}
-                        className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2"
-                      >
-                        {scanningFace ? 'Menganalisis Wajah...' : 'Ambil Foto & Verifikasi Wajah'}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setShowCamera(false)}
-                        className="text-xs"
-                      >
-                        Batal
-                      </Button>
-                    </div>
-                  </div>
-                ) : photoPreview ? (
-                  <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                    <img
-                      src={photoPreview}
-                      alt="Selfie Preview"
-                      className="w-28 h-28 object-cover rounded-2xl border-2 border-slate-700 shrink-0"
-                    />
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex items-center gap-2 justify-center sm:justify-start">
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                        <span className="font-bold text-sm text-white">Foto & Wajah Terverifikasi</span>
-                      </div>
-                      <p className="text-xs text-slate-300">
-                        {faceVector ? 'Template biometrik 128-D siap digunakan untuk check-in instan.' : 'Foto tersimpan secara aman.'}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleRetakePhoto}
-                        className="text-xs text-blue-400 hover:underline font-semibold"
-                      >
-                        Foto Ulang / Ganti
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-6 text-center space-y-3">
-                    <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center mx-auto text-blue-400 border border-slate-700">
-                      <Camera className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-sm text-white">Buka Kamera untuk Selfie Wajah</p>
-                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                        Gunakan kamera depan HP atau laptop Anda untuk registrasi wajah kilat.
-                      </p>
-                    </div>
-                    <div className="pt-2 flex flex-col sm:flex-row gap-2.5 justify-center">
-                      <Button
-                        type="button"
-                        onClick={() => setShowCamera(true)}
-                        className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2"
-                      >
-                        <Camera className="w-4 h-4 mr-1.5 inline" />
-                        Aktifkan Kamera Selfie
-                      </Button>
-
-                      {/* Manual Upload Fallback */}
-                      <label className="inline-flex items-center justify-center px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 cursor-pointer transition border border-slate-700">
-                        <Upload className="w-4 h-4 mr-1.5" />
-                        <span>Unggah Foto Manual</span>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileUpload}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Explicit Biometric Consent Checkbox */}
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    required
-                    checked={biometricConsent}
-                    onChange={(e) => setBiometricConsent(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 text-blue-600 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <span className="text-xs text-slate-700 leading-relaxed font-medium">
-                    Saya memberikan persetujuan eksplisit kepada PT Glosindo Digital Systems untuk memproses data biometrik wajah saya semata-mata untuk verifikasi identitas kunjungan dan presensi kehadiran di lokasi. Data disimpan terenkripsi dan tidak dibagikan ke pihak ketiga.
-                  </span>
-                </label>
-              </div>
+            {/* Persetujuan Biometrik */}
+            <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  checked={biometricConsent}
+                  onChange={(e) => setBiometricConsent(e.target.checked)}
+                  className="mt-1 w-4 h-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-xs text-slate-300 leading-relaxed">
+                  Saya menyetujui pemrosesan data biometrik wajah untuk keperluan identifikasi dan verifikasi check-in otomatis di Kiosk Glosindo. Data disimpan secara aman dan terenkripsi.
+                </span>
+              </label>
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-3">
+            {/* Tombol Form */}
+            <div className="pt-3 flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                onClick={() => setStep('scanning')}
+                className="flex-1 bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300"
+              >
+                Pindai Ulang
+              </Button>
               <Button
                 type="submit"
-                disabled={submitting}
-                className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl shadow-xs transition"
+                variant="primary"
+                size="lg"
+                loading={submitting}
+                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold"
               >
-                {submitting ? 'Memproses Reservasi & Auto-Approval...' : 'Konfirmasi & Dapatkan Tiket Reservasi'}
+                Konfirmasi Reservasi
               </Button>
-              <p className="text-center text-[11px] text-slate-400 mt-2">
-                Reservasi otomatis disetujui secara instan setelah formulir dikirimkan.
-              </p>
             </div>
           </form>
-        </Card>
+        </div>
+
+        <div className="py-2 text-center text-xs text-slate-600">
+          PT Global Media Pratama Solusindo
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
+
+  // ==========================================
+  // 4. SUKSES RESERVASI (AUTO APPROVED)
+  // ==========================================
+  if (step === 'success') {
+    const resData = reservationResult?.reservation || {};
+    const qrImage = reservationResult?.qr_code_base64;
+
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative font-sans">
+        {/* Header Ringkas */}
+        <div className="max-w-xl w-full mx-auto flex items-center justify-between pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-lg bg-white p-1 flex items-center justify-center">
+              <img src={glosindoLogo} alt="Glosindo" className="h-full w-full object-contain" />
+            </div>
+            <span className="font-bold text-white text-sm">GLIDE GUESTBOOK</span>
+          </div>
+          <span className="text-xs text-slate-400 font-mono">{formattedTime} WIB</span>
+        </div>
+
+        {/* Kartu Sukses Bersih */}
+        <div className="w-full max-w-xl mx-auto my-auto bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-6">
+          <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-500 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-9 h-9 text-emerald-400" />
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-800 text-emerald-400 text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Otomatis Disetujui (Auto Approved)</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight pt-1">
+              Reservasi Anda Berhasil!
+            </h2>
+            <p className="text-lg font-bold text-cyan-400">
+              Selamat Datang, {name}
+            </p>
+          </div>
+
+          {/* Kartu Detail Tiket */}
+          <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-5 text-left space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+              <div>
+                <span className="text-[11px] text-slate-400 uppercase tracking-wider block">Kode Reservasi</span>
+                <span className="font-mono text-lg font-bold text-cyan-300">
+                  {resData.reservation_code || 'RSV-CONFIRMED'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleCopyCode(resData.reservation_code)}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>{copiedCode ? 'Disalin' : 'Salin'}</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <span className="text-slate-400 block">Jadwal Kunjungan</span>
+                <span className="text-slate-200 font-semibold">{scheduledDate} • {scheduledTime} WIB</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block">Pihak Dituju</span>
+                <span className="text-slate-200 font-semibold">{meetTo}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block">Keperluan</span>
+                <span className="text-slate-200 font-semibold">{purpose}</span>
+              </div>
+              <div>
+                <span className="text-slate-400 block">Status Registrasi Wajah</span>
+                <span className="text-emerald-400 font-semibold">✓ Terdaftar</span>
+              </div>
+            </div>
+
+            {/* QR Code jika ada */}
+            {qrImage && (
+              <div className="pt-3 border-t border-slate-800/80 flex flex-col items-center gap-2">
+                <img
+                  src={qrImage}
+                  alt="QR Tiket"
+                  className="w-36 h-36 bg-white p-2 rounded-xl shadow-md"
+                />
+                <a
+                  href={qrImage}
+                  download={`tiket-reservasi-${resData.reservation_code || 'glosindo'}.png`}
+                  className="inline-flex items-center gap-1.5 text-xs text-cyan-400 hover:text-cyan-300 font-medium"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Unduh Gambar Tiket QR</span>
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Panduan Kunjungan (Penting Sesuai Flow User) */}
+          <div className="p-4 rounded-2xl bg-blue-950/30 border border-blue-900/50 text-left text-xs space-y-1.5">
+            <div className="flex items-center gap-2 text-blue-400 font-bold">
+              <Shield className="w-4 h-4" />
+              <span>Panduan Kedatangan di Kantor Glosindo:</span>
+            </div>
+            <p className="text-slate-300 leading-relaxed">
+              Saat Anda tiba di kantor Glosindo pada tanggal kunjungan, Anda <strong>TIDAK PERLU</strong> mengisi formulir lagi. Cukup dekati <strong>Kiosk Tamu</strong> di lobi dan klik <strong>Mulai Check-In</strong>. Sistem kamera akan langsung mengenali wajah Anda dan melakukan check-in seketika!
+            </p>
+          </div>
+
+          <div className="pt-2">
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              onClick={() => navigate('/')}
+              className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 cursor-pointer"
+            >
+              Kembali ke Beranda
+            </Button>
+          </div>
+        </div>
+
+        <div className="py-2 text-center text-xs text-slate-600">
+          PT Global Media Pratama Solusindo
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 };
 
 export default PublicReservationPage;
-

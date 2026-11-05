@@ -15,6 +15,7 @@ import Button from '../../components/ui/Button';
 import useFaceModels from '../../hooks/useFaceModels';
 import useFaceMatcher from '../../hooks/useFaceMatcher';
 import api from '../../services/api';
+import reservationService from '../../services/reservationService';
 import toast from 'react-hot-toast';
 import { LOGO as glosindoLogo } from '../../constants';
 
@@ -34,6 +35,8 @@ const GuestVisitPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [reservationData, setReservationData] = useState(null);
+  const [isAutoReservation, setIsAutoReservation] = useState(false);
 
   const [formData, setFormData] = useState({
     purpose: '',
@@ -74,6 +77,8 @@ const GuestVisitPage = () => {
     setVisitor(null);
     setFaceDescriptor(null);
     setSubmitting(false);
+    setReservationData(null);
+    setIsAutoReservation(false);
     setFormData({ purpose: '', name: '', phone: '', meet_person: '' });
   }, []);
 
@@ -81,9 +86,29 @@ const GuestVisitPage = () => {
     setStep('scanning');
   };
 
-  const handleMatchFound = (matchedVisitor) => {
+  const handleMatchFound = async (matchedVisitor) => {
     setVisitor(matchedVisitor);
     setFaceDescriptor(null);
+
+    // Cek apakah tamu memiliki reservasi terdaftar (Auto Approved) untuk kunjungan hari ini
+    try {
+      const res = await reservationService.autoCheckIn({ visitor_id: matchedVisitor.id });
+      if (res && res.success && res.checked_in) {
+        setReservationData(res.data?.reservation);
+        setIsAutoReservation(true);
+        setStep('success');
+        toast.success(`Check-in reservasi berhasil! Selamat datang, ${matchedVisitor.name}`);
+        return;
+      }
+    } catch (err) {
+      if (err.response?.data?.already_checked_in) {
+        toast.error(err.response.data.message || 'Tamu ini sudah check-in hari ini.');
+        handleReset();
+        return;
+      }
+      // Jika 404 (bukan tamu reservasi hari ini) -> lanjutkan alur tamu lama biasa
+    }
+
     setStep('form-existing');
   };
 
@@ -622,14 +647,38 @@ const GuestVisitPage = () => {
 
           <div className="space-y-1.5">
             <h2 className="text-2xl font-bold text-white">
-              Check-In Berhasil!
+              {isAutoReservation ? 'Check-In Reservasi Berhasil!' : 'Check-In Berhasil!'}
             </h2>
             <p className="text-xl font-bold text-cyan-400">
               {visitor ? visitor.name : formData.name}
             </p>
-            <p className="text-xs text-slate-400 pt-2">
-              Silakan masuk dan temui staf atau resepsionis.
-            </p>
+
+            {isAutoReservation && reservationData ? (
+              <div className="pt-3 text-left bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs">
+                {reservationData.visitor_company && (
+                  <div className="flex justify-between text-slate-400">
+                    <span>Instansi:</span>
+                    <span className="text-slate-200 font-semibold">{reservationData.visitor_company}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-slate-400">
+                  <span>Keperluan:</span>
+                  <span className="text-slate-200 font-semibold">{reservationData.purpose}</span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Bertemu:</span>
+                  <span className="text-slate-200 font-semibold">{reservationData.meet_to || '-'}</span>
+                </div>
+                <div className="flex justify-between text-slate-400 pt-2 border-t border-slate-800">
+                  <span>Kode Reservasi:</span>
+                  <span className="font-mono text-cyan-400 font-bold">{reservationData.reservation_code}</span>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 pt-2">
+                Silakan masuk dan temui staf atau resepsionis.
+              </p>
+            )}
           </div>
 
           <div className="pt-2 space-y-3">
@@ -639,7 +688,7 @@ const GuestVisitPage = () => {
               fullWidth
               icon={RotateCcw}
               onClick={handleReset}
-              className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
+              className="bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 cursor-pointer"
             >
               Selesai ({countdown}s)
             </Button>

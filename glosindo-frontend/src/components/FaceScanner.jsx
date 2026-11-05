@@ -66,7 +66,8 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
         lastMatchedTime.current = now;
         setScanStatus('matched');
         setResult({ type: 'match', data: matched });
-        onMatchFound?.(matched);
+        const photo = webcamRef.current?.getScreenshot?.() || null;
+        onMatchFound?.(matched, photo);
       } else {
         noMatchStreak.current += 1;
         // Stabilisasi konfirmasi: butuh minimal 2 frame berturut-turut untuk menyatakan 'Belum Terdaftar'
@@ -74,7 +75,8 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
         if (noMatchStreak.current >= 2) {
           setScanStatus('no_match');
           setResult({ type: 'no_match' });
-          onNoMatch?.(descriptorToArray(descriptor));
+          const photo = webcamRef.current?.getScreenshot?.() || null;
+          onNoMatch?.(descriptorToArray(descriptor), photo);
           noMatchStreak.current = 0;
         }
       }
