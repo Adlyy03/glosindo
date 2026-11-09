@@ -135,6 +135,7 @@ class KioskReservationIntegrationTest extends TestCase
 
         // 3. Kiosk scan wajah
         $scanResult = $bioService->kioskScanAndIdentify($vectorBudi);
+        fwrite(STDERR, "\nDEBUG SCAN RESULT: " . json_encode($scanResult) . "\n");
 
         $this->assertTrue($scanResult['success']);
         $this->assertEquals('reservation_auto_checked_in', $scanResult['type']);
