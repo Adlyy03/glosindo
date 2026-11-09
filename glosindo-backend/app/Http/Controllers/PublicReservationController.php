@@ -486,7 +486,6 @@ class PublicReservationController extends Controller
 
         return response()->json($result);
     }
-    }
 
     /**
      * Store photo file or base64 string.
