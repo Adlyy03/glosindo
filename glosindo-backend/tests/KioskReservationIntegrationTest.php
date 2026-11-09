@@ -4,16 +4,17 @@ namespace Tests;
 
 use App\Models\FaceEmbedding;
 use App\Models\Reservation;
-use App\Models\ReservationInvitation;
 use App\Models\Visit;
 use App\Models\Visitor;
 use App\Services\BiometricReservationService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class KioskReservationIntegrationTest extends TestCase
 {
+    private array $createdVisitorIds = [];
+    private array $createdReservationIds = [];
+
     private function generateSampleVector(float $base = 0.1): array
     {
         $vector = [];
@@ -27,6 +28,20 @@ class KioskReservationIntegrationTest extends TestCase
     {
         parent::setUp();
         Cache::flush();
+    }
+
+    protected function tearDown(): void
+    {
+        if (!empty($this->createdReservationIds)) {
+            Reservation::whereIn('id', $this->createdReservationIds)->forceDelete();
+        }
+        if (!empty($this->createdVisitorIds)) {
+            FaceEmbedding::whereIn('visitor_id', $this->createdVisitorIds)->delete();
+            Visit::whereIn('visitor_id', $this->createdVisitorIds)->forceDelete();
+            Visitor::whereIn('id', $this->createdVisitorIds)->forceDelete();
+        }
+        Cache::flush();
+        parent::tearDown();
     }
 
     /**
@@ -44,11 +59,12 @@ class KioskReservationIntegrationTest extends TestCase
             $vectorAgus,
             [
                 'name' => 'Agus Pratama',
-                'phone' => '081234567890',
+                'phone' => '0812' . rand(1000000, 9999999),
                 'company' => 'PT Mandiri Sejahtera',
             ]
         );
         $visitorAwal = $regResult['visitor'];
+        $this->createdVisitorIds[] = $visitorAwal->id;
         $this->assertNotNull($visitorAwal->id);
 
         // 2. Kemudian Pak Agus mengisi form reservasi dengan nomor berbeda sedikit
@@ -57,11 +73,12 @@ class KioskReservationIntegrationTest extends TestCase
             $vectorAgusSlight,
             [
                 'name' => 'Agus Pratama',
-                'phone' => '081234567899',
+                'phone' => '0813' . rand(1000000, 9999999),
                 'company' => 'PT Mandiri Sejahtera',
             ]
         );
         $visitorKedua = $resResult['visitor'];
+        $this->createdVisitorIds[] = $visitorKedua->id;
 
         // Harus mereferensikan orang yang sama (Single Identity)!
         $this->assertEquals($visitorAwal->id, $visitorKedua->id, 'Visitor ID harus sama untuk orang dengan biometrik yang sama');
@@ -86,9 +103,11 @@ class KioskReservationIntegrationTest extends TestCase
         // 1. Buat identitas pengunjung
         $visitor = Visitor::create([
             'name' => 'Budi Santoso',
-            'phone' => '085712345678',
+            'phone' => '0857' . rand(1000000, 9999999),
             'company' => 'PT Teknologi Nusantara',
         ]);
+        $this->createdVisitorIds[] = $visitor->id;
+
         FaceEmbedding::updateOrCreate(
             ['visitor_id' => $visitor->id],
             ['face_vector' => $vectorBudi]
@@ -98,7 +117,7 @@ class KioskReservationIntegrationTest extends TestCase
         // 2. Buat reservasi hari ini dengan status APPROVED
         $today = Carbon::now('Asia/Jakarta')->toDateString();
         $reservation = Reservation::create([
-            'reservation_code' => 'RSV-TEST-0001',
+            'reservation_code' => 'RSV-TEST-' . uniqid(),
             'visitor_id' => $visitor->id,
             'visitor_name' => $visitor->name,
             'visitor_phone' => $visitor->phone,
@@ -112,6 +131,7 @@ class KioskReservationIntegrationTest extends TestCase
             'biometric_consent' => true,
             'has_face_registered' => true,
         ]);
+        $this->createdReservationIds[] = $reservation->id;
 
         // 3. Kiosk scan wajah
         $scanResult = $bioService->kioskScanAndIdentify($vectorBudi);
@@ -145,9 +165,11 @@ class KioskReservationIntegrationTest extends TestCase
 
         $visitor = Visitor::create([
             'name' => 'Citra Dewi',
-            'phone' => '087712345678',
+            'phone' => '0877' . rand(1000000, 9999999),
             'company' => 'CV Mega Bintang',
         ]);
+        $this->createdVisitorIds[] = $visitor->id;
+
         FaceEmbedding::updateOrCreate(
             ['visitor_id' => $visitor->id],
             ['face_vector' => $vectorCitra]
@@ -156,7 +178,7 @@ class KioskReservationIntegrationTest extends TestCase
 
         $today = Carbon::now('Asia/Jakarta')->toDateString();
         $reservation = Reservation::create([
-            'reservation_code' => 'RSV-TEST-0002',
+            'reservation_code' => 'RSV-TEST-' . uniqid(),
             'visitor_id' => $visitor->id,
             'visitor_name' => $visitor->name,
             'visitor_phone' => $visitor->phone,
@@ -170,6 +192,7 @@ class KioskReservationIntegrationTest extends TestCase
             'biometric_consent' => true,
             'has_face_registered' => true,
         ]);
+        $this->createdReservationIds[] = $reservation->id;
 
         // Check-in pertama -> Sukses
         $res1 = $bioService->kioskScanAndIdentify($vectorCitra);
@@ -200,9 +223,11 @@ class KioskReservationIntegrationTest extends TestCase
 
         $visitor = Visitor::create([
             'name' => 'Dedi Kurniawan',
-            'phone' => '081398765432',
+            'phone' => '0813' . rand(1000000, 9999999),
             'company' => 'PT Solusi Pratama',
         ]);
+        $this->createdVisitorIds[] = $visitor->id;
+
         FaceEmbedding::updateOrCreate(
             ['visitor_id' => $visitor->id],
             ['face_vector' => $vectorDedi]
@@ -213,7 +238,7 @@ class KioskReservationIntegrationTest extends TestCase
 
         // Reservasi 1: Pagi
         $r1 = Reservation::create([
-            'reservation_code' => 'RSV-TEST-MULTI-1',
+            'reservation_code' => 'RSV-TEST-' . uniqid(),
             'visitor_id' => $visitor->id,
             'visitor_name' => $visitor->name,
             'visitor_phone' => $visitor->phone,
@@ -225,10 +250,11 @@ class KioskReservationIntegrationTest extends TestCase
             'approved_at' => Carbon::now('Asia/Jakarta'),
             'biometric_consent' => true,
         ]);
+        $this->createdReservationIds[] = $r1->id;
 
         // Reservasi 2: Siang
         $r2 = Reservation::create([
-            'reservation_code' => 'RSV-TEST-MULTI-2',
+            'reservation_code' => 'RSV-TEST-' . uniqid(),
             'visitor_id' => $visitor->id,
             'visitor_name' => $visitor->name,
             'visitor_phone' => $visitor->phone,
@@ -240,6 +266,7 @@ class KioskReservationIntegrationTest extends TestCase
             'approved_at' => Carbon::now('Asia/Jakarta'),
             'biometric_consent' => true,
         ]);
+        $this->createdReservationIds[] = $r2->id;
 
         // Scan di kiosk -> harus mengembalikan multiple choice
         $scanResult = $bioService->kioskScanAndIdentify($vectorDedi);
@@ -251,7 +278,7 @@ class KioskReservationIntegrationTest extends TestCase
         $chooseResult = $bioService->kioskScanAndIdentify(null, $visitor->id, $r2->id);
         $this->assertTrue($chooseResult['success']);
         $this->assertEquals('reservation_auto_checked_in', $chooseResult['type']);
-        $this->assertEquals('RSV-TEST-MULTI-2', $chooseResult['data']['reservation_code']);
+        $this->assertEquals($r2->reservation_code, $chooseResult['data']['reservation_code']);
         $this->assertEquals('CHECKED_IN', $r2->fresh()->status);
         $this->assertEquals('APPROVED', $r1->fresh()->status, 'Reservasi ke-1 harus tetap APPROVED untuk jadwalnya');
     }
@@ -268,9 +295,11 @@ class KioskReservationIntegrationTest extends TestCase
 
         $visitor = Visitor::create([
             'name' => 'Eko Prasetyo',
-            'phone' => '081298761234',
+            'phone' => '0812' . rand(1000000, 9999999),
             'company' => 'PT Mitra Sejati',
         ]);
+        $this->createdVisitorIds[] = $visitor->id;
+
         FaceEmbedding::updateOrCreate(
             ['visitor_id' => $visitor->id],
             ['face_vector' => $vectorEko]
@@ -310,9 +339,11 @@ class KioskReservationIntegrationTest extends TestCase
 
         $visitor = Visitor::create([
             'name' => 'Fani Anggraini',
-            'phone' => '082198765432',
+            'phone' => '0821' . rand(1000000, 9999999),
             'company' => 'PT Cipta Karya',
         ]);
+        $this->createdVisitorIds[] = $visitor->id;
+
         FaceEmbedding::updateOrCreate(
             ['visitor_id' => $visitor->id],
             ['face_vector' => $vectorFani]
@@ -320,8 +351,8 @@ class KioskReservationIntegrationTest extends TestCase
         Cache::forget('face_embeddings_all');
 
         $tomorrow = Carbon::now('Asia/Jakarta')->addDays(2)->toDateString();
-        Reservation::create([
-            'reservation_code' => 'RSV-TEST-FUTURE',
+        $res = Reservation::create([
+            'reservation_code' => 'RSV-TEST-' . uniqid(),
             'visitor_id' => $visitor->id,
             'visitor_name' => $visitor->name,
             'visitor_phone' => $visitor->phone,
@@ -333,6 +364,7 @@ class KioskReservationIntegrationTest extends TestCase
             'approved_at' => Carbon::now('Asia/Jakarta'),
             'biometric_consent' => true,
         ]);
+        $this->createdReservationIds[] = $res->id;
 
         $scanResult = $bioService->kioskScanAndIdentify($vectorFani);
         $this->assertFalse($scanResult['success']);

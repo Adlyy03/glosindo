@@ -16,8 +16,9 @@ class ExampleTest extends TestCase
     {
         $this->get('/');
 
-        $this->assertEquals(
-            $this->app->version(), $this->response->getContent()
-        );
+        $this->assertResponseOk();
+        $this->seeJson([
+            'app' => 'GLOSINDO Digital Guestbook API',
+        ]);
     }
 }
