@@ -136,7 +136,10 @@ const PublicReservationPage = () => {
   }, []);
 
   // Handler when face is matched or captured
-  const handleMatchFound = (matchedVisitor, photo) => {
+  const handleMatchFound = (matchedVisitor, photo, descriptor) => {
+    if (descriptor) {
+      setFaceDescriptor(descriptor);
+    }
     if (photo) {
       setPhotoPreview(photo);
       setPhotoFile(photo);

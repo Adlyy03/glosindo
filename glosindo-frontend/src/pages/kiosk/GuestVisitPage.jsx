@@ -4,6 +4,7 @@ import {
   Camera,
   ArrowLeft,
   CheckCircle2,
+  AlertCircle,
   User,
   Phone,
   Building,
@@ -37,6 +38,8 @@ const GuestVisitPage = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [reservationData, setReservationData] = useState(null);
   const [isAutoReservation, setIsAutoReservation] = useState(false);
+  const [multipleReservations, setMultipleReservations] = useState([]);
+  const [noticeData, setNoticeData] = useState(null);
 
   const [formData, setFormData] = useState({
     purpose: '',
@@ -79,6 +82,8 @@ const GuestVisitPage = () => {
     setSubmitting(false);
     setReservationData(null);
     setIsAutoReservation(false);
+    setMultipleReservations([]);
+    setNoticeData(null);
     setFormData({ purpose: '', name: '', phone: '', meet_person: '' });
   }, []);
 
@@ -86,30 +91,113 @@ const GuestVisitPage = () => {
     setStep('scanning');
   };
 
-  const handleMatchFound = async (matchedVisitor) => {
+  const handleMatchFound = async (matchedVisitor, photo, descriptor) => {
     setVisitor(matchedVisitor);
     setFaceDescriptor(null);
 
-    // Cek apakah tamu memiliki reservasi terdaftar (Auto Approved) untuk kunjungan hari ini
     try {
-      const res = await reservationService.autoCheckIn({ visitor_id: matchedVisitor.id });
-      if (res && res.success && res.checked_in) {
-        setReservationData(res.data?.reservation);
-        setIsAutoReservation(true);
-        setStep('success');
-        toast.success(`Check-in reservasi berhasil! Selamat datang, ${matchedVisitor.name}`);
-        return;
+      // Prioritas 1: Pencarian dan validasi reservasi aktif untuk identitas wajah yang cocok
+      const res = await reservationService.scanIdentify({
+        face_vector: descriptor || null,
+        visitor_id: matchedVisitor?.id || null,
+      });
+
+      if (res && res.success) {
+        // Kondisi 1: Reservasi valid ditemukan & auto check-in sukses
+        if (res.type === 'reservation_auto_checked_in') {
+          setReservationData(res.data);
+          setVisitor({
+            id: matchedVisitor?.id,
+            name: res.data.visitor_name,
+            company: res.data.visitor_company,
+          });
+          setIsAutoReservation(true);
+          setStep('success');
+          toast.success(`Check-in reservasi berhasil!`);
+          return;
+        }
+
+        // Kondisi jika ada lebih dari 1 reservasi yang sama-sama valid hari ini
+        if (res.type === 'reservation_multiple_choice') {
+          setMultipleReservations(res.data.reservations || []);
+          setVisitor(res.data.visitor);
+          setStep('multiple-choice');
+          return;
+        }
+
+        // Kondisi 2: Tamu biasa yang sudah pernah berkunjung (tidak ada reservasi hari ini)
+        if (res.type === 'regular_existing_guest') {
+          setVisitor(res.data.visitor || matchedVisitor);
+          setStep('form-existing');
+          return;
+        }
+      }
+
+      // Kondisi jika reservasi tidak valid atau sudah check-in
+      if (res && !res.success) {
+        if (res.type === 'reservation_already_checked_in') {
+          setNoticeData({
+            title: 'Sudah Check-In Hari Ini',
+            message: res.message,
+            visitor: matchedVisitor,
+            allowRegularFallback: false,
+          });
+          setStep('reservation-notice');
+          return;
+        }
+
+        if (res.type === 'reservation_invalid_status') {
+          setNoticeData({
+            title: 'Pemberitahuan Reservasi',
+            message: res.message,
+            visitor: matchedVisitor,
+            allowRegularFallback: true,
+          });
+          setStep('reservation-notice');
+          return;
+        }
       }
     } catch (err) {
-      if (err.response?.data?.already_checked_in) {
-        toast.error(err.response.data.message || 'Tamu ini sudah check-in hari ini.');
-        handleReset();
+      console.warn('scanIdentify error:', err);
+      // Jika terjadi gangguan server, jangan langsung lempar ke form tamu biasa jika identitas ada
+      if (err.response?.status >= 500 || !err.response) {
+        setNoticeData({
+          title: 'Gangguan Koneksi Server',
+          message: 'Sistem mengalami kendala jaringan saat memverifikasi reservasi. Silakan hubungi petugas resepsionis.',
+          allowRetry: true,
+          allowRegularFallback: true,
+          visitor: matchedVisitor,
+        });
+        setStep('reservation-notice');
         return;
       }
-      // Jika 404 (bukan tamu reservasi hari ini) -> lanjutkan alur tamu lama biasa
     }
 
+    // Default fallback: langsung lanjutkan ke form tamu biasa existing
     setStep('form-existing');
+  };
+
+  const handleSelectReservation = async (reservationId) => {
+    setSubmitting(true);
+    try {
+      const res = await reservationService.scanIdentify({
+        reservation_id: reservationId,
+        visitor_id: visitor?.id,
+      });
+
+      if (res && res.success && res.type === 'reservation_auto_checked_in') {
+        setReservationData(res.data);
+        setIsAutoReservation(true);
+        setStep('success');
+        toast.success('Check-in reservasi berhasil!');
+      } else {
+        toast.error(res?.message || 'Gagal memproses check-in reservasi.');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal memproses check-in.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleNoMatch = (descriptor) => {
@@ -624,6 +712,163 @@ const GuestVisitPage = () => {
   }
 
   // ==========================================
+  // 4b. PILIHAN RESERVASI (JIKA ADA BANYAK)
+  // ==========================================
+  if (step === 'multiple-choice') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative font-sans">
+        <header className="relative z-10 w-full px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-semibold"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Batal</span>
+            </button>
+            <div className="h-8 w-8 rounded-xl bg-white p-1 flex items-center justify-center">
+              <img src={glosindoLogo} alt="Logo" className="h-full w-full object-contain" />
+            </div>
+            <span className="font-bold text-white text-sm">GLIDE GUESTBOOK</span>
+          </div>
+          <span className="text-xs font-mono text-slate-400">{formattedTime} WIB</span>
+        </header>
+
+        <main className="relative z-10 flex-1 max-w-lg w-full mx-auto px-4 flex flex-col items-center justify-center my-auto">
+          <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+            <div className="text-center space-y-1">
+              <span className="text-xs uppercase tracking-wider text-cyan-400 font-bold px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800 inline-block">
+                Pilih Jadwal Kunjungan
+              </span>
+              <h2 className="text-2xl font-bold text-white">Selamat Datang, {visitor?.name}</h2>
+              <p className="text-xs text-slate-400">
+                Anda memiliki beberapa reservasi aktif untuk hari ini. Silakan pilih kunjungan Anda:
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {multipleReservations.map((r) => (
+                <div
+                  key={r.id}
+                  className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-blue-500/50 transition-all flex items-center justify-between gap-3 text-left"
+                >
+                  <div className="space-y-1">
+                    <p className="text-sm font-bold text-white">{r.purpose}</p>
+                    <p className="text-xs text-slate-400">Bertemu: <span className="text-slate-200">{r.meet_to}</span></p>
+                    {r.scheduled_time && (
+                      <p className="text-[11px] text-cyan-400 font-mono">Pukul: {r.scheduled_time} WIB</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    loading={submitting}
+                    onClick={() => handleSelectReservation(r.id)}
+                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold flex-shrink-0"
+                  >
+                    Check-In
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              onClick={handleReset}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700"
+            >
+              Batal
+            </Button>
+          </div>
+        </main>
+
+        <footer className="relative z-10 w-full py-4 text-center text-xs text-slate-500">
+          PT Global Media Pratama Solusindo
+        </footer>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 4c. PEMBERITAHUAN RESERVASI / KENDALA
+  // ==========================================
+  if (step === 'reservation-notice') {
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative font-sans">
+        <header className="relative z-10 w-full px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleReset}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 text-xs font-semibold"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Kembali</span>
+            </button>
+            <div className="h-8 w-8 rounded-xl bg-white p-1 flex items-center justify-center">
+              <img src={glosindoLogo} alt="Logo" className="h-full w-full object-contain" />
+            </div>
+            <span className="font-bold text-white text-sm">GLIDE GUESTBOOK</span>
+          </div>
+          <span className="text-xs font-mono text-slate-400">{formattedTime} WIB</span>
+        </header>
+
+        <main className="relative z-10 flex-1 max-w-md w-full mx-auto px-4 flex flex-col items-center justify-center my-auto">
+          <div className="w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-6">
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-white">
+                {noticeData?.title || 'Informasi Reservasi'}
+              </h2>
+              {noticeData?.visitor?.name && (
+                <p className="text-sm font-semibold text-cyan-400">
+                  {noticeData.visitor.name}
+                </p>
+              )}
+              <p className="text-sm text-slate-300 leading-relaxed">
+                {noticeData?.message}
+              </p>
+            </div>
+
+            <div className="pt-2 space-y-3">
+              {noticeData?.allowRegularFallback && (
+                <Button
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={() => setStep('form-existing')}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold"
+                >
+                  Lanjut Sebagai Tamu Biasa
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="lg"
+                fullWidth
+                onClick={handleReset}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700"
+              >
+                Kembali ke Beranda
+              </Button>
+            </div>
+          </div>
+        </main>
+
+        <footer className="relative z-10 w-full py-4 text-center text-xs text-slate-500">
+          PT Global Media Pratama Solusindo
+        </footer>
+      </div>
+    );
+  }
+
+  // ==========================================
   // 5. SUKSES CHECK-IN
   // ==========================================
   if (step === 'success') {
@@ -635,8 +880,9 @@ const GuestVisitPage = () => {
             <div className="h-8 w-8 rounded-lg bg-white p-1 flex items-center justify-center">
               <img src={glosindoLogo} alt="Glosindo" className="h-full w-full object-contain" />
             </div>
-            <span className="font-bold text-white text-sm">PT GLOSINDO</span>
+            <span className="font-bold text-white text-sm">GLIDE GUESTBOOK</span>
           </div>
+          <span className="text-xs text-slate-400 font-mono">{formattedTime} WIB</span>
         </div>
 
         {/* Kartu Konfirmasi Bersih */}
@@ -645,39 +891,62 @@ const GuestVisitPage = () => {
             <CheckCircle2 className="w-9 h-9 text-emerald-400" />
           </div>
 
-          <div className="space-y-1.5">
-            <h2 className="text-2xl font-bold text-white">
-              {isAutoReservation ? 'Check-In Reservasi Berhasil!' : 'Check-In Berhasil!'}
-            </h2>
-            <p className="text-xl font-bold text-cyan-400">
-              {visitor ? visitor.name : formData.name}
-            </p>
+          <div className="space-y-2">
+            {isAutoReservation ? (
+              <>
+                <span className="text-xs uppercase tracking-widest text-emerald-400 font-bold px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-800 inline-block">
+                  Reservasi Terverifikasi
+                </span>
+                <h2 className="text-3xl font-black text-white tracking-tight">
+                  SELAMAT DATANG!
+                </h2>
+                <p className="text-2xl font-extrabold text-cyan-400">
+                  {visitor ? visitor.name : (reservationData?.visitor_name || formData.name)}
+                </p>
+                {(reservationData?.visitor_company || visitor?.company) && (
+                  <p className="text-base font-semibold text-slate-300">
+                    {reservationData?.visitor_company || visitor?.company}
+                  </p>
+                )}
+                <div className="py-2 text-sm text-emerald-300 font-medium">
+                  Reservasi berhasil diverifikasi. Check-in berhasil.
+                </div>
 
-            {isAutoReservation && reservationData ? (
-              <div className="pt-3 text-left bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs">
-                {reservationData.visitor_company && (
-                  <div className="flex justify-between text-slate-400">
-                    <span>Instansi:</span>
-                    <span className="text-slate-200 font-semibold">{reservationData.visitor_company}</span>
+                {reservationData && (
+                  <div className="pt-3 text-left bg-slate-950/70 border border-slate-800 rounded-2xl p-4 space-y-2 text-xs">
+                    <div className="flex justify-between text-slate-400">
+                      <span>Keperluan:</span>
+                      <span className="text-slate-200 font-semibold">{reservationData.purpose}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Bertemu:</span>
+                      <span className="text-slate-200 font-semibold">{reservationData.meet_to || '-'}</span>
+                    </div>
+                    {reservationData.scheduled_time && (
+                      <div className="flex justify-between text-slate-400">
+                        <span>Jadwal:</span>
+                        <span className="text-slate-200 font-semibold">{reservationData.scheduled_time} WIB</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-slate-400 pt-2 border-t border-slate-800">
+                      <span>Kode Reservasi:</span>
+                      <span className="font-mono text-cyan-400 font-bold">{reservationData.reservation_code}</span>
+                    </div>
                   </div>
                 )}
-                <div className="flex justify-between text-slate-400">
-                  <span>Keperluan:</span>
-                  <span className="text-slate-200 font-semibold">{reservationData.purpose}</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Bertemu:</span>
-                  <span className="text-slate-200 font-semibold">{reservationData.meet_to || '-'}</span>
-                </div>
-                <div className="flex justify-between text-slate-400 pt-2 border-t border-slate-800">
-                  <span>Kode Reservasi:</span>
-                  <span className="font-mono text-cyan-400 font-bold">{reservationData.reservation_code}</span>
-                </div>
-              </div>
+              </>
             ) : (
-              <p className="text-xs text-slate-400 pt-2">
-                Silakan masuk dan temui staf atau resepsionis.
-              </p>
+              <>
+                <h2 className="text-2xl font-bold text-white">
+                  Check-In Berhasil!
+                </h2>
+                <p className="text-xl font-bold text-cyan-400">
+                  {visitor ? visitor.name : formData.name}
+                </p>
+                <p className="text-xs text-slate-400 pt-2">
+                  Silakan masuk dan temui staf atau resepsionis.
+                </p>
+              </>
             )}
           </div>
 
@@ -696,7 +965,7 @@ const GuestVisitPage = () => {
         </div>
 
         <div className="py-2 text-center text-xs text-slate-600">
-          Terima kasih atas kunjungan Anda
+          PT Global Media Pratama Solusindo
         </div>
       </div>
     );

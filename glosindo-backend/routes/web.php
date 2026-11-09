@@ -48,6 +48,7 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('public/reservations/{token}/check-face', ['middleware' => 'throttle:60,1', 'uses' => 'PublicReservationController@checkFace']);
     $router->post('public/reservations/{token}/submit', ['middleware' => 'throttle:60,1', 'uses' => 'PublicReservationController@submitReservation']);
     $router->post('public/reservations/auto-checkin', ['middleware' => 'throttle:60,1', 'uses' => 'PublicReservationController@autoCheckIn']);
+    $router->post('public/kiosk/scan-identify', ['middleware' => 'throttle:60,1', 'uses' => 'PublicReservationController@kioskScanIdentify']);
     
 
 });

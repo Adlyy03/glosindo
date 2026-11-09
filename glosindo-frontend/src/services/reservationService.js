@@ -118,6 +118,14 @@ const reservationService = {
     const response = await api.post('/public/reservations/auto-checkin', payload);
     return response.data;
   },
+
+  /**
+   * Kiosk/Public: unified single-step face identification and auto check-in
+   */
+  scanIdentify: async (payload) => {
+    const response = await api.post('/public/kiosk/scan-identify', payload);
+    return response.data;
+  },
 };
 
 export default reservationService;

@@ -7,6 +7,7 @@ use App\Models\Reservation;
 use App\Models\ReservationInvitation;
 use App\Models\Visit;
 use App\Models\Visitor;
+use App\Services\BiometricReservationService;
 use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Http\Request;
@@ -243,32 +244,19 @@ class PublicReservationController extends Controller
                 // Handle Photo storage
                 $photoPath = $this->storePhoto($request->input('photo'), $request);
 
-                // Find or create Visitor
-                $visitor = Visitor::where('phone', $cleanPhone)->first();
-                if ($visitor) {
-                    $visitor->name = $request->name;
-                    if ($request->filled('email')) $visitor->email = $request->email;
-                    if ($request->filled('company')) $visitor->company = $request->company;
-                    if ($photoPath) $visitor->photo = $photoPath;
-                    $visitor->save();
-                } else {
-                    $visitor = Visitor::create([
+                // Resolve Single Biometric Identity (prevents duplicate visitor & biometric records)
+                $bioService = app(BiometricReservationService::class);
+                $identityResult = $bioService->resolveOrCreateVisitor(
+                    $faceVector,
+                    [
                         'name' => $request->name,
                         'phone' => $cleanPhone,
                         'email' => $request->email,
                         'company' => $request->company ?: $invitation->company_name,
-                        'photo' => $photoPath,
-                    ]);
-                }
-
-                // Save or update Face Embedding if vector provided
-                if ($hasFaceVector) {
-                    FaceEmbedding::updateOrCreate(
-                        ['visitor_id' => $visitor->id],
-                        ['face_vector' => $faceVector]
-                    );
-                    Cache::forget('face_embeddings_all');
-                }
+                    ],
+                    $photoPath
+                );
+                $visitor = $identityResult['visitor'];
 
                 // Generate Unique Reservation Code (e.g. RSV-20261105-X7K2)
                 $datePrefix = Carbon::parse($request->scheduled_date)->format('Ymd');
@@ -289,7 +277,7 @@ class PublicReservationController extends Controller
                     'scheduled_date' => $request->scheduled_date,
                     'scheduled_time' => $request->scheduled_time ?: $invitation->scheduled_time,
                     'status' => 'APPROVED',
-                    'approved_at' => Carbon::now(),
+                    'approved_at' => Carbon::now('Asia/Jakarta'),
                     'biometric_consent' => true,
                     'has_face_registered' => $hasFaceVector,
                     'notes' => $request->input('notes'),
@@ -349,125 +337,155 @@ class PublicReservationController extends Controller
         $this->validate($request, [
             'visitor_id' => 'nullable|integer',
             'reservation_code' => 'nullable|string',
+            'reservation_id' => 'nullable|integer',
         ]);
 
         $visitorId = $request->input('visitor_id');
         $reservationCode = $request->input('reservation_code');
+        $reservationId = $request->input('reservation_id');
 
-        if (!$visitorId && !$reservationCode) {
+        if (!$visitorId && !$reservationCode && !$reservationId) {
             return response()->json([
                 'success' => false,
-                'message' => 'Visitor ID atau Reservation Code diperlukan.',
+                'message' => 'Visitor ID atau Reservation Code / ID diperlukan.',
             ], 422);
         }
 
-        // Find reservation
-        $query = Reservation::query()->with('visitor');
+        $bioService = app(BiometricReservationService::class);
 
-        if ($reservationCode) {
-            $query->where('reservation_code', strtoupper(trim($reservationCode)));
-        } else {
-            $query->where('visitor_id', $visitorId);
+        // 1. If explicit reservation_id or reservation_code provided
+        if ($reservationId || $reservationCode) {
+            $reservation = $reservationId
+                ? Reservation::with(['visitor', 'invitation'])->find($reservationId)
+                : Reservation::with(['visitor', 'invitation'])->where('reservation_code', strtoupper(trim($reservationCode)))->first();
+
+            if (!$reservation) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Data reservasi tidak ditemukan.',
+                ], 404);
+            }
+
+            try {
+                $visit = $bioService->checkInReservation($reservation);
+                return response()->json([
+                    'success' => true,
+                    'has_reservation' => true,
+                    'checked_in' => true,
+                    'message' => "Check-in reservasi berhasil diverifikasi! Selamat datang, {$reservation->visitor_name}.",
+                    'data' => [
+                        'reservation' => $reservation->fresh(),
+                        'visit' => $visit,
+                        'visitor' => $reservation->visitor,
+                    ],
+                ]);
+            } catch (\Throwable $e) {
+                $alreadyChecked = str_contains($e->getMessage(), 'pernah digunakan') || $reservation->status === 'CHECKED_IN';
+                return response()->json([
+                    'success' => false,
+                    'has_reservation' => true,
+                    'already_checked_in' => $alreadyChecked,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
         }
 
-        // Check newest reservation
-        $reservation = $query->orderBy('scheduled_date', 'desc')
-                             ->orderBy('created_at', 'desc')
-                             ->first();
+        // 2. Evaluate active reservations for this visitor
+        $eval = $bioService->evaluateVisitorReservations((int) $visitorId);
 
-        if (!$reservation) {
+        if ($eval['outcome'] === 'VALID_APPROVED') {
+            try {
+                $reservation = $eval['reservation'];
+                $visit = $bioService->checkInReservation($reservation);
+
+                return response()->json([
+                    'success' => true,
+                    'has_reservation' => true,
+                    'checked_in' => true,
+                    'message' => "Check-in reservasi berhasil diverifikasi! Selamat datang, {$reservation->visitor_name}.",
+                    'data' => [
+                        'reservation' => $reservation->fresh(),
+                        'visit' => $visit,
+                        'visitor' => $reservation->visitor,
+                    ],
+                ]);
+            } catch (\Throwable $e) {
+                return response()->json([
+                    'success' => false,
+                    'has_reservation' => true,
+                    'already_checked_in' => true,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+        }
+
+        if ($eval['outcome'] === 'MULTIPLE_APPROVED') {
             return response()->json([
-                'success' => false,
-                'has_reservation' => false,
-                'message' => 'Tidak ditemukan data reservasi untuk tamu ini.',
-            ], 404);
+                'success' => true,
+                'has_reservation' => true,
+                'multiple_reservations' => true,
+                'message' => $eval['message'],
+                'reservations' => $eval['reservations'],
+            ]);
         }
 
-        $today = Carbon::today();
-        $scheduledDate = Carbon::parse($reservation->scheduled_date);
-
-        // Check if already checked in
-        if ($reservation->status === 'CHECKED_IN') {
-            $checkInTime = $reservation->checked_in_at ? $reservation->checked_in_at->format('H:i') : 'sebelumnya';
+        if ($eval['outcome'] === 'ALREADY_CHECKED_IN') {
             return response()->json([
                 'success' => false,
                 'has_reservation' => true,
                 'already_checked_in' => true,
-                'reservation' => $reservation,
-                'message' => "Tamu {$reservation->visitor_name} sudah melakukan check-in hari ini pada pukul {$checkInTime}.",
+                'reservation' => $eval['reservation'],
+                'message' => $eval['message'],
             ], 422);
         }
 
-        // Check if expired
-        if ($reservation->status === 'EXPIRED' || ($reservation->status === 'APPROVED' && $scheduledDate->lessThan($today))) {
-            if ($reservation->status !== 'EXPIRED') {
-                $reservation->status = 'EXPIRED';
-                $reservation->save();
-            }
+        if (in_array($eval['outcome'], ['CANCELLED', 'EXPIRED', 'FUTURE_SCHEDULE', 'PAST_EXPIRED'])) {
             return response()->json([
                 'success' => false,
                 'has_reservation' => true,
-                'is_expired' => true,
-                'reservation' => $reservation,
-                'message' => "Reservasi ini telah kedaluwarsa (jadwal kunjungan: {$scheduledDate->format('d/m/Y')}). Silakan lakukan check-in manual di resepsionis.",
+                'is_invalid_status' => true,
+                'outcome' => $eval['outcome'],
+                'reservation' => $eval['reservation'] ?? null,
+                'message' => $eval['message'],
             ], 422);
         }
 
-        // Check if cancelled
-        if ($reservation->status === 'CANCELLED') {
+        return response()->json([
+            'success' => false,
+            'has_reservation' => false,
+            'message' => 'Tidak ditemukan data reservasi untuk tamu ini.',
+        ], 404);
+    }
+
+    /**
+     * Unified Kiosk Scan & Check-In Endpoint:
+     * Accepts face vector or visitorId and returns single authoritative response.
+     */
+    public function kioskScanIdentify(Request $request)
+    {
+        $this->validate($request, [
+            'face_vector' => 'nullable|array',
+            'face_vector.*' => 'nullable|numeric',
+            'visitor_id' => 'nullable|integer',
+            'reservation_id' => 'nullable|integer',
+        ]);
+
+        $faceVector = $request->input('face_vector');
+        $visitorId = $request->input('visitor_id');
+        $reservationId = $request->input('reservation_id');
+
+        if (!$faceVector && !$visitorId && !$reservationId) {
             return response()->json([
                 'success' => false,
-                'has_reservation' => true,
-                'is_cancelled' => true,
-                'message' => 'Reservasi ini telah dibatalkan. Silakan hubungi petugas resepsionis.',
+                'message' => 'Diperlukan vektor wajah atau identitas pengunjung.',
             ], 422);
         }
 
-        // Perform auto check-in inside transaction
-        try {
-            $visit = DB::transaction(function () use ($reservation) {
-                // Create visit record
-                $newVisit = Visit::create([
-                    'visitor_id' => $reservation->visitor_id,
-                    'visitor_name' => $reservation->visitor_name,
-                    'visitor_company' => $reservation->visitor_company,
-                    'visitor_phone' => $reservation->visitor_phone,
-                    'purpose' => $reservation->purpose,
-                    'meet_to' => $reservation->meet_to,
-                    'check_in' => Carbon::now(),
-                    'status' => 'IN',
-                ]);
+        $bioService = app(BiometricReservationService::class);
+        $result = $bioService->kioskScanAndIdentify($faceVector, $visitorId, $reservationId);
 
-                // Update reservation status to CHECKED_IN
-                $reservation->status = 'CHECKED_IN';
-                $reservation->checked_in_at = Carbon::now();
-                $reservation->visit_id = $newVisit->id;
-                $reservation->save();
-
-                // Audit log
-                $reservation->audit('checked_in', null, $reservation->toArray(), "Auto check-in verified via face biometric for code {$reservation->reservation_code}");
-
-                return $newVisit;
-            });
-
-            return response()->json([
-                'success' => true,
-                'has_reservation' => true,
-                'checked_in' => true,
-                'message' => "Check-in reservasi berhasil diverifikasi! Selamat datang, {$reservation->visitor_name}.",
-                'data' => [
-                    'reservation' => $reservation->fresh(),
-                    'visit' => $visit,
-                    'visitor' => $reservation->visitor,
-                ],
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Auto check-in error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal memproses check-in otomatis: ' . $e->getMessage(),
-            ], 500);
-        }
+        return response()->json($result);
+    }
     }
 
     /**

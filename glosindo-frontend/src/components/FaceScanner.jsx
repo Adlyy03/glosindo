@@ -67,7 +67,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
         setScanStatus('matched');
         setResult({ type: 'match', data: matched });
         const photo = webcamRef.current?.getScreenshot?.() || null;
-        onMatchFound?.(matched, photo);
+        onMatchFound?.(matched, photo, descriptorToArray(descriptor));
       } else {
         noMatchStreak.current += 1;
         // Stabilisasi konfirmasi: butuh minimal 2 frame berturut-turut untuk menyatakan 'Belum Terdaftar'
