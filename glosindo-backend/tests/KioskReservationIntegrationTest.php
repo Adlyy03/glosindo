@@ -15,11 +15,14 @@ class KioskReservationIntegrationTest extends TestCase
     private array $createdVisitorIds = [];
     private array $createdReservationIds = [];
 
-    private function generateSampleVector(float $base = 0.1): array
+    private function generateSampleVector(?float $base = null): array
     {
+        if ($base === null) {
+            $base = (float) rand(100, 850) / 1000.0;
+        }
         $vector = [];
         for ($i = 0; $i < 128; $i++) {
-            $vector[] = round($base + ($i * 0.001), 4);
+            $vector[] = round($base + ($i * 0.0005), 4);
         }
         return $vector;
     }
@@ -28,6 +31,8 @@ class KioskReservationIntegrationTest extends TestCase
     {
         parent::setUp();
         Cache::flush();
+        $this->createdVisitorIds = [];
+        $this->createdReservationIds = [];
     }
 
     protected function tearDown(): void
@@ -52,7 +57,8 @@ class KioskReservationIntegrationTest extends TestCase
     public function test_single_identity_reuses_existing_visitor()
     {
         $bioService = app(BiometricReservationService::class);
-        $vectorAgus = $this->generateSampleVector(0.05);
+        $baseVal = (float) rand(100, 800) / 1000.0;
+        $vectorAgus = $this->generateSampleVector($baseVal);
 
         // 1. Pak Agus datang pertama kali sebagai tamu biasa
         $regResult = $bioService->resolveOrCreateVisitor(
@@ -67,8 +73,8 @@ class KioskReservationIntegrationTest extends TestCase
         $this->createdVisitorIds[] = $visitorAwal->id;
         $this->assertNotNull($visitorAwal->id);
 
-        // 2. Kemudian Pak Agus mengisi form reservasi dengan nomor berbeda sedikit
-        $vectorAgusSlight = $this->generateSampleVector(0.0505); // Kemiripan sangat tinggi (<0.01)
+        // 2. Kemudian Pak Agus mengisi form reservasi dengan biometrik yang sama
+        $vectorAgusSlight = $this->generateSampleVector($baseVal + 0.0001); // Kemiripan sangat tinggi (<0.01)
         $resResult = $bioService->resolveOrCreateVisitor(
             $vectorAgusSlight,
             [
@@ -98,7 +104,7 @@ class KioskReservationIntegrationTest extends TestCase
     public function test_kiosk_scan_identifies_and_auto_checkins_approved_reservation()
     {
         $bioService = app(BiometricReservationService::class);
-        $vectorBudi = $this->generateSampleVector(0.20);
+        $vectorBudi = $this->generateSampleVector();
 
         // 1. Buat identitas pengunjung
         $visitor = Visitor::create([
@@ -135,7 +141,6 @@ class KioskReservationIntegrationTest extends TestCase
 
         // 3. Kiosk scan wajah
         $scanResult = $bioService->kioskScanAndIdentify($vectorBudi);
-        fwrite(STDERR, "\nDEBUG SCAN RESULT: " . json_encode($scanResult) . "\n");
 
         $this->assertTrue($scanResult['success']);
         $this->assertEquals('reservation_auto_checked_in', $scanResult['type']);
@@ -162,7 +167,7 @@ class KioskReservationIntegrationTest extends TestCase
     public function test_concurrency_double_checkin_prevention()
     {
         $bioService = app(BiometricReservationService::class);
-        $vectorCitra = $this->generateSampleVector(0.30);
+        $vectorCitra = $this->generateSampleVector();
 
         $visitor = Visitor::create([
             'name' => 'Citra Dewi',
@@ -220,7 +225,7 @@ class KioskReservationIntegrationTest extends TestCase
     public function test_multiple_approved_reservations_today_presents_choice()
     {
         $bioService = app(BiometricReservationService::class);
-        $vectorDedi = $this->generateSampleVector(0.40);
+        $vectorDedi = $this->generateSampleVector();
 
         $visitor = Visitor::create([
             'name' => 'Dedi Kurniawan',
@@ -292,7 +297,7 @@ class KioskReservationIntegrationTest extends TestCase
     public function test_regular_visitor_without_reservation_returns_regular_guest()
     {
         $bioService = app(BiometricReservationService::class);
-        $vectorEko = $this->generateSampleVector(0.50);
+        $vectorEko = $this->generateSampleVector();
 
         $visitor = Visitor::create([
             'name' => 'Eko Prasetyo',
@@ -322,7 +327,7 @@ class KioskReservationIntegrationTest extends TestCase
     public function test_unrecognized_face_returns_not_found()
     {
         $bioService = app(BiometricReservationService::class);
-        $vectorUnknown = $this->generateSampleVector(0.90);
+        $vectorUnknown = $this->generateSampleVector(0.95);
 
         $scanResult = $bioService->kioskScanAndIdentify($vectorUnknown);
         $this->assertTrue($scanResult['success']);
@@ -336,7 +341,7 @@ class KioskReservationIntegrationTest extends TestCase
     public function test_future_scheduled_reservation_is_rejected_politely()
     {
         $bioService = app(BiometricReservationService::class);
-        $vectorFani = $this->generateSampleVector(0.60);
+        $vectorFani = $this->generateSampleVector();
 
         $visitor = Visitor::create([
             'name' => 'Fani Anggraini',
