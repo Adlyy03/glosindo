@@ -334,15 +334,10 @@ class PublicReservationController extends Controller
      */
     public function autoCheckIn(Request $request)
     {
-        $this->validate($request, [
-            'visitor_id' => 'nullable|integer',
-            'reservation_code' => 'nullable|string',
-            'reservation_id' => 'nullable|integer',
-        ]);
-
-        $visitorId = $request->input('visitor_id');
-        $reservationCode = $request->input('reservation_code');
-        $reservationId = $request->input('reservation_id');
+        $all = $request->all();
+        $visitorId = $all['visitor_id'] ?? $request->input('visitor_id');
+        $reservationCode = $all['reservation_code'] ?? $request->input('reservation_code');
+        $reservationId = $all['reservation_id'] ?? $request->input('reservation_id');
 
         if (!$visitorId && !$reservationCode && !$reservationId) {
             return response()->json([
@@ -463,16 +458,10 @@ class PublicReservationController extends Controller
      */
     public function kioskScanIdentify(Request $request)
     {
-        $this->validate($request, [
-            'face_vector' => 'nullable|array',
-            'face_vector.*' => 'nullable|numeric',
-            'visitor_id' => 'nullable|integer',
-            'reservation_id' => 'nullable|integer',
-        ]);
-
-        $faceVector = $request->input('face_vector');
-        $visitorId = $request->input('visitor_id');
-        $reservationId = $request->input('reservation_id');
+        $all = $request->all();
+        $faceVector = $all['face_vector'] ?? $request->input('face_vector');
+        $visitorId = $all['visitor_id'] ?? $request->input('visitor_id');
+        $reservationId = $all['reservation_id'] ?? $request->input('reservation_id');
 
         if (!$faceVector && !$visitorId && !$reservationId) {
             return response()->json([
