@@ -195,17 +195,26 @@ const AdminReservationPage = () => {
   };
 
   const handleCancelReservation = async (resv) => {
-    if (!window.confirm(`Batalkan reservasi tamu "${resv.visitor_name}" (${resv.reservation_code})?`)) return;
+    if (!window.confirm(`Hapus / batalkan pendaftaran tamu "${resv.visitor_name}" (${resv.reservation_code})?`)) return;
 
     try {
       const res = await reservationService.deleteReservation(resv.id);
       if (res.success) {
-        toast.success('Reservasi berhasil dibatalkan');
+        toast.success('Pendaftaran tamu berhasil dihapus');
+        setSelectedInvitation((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            used_count: Math.max(0, (prev.used_count || 1) - 1),
+            reservations: (prev.reservations || []).filter((item) => item.id !== resv.id),
+          };
+        });
+        loadInvitations();
         loadReservations();
         loadStats();
       }
     } catch (err) {
-      toast.error('Gagal membatalkan reservasi');
+      toast.error('Gagal menghapus pendaftaran tamu');
     }
   };
 
@@ -696,15 +705,13 @@ PT Glosindo Digital Systems`;
                           </td>
 
                           <td className="px-4 py-3.5 text-right">
-                            {resv.status === 'APPROVED' && (
-                              <button
-                                onClick={() => handleCancelReservation(resv)}
-                                title="Batalkan Reservasi"
-                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
+                            <button
+                              onClick={() => handleCancelReservation(resv)}
+                              title="Hapus Pendaftaran Tamu"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
                           </td>
                         </tr>
                       );
@@ -964,13 +971,23 @@ PT Glosindo Digital Systems`;
                           <p className="text-xs text-slate-500">{r.visitor_phone} • {r.visitor_email || 'Tanpa email'}</p>
                         </div>
 
-                        <div className="text-right space-y-1">
-                          <Badge color={r.status === 'CHECKED_IN' ? 'green' : 'blue'}>
-                            {r.status === 'CHECKED_IN' ? 'Checked-In' : 'Disetujui'}
-                          </Badge>
-                          <p className="text-[10px] text-slate-400">
-                            {new Date(r.approved_at).toLocaleDateString('id-ID')}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right space-y-1">
+                            <Badge color={r.status === 'CHECKED_IN' ? 'green' : 'blue'}>
+                              {r.status === 'CHECKED_IN' ? 'Checked-In' : 'Disetujui'}
+                            </Badge>
+                            <p className="text-[10px] text-slate-400">
+                              {new Date(r.approved_at).toLocaleDateString('id-ID')}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCancelReservation(r)}
+                            title="Hapus Tamu Terdaftar"
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     ))}
