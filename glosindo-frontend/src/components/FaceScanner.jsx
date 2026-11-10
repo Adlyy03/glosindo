@@ -15,18 +15,37 @@ import Badge from './ui/Badge';
  *   paused                  — if true, stop auto-scan (prevent spam during processing)
  *   fullscreen              — if true, full viewport mode (hide badges/alerts)
  */
-const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false, paused = false, fullscreen = false }) => {
+const FaceScanner = ({
+  onMatchFound,
+  onNoMatch,
+  reloadSignal,
+  silentMode = true,
+  paused = false,
+  fullscreen = false,
+  emptyGraceMs = 7000,
+  onStandbyChange,
+}) => {
   const webcamRef = useRef(null);
   const { modelsLoaded, loading: modelsLoading, error: modelsError } = useFaceModels();
   const { loading: embeddingsLoading, error: embeddingsError, matchFace, reload } = useFaceMatcher();
   const [result, setResult] = useState(null); // { type: 'match'|'no_match', data }
   const [scanning, setScanning] = useState(false);
-  const [scanStatus, setScanStatus] = useState('idle'); // 'idle' | 'verifying' | 'matched' | 'no_match'
+  const [scanStatus, setScanStatus] = useState('idle'); // 'idle' | 'standby' | 'verifying' | 'matched' | 'no_match'
 
   const scanInProgress = useRef(false);
   const lastMatchedId = useRef(null);
   const lastMatchedTime = useRef(0);
   const noMatchStreak = useRef(0);
+  const emptySinceRef = useRef(null);
+  const onStandbyChangeRef = useRef(onStandbyChange);
+
+  useEffect(() => {
+    onStandbyChangeRef.current = onStandbyChange;
+  }, [onStandbyChange]);
+
+  useEffect(() => {
+    onStandbyChangeRef.current?.(scanStatus === 'standby');
+  }, [scanStatus]);
 
   useEffect(() => {
     if (typeof reloadSignal === 'number' && reloadSignal > 0) {
@@ -36,19 +55,34 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
 
   const handleScan = useCallback(async () => {
     if (scanInProgress.current || paused || (typeof document !== 'undefined' && document.hidden)) {
-      return;
+      return { detected: false, ready: false, standby: false };
+    }
+
+    // Tunggu kamera benar-benar siap sebelum memindai agar tidak spam warning kamera belum siap
+    const isReady = webcamRef.current?.isCameraReady?.() ?? Boolean(webcamRef.current?.getVideoElement?.());
+    if (!isReady) {
+      emptySinceRef.current = null;
+      noMatchStreak.current = 0;
+      setScanStatus('idle');
+      return { detected: false, ready: false, standby: false };
     }
 
     scanInProgress.current = true;
     try {
       const descriptor = await webcamRef.current?.captureDescriptor();
       if (!descriptor) {
-        // No face currently detected in front of the lens
+        // Tidak ada orang/wajah di depan kamera: hitung jeda 7 detik lalu masuk mode stay (standby)
         noMatchStreak.current = 0;
-        setScanStatus('idle');
-        return;
+        if (!emptySinceRef.current) {
+          emptySinceRef.current = Date.now();
+        }
+        const emptyElapsed = Date.now() - emptySinceRef.current;
+        const isStandby = emptyElapsed >= emptyGraceMs;
+        setScanStatus(isStandby ? 'standby' : 'idle');
+        return { detected: false, ready: true, standby: isStandby };
       }
 
+      emptySinceRef.current = null;
       setScanStatus('verifying');
       const matched = await matchFace(descriptor);
 
@@ -59,7 +93,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
 
         // Hindari eksekusi berulang pada wajah & orang yang sama dalam rentang 3 detik
         if (lastMatchedId.current === matchedId && now - lastMatchedTime.current < 3000) {
-          return;
+          return { detected: true, ready: true, standby: false };
         }
 
         lastMatchedId.current = matchedId;
@@ -68,6 +102,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
         setResult({ type: 'match', data: matched });
         const photo = webcamRef.current?.getScreenshot?.() || null;
         onMatchFound?.(matched, photo, descriptorToArray(descriptor));
+        return { detected: true, ready: true, standby: false };
       } else {
         noMatchStreak.current += 1;
         // Stabilisasi konfirmasi: butuh minimal 2 frame berturut-turut untuk menyatakan 'Belum Terdaftar'
@@ -79,19 +114,22 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
           onNoMatch?.(descriptorToArray(descriptor), photo);
           noMatchStreak.current = 0;
         }
+        return { detected: true, ready: true, standby: false };
       }
     } catch (err) {
       console.warn('Face scan execution error:', err);
+      return { detected: false, ready: true, standby: false };
     } finally {
       scanInProgress.current = false;
     }
-  }, [matchFace, onMatchFound, onNoMatch, paused]);
+  }, [matchFace, onMatchFound, onNoMatch, paused, emptyGraceMs]);
 
-  // Auto-scan adaptif & hemat baterai (loop 300ms) — Pause saat tab tidak aktif
+  // Auto-scan adaptif & hemat resource — Pause saat tab tidak aktif, standby tenang bila kosong > 7 detik
   useEffect(() => {
     if (!modelsLoaded || embeddingsLoading || paused) {
       setScanning(false);
       setScanStatus('idle');
+      emptySinceRef.current = null;
       return;
     }
 
@@ -101,9 +139,10 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
 
     const runScanLoop = async () => {
       if (!isMounted || paused || document.hidden) return;
-      await handleScan();
+      const outcome = await handleScan();
       if (isMounted && !paused && !document.hidden) {
-        timerId = setTimeout(runScanLoop, 300);
+        const nextDelay = !outcome?.ready ? 400 : outcome?.standby ? 1500 : 350;
+        timerId = setTimeout(runScanLoop, nextDelay);
       }
     };
 
@@ -112,14 +151,15 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
       if (document.hidden) {
         if (timerId) clearTimeout(timerId);
       } else if (isMounted && !paused) {
-        timerId = setTimeout(runScanLoop, 150);
+        emptySinceRef.current = null;
+        timerId = setTimeout(runScanLoop, 200);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Mulai scan pertama segera setelah stream siap
-    timerId = setTimeout(runScanLoop, 200);
+    // Tunggu sebentar agar stream webcam terpasang dulu
+    timerId = setTimeout(runScanLoop, 400);
 
     return () => {
       isMounted = false;
@@ -210,6 +250,7 @@ const FaceScanner = ({ onMatchFound, onNoMatch, reloadSignal, silentMode = false
           showButton={false}
           silentMode={silentMode}
           fullscreen={fullscreen}
+          scanState={scanStatus}
         />
       </div>
 

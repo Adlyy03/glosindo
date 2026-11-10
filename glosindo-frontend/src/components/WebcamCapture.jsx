@@ -5,7 +5,7 @@ import { ScanLine } from 'lucide-react';
 import Button from './ui/Button';
 import CameraPermissionAlert from './CameraPermissionAlert';
 
-const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = true, silentMode = false, fullscreen = false }, ref) => {
+const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = true, silentMode = false, fullscreen = false, scanState = 'idle' }, ref) => {
   const webcamRef = useRef(null);
   const offscreenCanvasRef = useRef(null);
   const [scanning, setScanning] = useState(false);
@@ -20,6 +20,10 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
     captureDescriptor,
     getVideoElement: () => webcamRef.current?.video || null,
     getScreenshot: () => webcamRef.current?.getScreenshot() || null,
+    isCameraReady: () => {
+      const video = webcamRef.current?.video;
+      return !!(isVideoLive && video && video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0);
+    },
   }));
 
   // Resolusi 640x480 ideal: inisialisasi webcam super cepat (<300ms) & rendah beban CPU/GPU
@@ -221,18 +225,27 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
    * Detect face on current video frame and return descriptor — High-Performance Mobile Biometrics
    */
   const captureDescriptor = async () => {
-    if (!silentMode) setError(null);
-    setScanning(true);
+    const isAutoScan = silentMode || !showButton;
+    if (!isAutoScan) setError(null);
+
+    const video = webcamRef.current?.video;
+    // Guard: video harus ready dan memiliki dimensi sebelum deteksi (tanpa spam error di auto-scan)
+    if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+      if (!isAutoScan && !video) {
+        setError({
+          type: 'general',
+          title: 'Kamera Belum Siap',
+          message: 'Kamera sedang dimuat, silakan tunggu sebentar lalu coba lagi.',
+        });
+      }
+      return null;
+    }
+
+    if (!isAutoScan) {
+      setScanning(true);
+    }
 
     try {
-      const video = webcamRef.current?.video;
-      if (!video) throw new Error('Kamera tidak siap / belum aktif');
-
-      // Guard: video harus ready dan memiliki dimensi sebelum deteksi
-      if (video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
-        return null;
-      }
-
       // Pastikan video aktif
       if (video.paused) {
         await video.play().catch(() => {});
@@ -247,7 +260,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
         .withFaceDescriptor();
 
       if (!result || !result.descriptor) {
-        if (!silentMode) {
+        if (!isAutoScan) {
           setError({
             type: 'general',
             title: 'Wajah Belum Terdeteksi',
@@ -266,7 +279,7 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
       return descriptor;
     } catch (err) {
       console.error('Face detection error:', err);
-      if (!silentMode) {
+      if (!isAutoScan) {
         setError({
           type: 'general',
           title: 'Gagal Memindai Wajah',
@@ -275,7 +288,9 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
       }
       return null;
     } finally {
-      setScanning(false);
+      if (!isAutoScan) {
+        setScanning(false);
+      }
     }
   };
 
@@ -283,6 +298,9 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
     if (!detections || detections.length === 0) return null;
     return detections[0]?.detection || detections[0];
   };
+
+  const isRingActive = scanning || scanState === 'verifying' || scanState === 'matched';
+  const isRingStandby = scanState === 'standby';
 
   return (
     <div className={`flex flex-col items-center w-full ${fullscreen ? 'h-full justify-center' : 'gap-4'}`}>
@@ -309,6 +327,10 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
               setIsVideoLive(true);
               setError(null);
             }}
+            onPlaying={() => {
+              setIsVideoLive(true);
+              setError(null);
+            }}
             onUserMediaError={handleUserMediaError}
             mirrored={true}
             className="w-full h-full object-cover"
@@ -323,36 +345,40 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
           )}
 
           {/* Biometric Face Guide Overlay */}
-          <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-4">
-            {/* Dynamic Sized Face Guide: 75-85% camera width, constrained by height */}
+          <div className={`absolute inset-0 pointer-events-none flex items-center justify-center ${
+            fullscreen ? 'px-4 pt-16 pb-28 sm:pt-20 sm:pb-32' : 'p-4'
+          }`}>
+            {/* Dynamic Sized Face Guide: larger and proportional on desktop viewports */}
             <div
               className={`relative transition-all duration-300 flex items-center justify-center aspect-square ${
                 fullscreen
-                  ? 'w-[min(80vw,62vh,340px)]'
+                  ? 'w-[min(82vw,54vh,340px)] sm:w-[min(70vw,60vh,460px)] md:w-[min(62vw,64vh,520px)] lg:w-[min(56vw,66vh,580px)] xl:w-[min(52vw,68vh,600px)]'
                   : 'w-[min(65%,240px)]'
               }`}
             >
               {/* Solid Thin Elegant White Circle */}
               <div
-                className={`absolute inset-0 rounded-full border-2 transition-all duration-300 ${
-                  scanning
+                className={`absolute inset-0 rounded-full border-2 lg:border-[3px] transition-all duration-300 ${
+                  isRingActive
                     ? 'border-cyan-400 shadow-[0_0_28px_rgba(6,182,212,0.6)] ring-4 ring-cyan-400/25 scale-[1.01]'
+                    : isRingStandby
+                    ? 'border-white/50 shadow-[0_0_14px_rgba(255,255,255,0.1)]'
                     : 'border-white/85 shadow-[0_0_20px_rgba(255,255,255,0.2)] animate-pulse'
                 }`}
               />
 
               {/* 4 Minimalist Rounded Framing Corners Outside Circle */}
-              <div className={`absolute -top-3.5 -left-3.5 w-6 h-6 sm:w-7 sm:h-7 border-t-2 border-l-2 rounded-tl-xl transition-colors duration-300 ${
-                scanning ? 'border-cyan-400/90' : 'border-white/60'
+              <div className={`absolute -top-3.5 -left-3.5 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 border-t-2 border-l-2 lg:border-t-[3px] lg:border-l-[3px] rounded-tl-xl transition-colors duration-300 ${
+                isRingActive ? 'border-cyan-400/90' : isRingStandby ? 'border-white/35' : 'border-white/60'
               }`} />
-              <div className={`absolute -top-3.5 -right-3.5 w-6 h-6 sm:w-7 sm:h-7 border-t-2 border-r-2 rounded-tr-xl transition-colors duration-300 ${
-                scanning ? 'border-cyan-400/90' : 'border-white/60'
+              <div className={`absolute -top-3.5 -right-3.5 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 border-t-2 border-r-2 lg:border-t-[3px] lg:border-r-[3px] rounded-tr-xl transition-colors duration-300 ${
+                isRingActive ? 'border-cyan-400/90' : isRingStandby ? 'border-white/35' : 'border-white/60'
               }`} />
-              <div className={`absolute -bottom-3.5 -left-3.5 w-6 h-6 sm:w-7 sm:h-7 border-b-2 border-l-2 rounded-bl-xl transition-colors duration-300 ${
-                scanning ? 'border-cyan-400/90' : 'border-white/60'
+              <div className={`absolute -bottom-3.5 -left-3.5 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 border-b-2 border-l-2 lg:border-b-[3px] lg:border-l-[3px] rounded-bl-xl transition-colors duration-300 ${
+                isRingActive ? 'border-cyan-400/90' : isRingStandby ? 'border-white/35' : 'border-white/60'
               }`} />
-              <div className={`absolute -bottom-3.5 -right-3.5 w-6 h-6 sm:w-7 sm:h-7 border-b-2 border-r-2 rounded-br-xl transition-colors duration-300 ${
-                scanning ? 'border-cyan-400/90' : 'border-white/60'
+              <div className={`absolute -bottom-3.5 -right-3.5 w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 border-b-2 border-r-2 lg:border-b-[3px] lg:border-r-[3px] rounded-br-xl transition-colors duration-300 ${
+                isRingActive ? 'border-cyan-400/90' : isRingStandby ? 'border-white/35' : 'border-white/60'
               }`} />
             </div>
 
@@ -376,8 +402,8 @@ const WebcamCapture = forwardRef(({ onDescriptorCapture, disabled, showButton = 
             )}
           </div>
 
-          {/* Scanning Overlay Spinner */}
-          {scanning && (
+          {/* Scanning Overlay Spinner (Manual click mode only) */}
+          {scanning && showButton && (
             <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs flex items-center justify-center z-10 transition-opacity">
               <div className="bg-white/95 rounded-2xl px-5 py-3 flex items-center gap-3 shadow-2xl border border-slate-100">
                 <div className="w-5 h-5 rounded-full border-2 border-brand-navy border-t-cyan-500 animate-spin" />

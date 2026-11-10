@@ -40,6 +40,8 @@ const GuestVisitPage = () => {
   const [isAutoReservation, setIsAutoReservation] = useState(false);
   const [multipleReservations, setMultipleReservations] = useState([]);
   const [noticeData, setNoticeData] = useState(null);
+  const [processingScan, setProcessingScan] = useState(false);
+  const [isScannerStandby, setIsScannerStandby] = useState(false);
 
   const [formData, setFormData] = useState({
     purpose: '',
@@ -80,6 +82,8 @@ const GuestVisitPage = () => {
     setVisitor(null);
     setFaceDescriptor(null);
     setSubmitting(false);
+    setProcessingScan(false);
+    setIsScannerStandby(false);
     setReservationData(null);
     setIsAutoReservation(false);
     setMultipleReservations([]);
@@ -88,10 +92,13 @@ const GuestVisitPage = () => {
   }, []);
 
   const handleStartScan = () => {
+    setProcessingScan(false);
+    setIsScannerStandby(false);
     setStep('scanning');
   };
 
   const handleMatchFound = async (matchedVisitor, photo, descriptor) => {
+    setProcessingScan(true);
     setVisitor(matchedVisitor);
     setFaceDescriptor(null);
 
@@ -171,6 +178,8 @@ const GuestVisitPage = () => {
         setStep('reservation-notice');
         return;
       }
+    } finally {
+      setProcessingScan(false);
     }
 
     // Default fallback: langsung lanjutkan ke form tamu biasa existing
@@ -396,8 +405,11 @@ const GuestVisitPage = () => {
           <FaceScanner
             onMatchFound={handleMatchFound}
             onNoMatch={handleNoMatch}
-            silentMode={false}
+            silentMode={true}
             fullscreen={true}
+            paused={processingScan}
+            emptyGraceMs={7000}
+            onStandbyChange={setIsScannerStandby}
           />
         </div>
 
@@ -405,7 +417,9 @@ const GuestVisitPage = () => {
         <div className="absolute bottom-6 sm:bottom-8 inset-x-0 z-30 flex flex-col items-center gap-2.5 px-4 pb-[env(safe-area-inset-bottom,0px)] pointer-events-auto">
           <div className="px-5 py-2.5 rounded-2xl bg-slate-950/80 border border-white/15 backdrop-blur-md shadow-2xl text-center max-w-[90vw] sm:max-w-md pointer-events-none">
             <p className="text-xs sm:text-sm text-white/95 font-medium tracking-wide">
-              Posisikan wajah Anda di dalam lingkaran
+              {isScannerStandby
+                ? 'Kamera Siaga • Posisikan wajah Anda di dalam lingkaran'
+                : 'Posisikan wajah Anda di dalam lingkaran'}
             </p>
             <p className="text-[10px] text-slate-400 mt-0.5">
               Lepaskan kacamata hitam atau penutup wajah untuk hasil optimal

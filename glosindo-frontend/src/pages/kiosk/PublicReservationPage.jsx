@@ -432,7 +432,7 @@ const PublicReservationPage = () => {
           <FaceScanner
             onMatchFound={handleMatchFound}
             onNoMatch={handleNoMatch}
-            silentMode={false}
+            silentMode={true}
             fullscreen={true}
           />
         </div>
