@@ -15,13 +15,29 @@ dayjs.locale('id');
 export const SERVER_TIMEZONE = 'Asia/Jakarta';
 
 /**
- * Format datetime from server (always treat as Asia/Jakarta)
- * Server sends: "2024-08-21 14:30:00" (implicitly Asia/Jakarta)
+ * Parse datetime string into Asia/Jakarta dayjs instance.
+ * - Strings with explicit offset/UTC ("...Z", "+07:00") are converted to Asia/Jakarta.
+ * - Naive SQL strings without timezone ("2024-08-21 14:30:00") are treated as Asia/Jakarta.
+ */
+const toServerDayjs = (dateString) => {
+  if (!dateString) return null;
+
+  if (typeof dateString === 'string') {
+    const trimmed = dateString.trim();
+    const hasExplicitTz = /(Z|[+-]\d{2}:?\d{2}|GMT)$/i.test(trimmed);
+    return hasExplicitTz ? dayjs(trimmed).tz(SERVER_TIMEZONE) : dayjs.tz(trimmed, SERVER_TIMEZONE);
+  }
+
+  return dayjs(dateString).tz(SERVER_TIMEZONE);
+};
+
+/**
+ * Format datetime from server in Asia/Jakarta
  */
 export const formatServerDate = (dateString, format = 'DD MMM YYYY HH:mm') => {
   if (!dateString) return '-';
-  
-  return dayjs.tz(dateString, SERVER_TIMEZONE).format(format);
+
+  return toServerDayjs(dateString).format(format);
 };
 
 /**
@@ -48,8 +64,8 @@ export const toServerTimezone = (localDate) => {
  */
 export const parseServerDate = (dateString) => {
   if (!dateString) return null;
-  
-  return dayjs.tz(dateString, SERVER_TIMEZONE).toDate();
+
+  return toServerDayjs(dateString).toDate();
 };
 
 /**
@@ -57,8 +73,8 @@ export const parseServerDate = (dateString) => {
  */
 export const getRelativeTime = (dateString) => {
   if (!dateString) return '-';
-  
-  return dayjs.tz(dateString, SERVER_TIMEZONE).fromNow();
+
+  return toServerDayjs(dateString).fromNow();
 };
 
 /**
@@ -87,10 +103,10 @@ export const formatCompactDatetime = (dateString) => {
  */
 export const isToday = (dateString) => {
   if (!dateString) return false;
-  
-  const date = dayjs.tz(dateString, SERVER_TIMEZONE);
+
+  const date = toServerDayjs(dateString);
   const today = dayjs().tz(SERVER_TIMEZONE);
-  
+
   return date.format('YYYY-MM-DD') === today.format('YYYY-MM-DD');
 };
 
@@ -99,10 +115,10 @@ export const isToday = (dateString) => {
  */
 export const calculateDuration = (startDate, endDate) => {
   if (!startDate || !endDate) return null;
-  
-  const start = dayjs.tz(startDate, SERVER_TIMEZONE);
-  const end = dayjs.tz(endDate, SERVER_TIMEZONE);
-  
+
+  const start = toServerDayjs(startDate);
+  const end = toServerDayjs(endDate);
+
   return end.diff(start, 'minute');
 };
 
@@ -134,7 +150,7 @@ export const getCurrentServerTime = () => {
  */
 export const formatInputDate = (dateString) => {
   if (!dateString) return '';
-  return dayjs.tz(dateString, SERVER_TIMEZONE).format('YYYY-MM-DD');
+  return toServerDayjs(dateString).format('YYYY-MM-DD');
 };
 
 /**
@@ -142,7 +158,7 @@ export const formatInputDate = (dateString) => {
  */
 export const formatInputTime = (dateString) => {
   if (!dateString) return '';
-  return dayjs.tz(dateString, SERVER_TIMEZONE).format('HH:mm');
+  return toServerDayjs(dateString).format('HH:mm');
 };
 
 export default {
