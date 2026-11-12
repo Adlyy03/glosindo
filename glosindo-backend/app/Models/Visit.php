@@ -145,7 +145,7 @@ class Visit extends Model
             return 0;
         }
 
-        return DB::transaction(function () use ($expiredIds, $cutoff, $now, $minutes) {
+        return DB::transaction(function () use ($expiredIds, $cutoff, $minutes) {
             $checkedOutCount = 0;
 
             foreach ($expiredIds as $visitId) {
@@ -161,13 +161,9 @@ class Visit extends Model
                 }
 
                 $oldValues = $visit->toArray();
-                $checkOutAt = Carbon::parse($visit->check_in)->addMinutes($minutes);
-                if ($checkOutAt->gt($now)) {
-                    $checkOutAt = $now;
-                }
 
                 $visit->update([
-                    'check_out' => $checkOutAt,
+                    'check_out' => null,
                     'status'    => 'OUT',
                 ]);
 
@@ -175,7 +171,7 @@ class Visit extends Model
                     ->where('status', 'CHECKED_IN')
                     ->update([
                         'status'         => 'CHECKED_OUT',
-                        'checked_out_at' => $checkOutAt,
+                        'checked_out_at' => null,
                     ]);
 
                 $visit->audit(

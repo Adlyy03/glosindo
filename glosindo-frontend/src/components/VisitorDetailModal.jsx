@@ -366,7 +366,7 @@ const VisitorDetailModal = ({ isOpen, visitorId, initialVisitor, onClose, onEdit
                             <Clock className="w-3 h-3 text-emerald-600" />
                             Masuk: {formatServerDate(v.check_in, 'DD/MM/YYYY HH:mm')}
                           </span>
-                          {isCheckedOut && (
+                          {isCheckedOut && Boolean(v.check_out) && (
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3 text-rose-500" />
                               Keluar: {formatServerDate(v.check_out, 'HH:mm')}
