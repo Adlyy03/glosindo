@@ -6,10 +6,17 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class Visit extends Model
 {
     use HasFactory, SoftDeletes, Auditable;
+
+    /**
+     * Default idle minutes before an active regular visit is automatically checked out.
+     */
+    public const AUTO_CHECKOUT_MINUTES = 10;
 
     /**
      * The attributes that are mass assignable.
@@ -114,5 +121,74 @@ class Visit extends Model
     public function scopeCompleted($query)
     {
         return $query->where('status', 'OUT');
+    }
+
+    /**
+     * Automatically check out regular (non-event) active visits that have exceeded
+     * the idle timeout without a checkout scan.
+     *
+     * @param  int  $minutes
+     * @return int Number of visits transitioned to OUT
+     */
+    public static function autoCheckoutExpired(int $minutes = self::AUTO_CHECKOUT_MINUTES): int
+    {
+        $minutes = max(1, $minutes);
+        $now = Carbon::now();
+        $cutoff = $now->copy()->subMinutes($minutes);
+
+        $expiredIds = self::where('status', 'IN')
+            ->whereNull('event_id')
+            ->where('check_in', '<=', $cutoff)
+            ->pluck('id');
+
+        if ($expiredIds->isEmpty()) {
+            return 0;
+        }
+
+        return DB::transaction(function () use ($expiredIds, $cutoff, $now, $minutes) {
+            $checkedOutCount = 0;
+
+            foreach ($expiredIds as $visitId) {
+                $visit = self::where('id', $visitId)
+                    ->where('status', 'IN')
+                    ->whereNull('event_id')
+                    ->where('check_in', '<=', $cutoff)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$visit) {
+                    continue;
+                }
+
+                $oldValues = $visit->toArray();
+                $checkOutAt = Carbon::parse($visit->check_in)->addMinutes($minutes);
+                if ($checkOutAt->gt($now)) {
+                    $checkOutAt = $now;
+                }
+
+                $visit->update([
+                    'check_out' => $checkOutAt,
+                    'status'    => 'OUT',
+                ]);
+
+                Reservation::where('visit_id', $visit->id)
+                    ->where('status', 'CHECKED_IN')
+                    ->update([
+                        'status'         => 'CHECKED_OUT',
+                        'checked_out_at' => $checkOutAt,
+                    ]);
+
+                $visit->audit(
+                    'auto_checked_out',
+                    $oldValues,
+                    $visit->fresh()->toArray(),
+                    "Auto checkout otomatis setelah {$minutes} menit tidak melakukan scan checkout"
+                );
+
+                $checkedOutCount++;
+            }
+
+            return $checkedOutCount;
+        });
     }
 }

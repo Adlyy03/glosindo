@@ -24,6 +24,8 @@ class ReportController extends Controller
      */
     public function statistics(Request $request)
     {
+        Visit::autoCheckoutExpired();
+
         $user = auth()->user();
         $period = $request->input('period', 'weekly'); // weekly or monthly
         $startDate = $request->input('start_date');
@@ -107,6 +109,8 @@ class ReportController extends Controller
     public function exportExcel(Request $request)
     {
         try {
+            Visit::autoCheckoutExpired();
+
             $user = auth()->user();
             $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
             $endDate = $request->input('end_date', Carbon::now()->endOfMonth());
@@ -236,6 +240,8 @@ class ReportController extends Controller
     public function exportPdf(Request $request)
     {
         try {
+            Visit::autoCheckoutExpired();
+
             $user = auth()->user();
             $startDate = $request->input('start_date', Carbon::now()->startOfMonth());
             $endDate = $request->input('end_date', Carbon::now()->endOfMonth());

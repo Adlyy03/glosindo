@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Visitor;
 use App\Models\FaceEmbedding;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
@@ -18,6 +19,7 @@ class VisitorController extends Controller
      */
     public function index(Request $request)
     {
+        Visit::autoCheckoutExpired();
         $query = Visitor::query()->with(['faceEmbedding', 'latestVisit.event:id,name', 'eventParticipants.event:id,name']);
 
         // Filter by type: regular vs event
@@ -205,8 +207,9 @@ class VisitorController extends Controller
      */
     public function show($id)
     {
+        Visit::autoCheckoutExpired();
         $visitor = Visitor::with(['faceEmbedding', 'visits' => function ($query) {
-            $query->orderBy('check_in', 'desc');
+            $query->with('event:id,name')->orderBy('check_in', 'desc');
         }])->find($id);
 
         if (!$visitor) {

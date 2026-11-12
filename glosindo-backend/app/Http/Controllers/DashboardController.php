@@ -19,6 +19,8 @@ class DashboardController extends Controller
      */
     public function stats()
     {
+        Visit::autoCheckoutExpired();
+
         $today = Carbon::today()->toDateString();
 
         // Regular visitor stats
@@ -91,6 +93,8 @@ class DashboardController extends Controller
      */
     public function receptionistStats()
     {
+        Visit::autoCheckoutExpired();
+
         $user  = auth()->user();
         $today = Carbon::today()->toDateString();
 

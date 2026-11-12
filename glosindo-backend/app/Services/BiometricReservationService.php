@@ -321,6 +321,8 @@ class BiometricReservationService
      */
     public function kioskScanAndIdentify(?array $faceVector, ?int $visitorId = null, ?int $reservationId = null): array
     {
+        Visit::autoCheckoutExpired();
+
         $startTime = microtime(true);
 
         // 1. If reservationId is explicitly specified (e.g. from multiple choice selection)
@@ -512,3 +514,4 @@ class BiometricReservationService
         }
     }
 }
+

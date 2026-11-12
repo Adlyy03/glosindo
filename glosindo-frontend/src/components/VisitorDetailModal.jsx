@@ -31,7 +31,14 @@ const VisitorDetailModal = ({ isOpen, visitorId, initialVisitor, onClose, onEdit
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'visits'
 
   useEffect(() => {
-    if (!isOpen || !visitorId) return;
+    if (!isOpen) {
+      setVisitor(null);
+      setError(null);
+      return;
+    }
+
+    setVisitor(initialVisitor || null);
+    if (!visitorId) return;
 
     let isMounted = true;
     const fetchDetail = async () => {
@@ -57,7 +64,7 @@ const VisitorDetailModal = ({ isOpen, visitorId, initialVisitor, onClose, onEdit
     return () => {
       isMounted = false;
     };
-  }, [isOpen, visitorId]);
+  }, [isOpen, visitorId, initialVisitor]);
 
   if (!isOpen) return null;
 
@@ -81,7 +88,7 @@ const VisitorDetailModal = ({ isOpen, visitorId, initialVisitor, onClose, onEdit
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3 sm:gap-4 min-w-0">
               {/* Photo / Avatar */}
-              <div className="relative flex-shrink-0">
+              <div className="relative flex-shrink-0"> 
                 {currentVisitor.photo ? (
                   <img
                     src={getStorageUrl(currentVisitor.photo)}
@@ -323,7 +330,7 @@ const VisitorDetailModal = ({ isOpen, visitorId, initialVisitor, onClose, onEdit
               ) : (
                 <div className="divide-y divide-slate-100 border border-slate-200 rounded-2xl overflow-hidden bg-white">
                   {visits.map((v, i) => {
-                    const isCheckedOut = Boolean(v.check_out);
+                    const isCheckedOut = v.status === 'OUT' || Boolean(v.check_out);
                     return (
                       <div key={v.id || i} className="p-4 hover:bg-slate-50/70 transition-colors">
                         <div className="flex items-start justify-between gap-3 mb-2">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use App\Models\ReservationInvitation;
+use App\Models\Visit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -268,6 +269,8 @@ class ReservationInvitationController extends Controller
      */
     public function stats()
     {
+        Visit::autoCheckoutExpired();
+
         $today = Carbon::today();
         $now = Carbon::now();
 
@@ -325,6 +328,8 @@ class ReservationInvitationController extends Controller
      */
     public function reservationsList(Request $request)
     {
+        Visit::autoCheckoutExpired();
+
         $query = Reservation::query()->with(['invitation:id,token,company_name,type', 'visitor:id,name,phone,company,photo']);
 
         if ($request->has('status') && !empty($request->status)) {

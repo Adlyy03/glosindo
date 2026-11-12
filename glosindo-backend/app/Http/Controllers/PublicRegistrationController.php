@@ -257,6 +257,8 @@ class PublicRegistrationController extends Controller
         }
 
         // 8. Create Visit record
+        Visit::autoCheckoutExpired();
+
         // Check if there is already an active visit (status IN)
         $existingActiveVisit = Visit::where('visitor_id', $visitor->id)
             ->where('status', 'IN')

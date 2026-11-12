@@ -20,6 +20,8 @@ class VisitController extends Controller
      */
     public function index(Request $request)
     {
+        Visit::autoCheckoutExpired();
+
         $user = auth()->user();
         $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name,code']);
 
@@ -104,6 +106,8 @@ class VisitController extends Controller
      */
     public function store(Request $request)
     {
+        Visit::autoCheckoutExpired();
+
         $this->validate($request, [
             'visitor_id' => 'required|exists:visitors,id',
             'purpose'    => 'required|string|max:255',
@@ -201,6 +205,8 @@ class VisitController extends Controller
      */
     public function active(Request $request)
     {
+        Visit::autoCheckoutExpired();
+
         $user = auth()->user();
         $query = Visit::whereHas('visitor')
             ->with(['visitor', 'receptionist:id,name,email', 'event:id,name,code'])
@@ -236,6 +242,8 @@ class VisitController extends Controller
      */
     public function history(Request $request)
     {
+        Visit::autoCheckoutExpired();
+
         $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name,code']);
 
         // Filter by type: regular / event
@@ -309,6 +317,8 @@ class VisitController extends Controller
      */
     public function show($id)
     {
+        Visit::autoCheckoutExpired();
+
         $user = auth()->user();
         $query = Visit::with(['visitor', 'receptionist:id,name,email', 'event:id,name,code']);
 
@@ -365,9 +375,10 @@ class VisitController extends Controller
         }
 
         $oldValues = $visit->toArray();
+        $checkoutAt = Carbon::now();
 
         $visit->update([
-            'check_out' => Carbon::now(),
+            'check_out' => $checkoutAt,
             'status'    => 'OUT',
         ]);
 
@@ -380,10 +391,18 @@ class VisitController extends Controller
             if ($participant) {
                 $participant->update([
                     'status'         => 'checked_out',
-                    'checked_out_at' => Carbon::now(),
+                    'checked_out_at' => $checkoutAt,
                 ]);
             }
         }
+
+        // Sync with Reservation if applicable
+        \App\Models\Reservation::where('visit_id', $visit->id)
+            ->where('status', 'CHECKED_IN')
+            ->update([
+                'status'         => 'CHECKED_OUT',
+                'checked_out_at' => $checkoutAt,
+            ]);
 
         // Audit log
         $visit->audit('checked_out', $oldValues, $visit->fresh()->toArray(), "Visitor checked out");
@@ -428,6 +447,8 @@ class VisitController extends Controller
      */
     public function publicGuestVisit(Request $request)
     {
+        Visit::autoCheckoutExpired();
+
         $this->validate($request, [
             'visitor_id'      => 'nullable|exists:visitors,id',
             'name'            => 'required_without:visitor_id|string|max:255',
