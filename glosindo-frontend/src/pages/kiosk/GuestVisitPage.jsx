@@ -21,16 +21,16 @@ import toast from 'react-hot-toast';
 import { LOGO as glosindoLogo } from '../../constants';
 
 // Opsi keperluan singkat & umum untuk tamu
-const PURPOSE_OPTIONS = ['Meeting', 'Kunjungan Vendor', 'Pengiriman Barang', 'Interview', 'bayar wifi'];
+const PURPOSE_OPTIONS = ['Meeting', 'Kunjungan Vendor', 'Pengiriman Barang', 'Interview', 'Bayar Tagihan WiFi'];
 
-const GuestVisitPage = () => {
+const GuestVisitPage = ({ directCamera = false }) => {
   const navigate = useNavigate();
 
   // Preload models & embeddings in background on idle screen for instant biometric analysis
   useFaceModels();
   useFaceMatcher();
 
-  const [step, setStep] = useState('idle'); // idle | scanning | form-new | form-existing | success
+  const [step, setStep] = useState(directCamera ? 'scanning' : 'idle'); // idle | scanning | form-new | form-existing | success
   const [visitor, setVisitor] = useState(null);
   const [faceDescriptor, setFaceDescriptor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -78,7 +78,7 @@ const GuestVisitPage = () => {
   }, [step]);
 
   const handleReset = useCallback(() => {
-    setStep('idle');
+    setStep(directCamera ? 'scanning' : 'idle');
     setVisitor(null);
     setFaceDescriptor(null);
     setSubmitting(false);
@@ -89,7 +89,7 @@ const GuestVisitPage = () => {
     setMultipleReservations([]);
     setNoticeData(null);
     setFormData({ purpose: '', name: '', phone: '', meet_person: '' });
-  }, []);
+  }, [directCamera]);
 
   const handleStartScan = () => {
     setProcessingScan(false);
@@ -377,7 +377,7 @@ const GuestVisitPage = () => {
   // ==========================================
   if (step === 'scanning') {
     return (
-      <div className="fixed inset-0 h-[100dvh] w-full bg-slate-950 flex flex-col overflow-hidden z-50 font-sans select-none">
+      <div className="fixed inset-0 h-[100dvh] w-full bg-slate-950 flex flex-col overflow-hidden z-[60] font-sans select-none">
         {/* Top bar pemindaian - Glassmorphic & safe-area aware */}
         <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/85 via-black/45 to-transparent px-4 sm:px-6 py-3.5 sm:py-4 flex items-center justify-between pt-[max(14px,env(safe-area-inset-top,14px))] pointer-events-auto">
           <div className="flex items-center gap-3">
@@ -392,11 +392,22 @@ const GuestVisitPage = () => {
 
           <button
             type="button"
-            onClick={handleReset}
+            onClick={() => {
+              if (directCamera) {
+                if (window.history.length > 1) {
+                  navigate(-1);
+                } else {
+                  navigate('/dashboard');
+                }
+              } else {
+                handleReset();
+              }
+            }}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/30 text-white border border-white/20 backdrop-blur-md text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-sm"
+            title={directCamera ? 'Kembali ke Dashboard' : 'Batal'}
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Batal</span>
+            <span>{directCamera ? 'Dashboard' : 'Batal'}</span>
           </button>
         </div>
 
@@ -442,7 +453,7 @@ const GuestVisitPage = () => {
   // ==========================================
   if (step === 'form-new') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative overflow-y-auto font-sans">
+      <div className="fixed inset-0 h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 z-[60] overflow-y-auto font-sans">
         {/* Header Ringkas */}
         <div className="max-w-lg w-full mx-auto flex items-center justify-between pb-3">
           <div className="flex items-center gap-2.5">
@@ -604,7 +615,7 @@ const GuestVisitPage = () => {
   // ==========================================
   if (step === 'form-existing') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative overflow-y-auto font-sans">
+      <div className="fixed inset-0 h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 z-[60] overflow-y-auto font-sans">
         {/* Header Ringkas */}
         <div className="max-w-lg w-full mx-auto flex items-center justify-between pb-3">
           <div className="flex items-center gap-2.5">
@@ -730,7 +741,7 @@ const GuestVisitPage = () => {
   // ==========================================
   if (step === 'multiple-choice') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative font-sans">
+      <div className="fixed inset-0 h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 z-[60] overflow-y-auto font-sans">
         <header className="relative z-10 w-full px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <button
@@ -811,7 +822,7 @@ const GuestVisitPage = () => {
   // ==========================================
   if (step === 'reservation-notice') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 relative font-sans">
+      <div className="fixed inset-0 h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col justify-between p-4 sm:p-6 z-[60] overflow-y-auto font-sans">
         <header className="relative z-10 w-full px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <button
@@ -887,7 +898,7 @@ const GuestVisitPage = () => {
   // ==========================================
   if (step === 'success') {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between p-6 relative font-sans">
+      <div className="fixed inset-0 h-[100dvh] w-full bg-slate-950 text-slate-100 flex flex-col justify-between p-6 z-[60] overflow-y-auto font-sans">
         {/* Header Ringkas */}
         <div className="max-w-md w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2.5">
