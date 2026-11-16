@@ -323,16 +323,16 @@ const GuestVisitPage = ({ directCamera = false }) => {
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
-            {/* Install Kiosk PWA Button (Minimalist, dark navy muted, in header) */}
+            {/* Install Aplikasi PWA Button (Minimalist, dark navy muted, in header) */}
             {!isInstalled && isOnline && (
               <button
                 type="button"
                 onClick={installPwa}
                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 active:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/70 text-xs font-medium backdrop-blur-md transition-all cursor-pointer shadow-xs active:scale-95"
-                title="Install GLOSINDO Kiosk ke Desktop/Tablet"
+                title="Install Aplikasi GLOSINDO Kiosk ke Desktop/Tablet"
               >
                 <Download className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-                <span>Install Kiosk</span>
+                <span>Install Aplikasi</span>
               </button>
             )}
 
