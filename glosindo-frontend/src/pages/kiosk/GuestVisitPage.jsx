@@ -324,7 +324,7 @@ const GuestVisitPage = ({ directCamera = false }) => {
 
           <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
             {/* Install Kiosk PWA Button (Minimalist, dark navy muted, in header) */}
-            {isInstallable && !isInstalled && isOnline && (
+            {!isInstalled && isOnline && (
               <button
                 type="button"
                 onClick={installPwa}

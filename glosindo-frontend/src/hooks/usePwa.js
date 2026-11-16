@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 /**
  * usePwa Hook
@@ -49,7 +50,17 @@ export const usePwa = () => {
   }, []);
 
   const installPwa = async () => {
-    if (!deferredPrompt) return false;
+    if (!deferredPrompt) {
+      toast(
+        'Untuk install: Klik ikon install/komputer di ujung kanan bilah URL browser, atau menu titik tiga > "Install GLOSINDO Kiosk".',
+        {
+          id: 'pwa-install-guide',
+          icon: '💻',
+          duration: 6000,
+        }
+      );
+      return false;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
