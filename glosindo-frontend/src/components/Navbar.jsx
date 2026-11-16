@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Menu, LogOut, Clock, ShieldCheck, User, Lock } from 'lucide-react';
+import { Menu, LogOut, Clock, ShieldCheck, User, Lock, Download } from 'lucide-react';
 import useAuthStore from '../store/authStore';
+import usePwa from '../hooks/usePwa';
 import { LOGO, APP_NAME } from '../constants';
 import PublicRegistrationToggle from './PublicRegistrationToggle';
 
 const Navbar = ({ onToggleSidebar }) => {
   const { user, logout } = useAuthStore();
+  const { isOnline, isInstalled, installPwa } = usePwa();
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState('');
   const [currentDate, setCurrentDate] = useState('');
@@ -87,6 +89,19 @@ const Navbar = ({ onToggleSidebar }) => {
 
         {/* Right: User Profile & Security Badge */}
         <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          {/* Install Kiosk Button */}
+          {!isInstalled && isOnline && (
+            <button
+              type="button"
+              onClick={installPwa}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 hover:text-slate-900 border border-slate-200/90 text-xs font-semibold transition-all shadow-xs cursor-pointer active:scale-95"
+              title="Install GLOSINDO Kiosk ke Desktop/Tablet"
+            >
+              <Download className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />
+              <span className="hidden sm:inline">Install Kiosk</span>
+            </button>
+          )}
+
           {typeof window !== 'undefined' && window.location.protocol === 'http:' && (
             <button
               type="button"
