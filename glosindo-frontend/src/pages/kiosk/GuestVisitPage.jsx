@@ -10,11 +10,13 @@ import {
   Building,
   Briefcase,
   RotateCcw,
+  Download,
 } from 'lucide-react';
 import FaceScanner from '../../components/FaceScanner';
 import Button from '../../components/ui/Button';
 import useFaceModels from '../../hooks/useFaceModels';
 import useFaceMatcher from '../../hooks/useFaceMatcher';
+import usePwa from '../../hooks/usePwa';
 import api from '../../services/api';
 import reservationService from '../../services/reservationService';
 import toast from 'react-hot-toast';
@@ -25,6 +27,9 @@ const PURPOSE_OPTIONS = ['Meeting', 'Kunjungan Vendor', 'Pengiriman Barang', 'In
 
 const GuestVisitPage = ({ directCamera = false }) => {
   const navigate = useNavigate();
+
+  // PWA install management
+  const { isOnline, isInstallable, isInstalled, installPwa } = usePwa();
 
   // Preload models & embeddings in background on idle screen for instant biometric analysis
   useFaceModels();
@@ -317,9 +322,24 @@ const GuestVisitPage = ({ directCamera = false }) => {
             </div>
           </div>
 
-          <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400">
-            <span className="hidden sm:inline">{formattedDate} • </span>
-            <span className="text-white font-semibold">{formattedTime} WIB</span>
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-shrink-0">
+            {/* Install Kiosk PWA Button (Minimalist, dark navy muted, in header) */}
+            {isInstallable && !isInstalled && isOnline && (
+              <button
+                type="button"
+                onClick={installPwa}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 active:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/70 text-xs font-medium backdrop-blur-md transition-all cursor-pointer shadow-xs active:scale-95"
+                title="Install GLOSINDO Kiosk ke Desktop/Tablet"
+              >
+                <Download className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                <span>Install Kiosk</span>
+              </button>
+            )}
+
+            <div className="text-right text-[11px] sm:text-xs font-mono text-slate-400 pl-2 sm:pl-3 border-l border-slate-800/80">
+              <span className="hidden md:inline">{formattedDate} • </span>
+              <span className="text-white font-semibold">{formattedTime} WIB</span>
+            </div>
           </div>
         </header>
 
