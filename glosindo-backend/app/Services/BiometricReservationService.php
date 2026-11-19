@@ -6,6 +6,7 @@ use App\Models\FaceEmbedding;
 use App\Models\Reservation;
 use App\Models\Visit;
 use App\Models\Visitor;
+use App\Traits\HandlesPhotoStorage;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Log;
 
 class BiometricReservationService
 {
+    use HandlesPhotoStorage;
+
     const TIMEZONE = 'Asia/Jakarta';
     const FACE_THRESHOLD_STRICT = 0.40;
     const FACE_THRESHOLD_RELAXED = 0.45;
@@ -252,12 +255,48 @@ class BiometricReservationService
     }
 
     /**
+     * Adapt or register biometric vector for visitor.
+     * Uses Exponential Moving Average (EMA) to smoothly adjust biometric vector
+     * without sudden drift, ensuring aging and lighting changes are adapted.
+     */
+    public function adaptOrRegisterFaceEmbedding(int $visitorId, array $newFaceVector, float $momentum = 0.8): ?FaceEmbedding
+    {
+        if (count($newFaceVector) !== 128) {
+            return null;
+        }
+
+        $existing = FaceEmbedding::where('visitor_id', $visitorId)->first();
+        if ($existing && is_array($existing->face_vector) && count($existing->face_vector) === 128) {
+            $oldVec = $existing->face_vector;
+            $updatedVec = [];
+            for ($i = 0; $i < 128; $i++) {
+                $val = ($momentum * (float) $oldVec[$i]) + ((1.0 - $momentum) * (float) $newFaceVector[$i]);
+                $updatedVec[$i] = round($val, 4);
+            }
+            $existing->update(['face_vector' => $updatedVec]);
+            Cache::forget('face_embeddings_all');
+            return $existing;
+        }
+
+        $compactVector = array_map(function ($val) {
+            return round((float) $val, 4);
+        }, $newFaceVector);
+
+        $newEmbedding = FaceEmbedding::updateOrCreate(
+            ['visitor_id' => $visitorId],
+            ['face_vector' => $compactVector]
+        );
+        Cache::forget('face_embeddings_all');
+        return $newEmbedding;
+    }
+
+    /**
      * Execute atomic, concurrency-proof check-in for a reservation.
      * Prevents double check-in using pessimistic row-locking and idempotency checks.
      */
-    public function checkInReservation(Reservation $reservation): Visit
+    public function checkInReservation(Reservation $reservation, ?string $photo = null, ?array $faceVector = null): Visit
     {
-        return DB::transaction(function () use ($reservation) {
+        return DB::transaction(function () use ($reservation, $photo, $faceVector) {
             // Pessimistic lock on reservation record to prevent race conditions across kiosks/tablets
             $locked = Reservation::where('id', $reservation->id)
                 ->lockForUpdate()
@@ -286,6 +325,12 @@ class BiometricReservationService
                     'status' => 'OUT',
                 ]);
 
+            // Save visual snapshot if provided
+            $storedPhoto = null;
+            if ($photo) {
+                $storedPhoto = $this->storePhoto($photo, null, 'visits');
+            }
+
             // Create new confirmed Visit record
             $visit = Visit::create([
                 'visitor_id' => $locked->visitor_id,
@@ -294,9 +339,22 @@ class BiometricReservationService
                 'visitor_phone' => $locked->visitor_phone,
                 'purpose' => $locked->purpose,
                 'meet_to' => $locked->meet_to ?: '-',
+                'photo' => $storedPhoto,
                 'check_in' => $now,
                 'status' => 'IN',
             ]);
+
+            // Update visitor's photo if empty or with latest photo
+            if ($storedPhoto && $locked->visitor) {
+                if (empty($locked->visitor->photo)) {
+                    $locked->visitor->update(['photo' => $storedPhoto]);
+                }
+            }
+
+            // Adapt or register face biometric vector
+            if ($faceVector && count($faceVector) === 128) {
+                $this->adaptOrRegisterFaceEmbedding((int) $locked->visitor_id, $faceVector);
+            }
 
             // Update Reservation status atomically
             $locked->status = 'CHECKED_IN';
@@ -319,7 +377,7 @@ class BiometricReservationService
      * 3. Performs atomic check-in if valid
      * 4. Returns structured outcome for kiosk display
      */
-    public function kioskScanAndIdentify(?array $faceVector, ?int $visitorId = null, ?int $reservationId = null): array
+    public function kioskScanAndIdentify(?array $faceVector, ?int $visitorId = null, ?int $reservationId = null, ?string $photo = null): array
     {
         Visit::autoCheckoutExpired();
 
@@ -345,7 +403,7 @@ class BiometricReservationService
             }
 
             try {
-                $visit = $this->checkInReservation($reservation);
+                $visit = $this->checkInReservation($reservation, $photo, $faceVector);
                 $durationMs = round((microtime(true) - $startTime) * 1000, 2);
 
                 return [
@@ -358,6 +416,7 @@ class BiometricReservationService
                         'purpose' => $reservation->purpose,
                         'meet_to' => $reservation->meet_to,
                         'reservation_code' => $reservation->reservation_code,
+                        'photo' => $visit->photo,
                         'check_in_time' => Carbon::parse($visit->check_in)->tz(self::TIMEZONE)->format('H:i'),
                         'duration_ms' => $durationMs,
                     ],
@@ -407,7 +466,7 @@ class BiometricReservationService
                 // Check in atomically!
                 try {
                     $reservation = $eval['reservation'];
-                    $visit = $this->checkInReservation($reservation);
+                    $visit = $this->checkInReservation($reservation, $photo, $faceVector);
 
                     return [
                         'success' => true,
@@ -420,6 +479,7 @@ class BiometricReservationService
                             'meet_to' => $reservation->meet_to,
                             'reservation_code' => $reservation->reservation_code,
                             'scheduled_time' => $reservation->scheduled_time,
+                            'photo' => $visit->photo,
                             'check_in_time' => Carbon::parse($visit->check_in)->tz(self::TIMEZONE)->format('H:i'),
                             'distance' => $matchDistance,
                             'duration_ms' => $durationMs,

@@ -338,6 +338,8 @@ class PublicReservationController extends Controller
         $visitorId = $all['visitor_id'] ?? $request->input('visitor_id');
         $reservationCode = $all['reservation_code'] ?? $request->input('reservation_code');
         $reservationId = $all['reservation_id'] ?? $request->input('reservation_id');
+        $photo = $all['photo'] ?? $request->input('photo');
+        $faceVector = $all['face_vector'] ?? $request->input('face_vector');
 
         if (!$visitorId && !$reservationCode && !$reservationId) {
             return response()->json([
@@ -362,7 +364,7 @@ class PublicReservationController extends Controller
             }
 
             try {
-                $visit = $bioService->checkInReservation($reservation);
+                $visit = $bioService->checkInReservation($reservation, $photo, $faceVector);
                 return response()->json([
                     'success' => true,
                     'has_reservation' => true,
@@ -391,7 +393,7 @@ class PublicReservationController extends Controller
         if ($eval['outcome'] === 'VALID_APPROVED') {
             try {
                 $reservation = $eval['reservation'];
-                $visit = $bioService->checkInReservation($reservation);
+                $visit = $bioService->checkInReservation($reservation, $photo, $faceVector);
 
                 return response()->json([
                     'success' => true,
@@ -463,6 +465,8 @@ class PublicReservationController extends Controller
         $visitorId = $all['visitor_id'] ?? $request->input('visitor_id');
         $reservationId = $all['reservation_id'] ?? $request->input('reservation_id');
 
+        $photo = $all['photo'] ?? $request->input('photo');
+
         if (!$faceVector && !$visitorId && !$reservationId) {
             return response()->json([
                 'success' => false,
@@ -471,7 +475,7 @@ class PublicReservationController extends Controller
         }
 
         $bioService = app(BiometricReservationService::class);
-        $result = $bioService->kioskScanAndIdentify($faceVector, $visitorId, $reservationId);
+        $result = $bioService->kioskScanAndIdentify($faceVector, $visitorId, $reservationId, $photo);
 
         return response()->json($result);
     }

@@ -22,7 +22,7 @@ const QuickCheckInPage = () => {
   const noMatchShown = useRef(false);
   const noMatchCooldown = useRef(false);
 
-  const handleMatchFound = async (visitor) => {
+  const handleMatchFound = async (visitor, photo, descriptor) => {
     if (processing) return;
     
     setProcessing(true);
@@ -65,6 +65,8 @@ const QuickCheckInPage = () => {
           visitor_id: visitorId,
           purpose: 'Quick Check-In',
           meet_to: '-',
+          photo: photo || null,
+          face_descriptor: descriptor || null,
         };
         
         await visitService.checkIn(checkInData);

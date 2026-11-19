@@ -38,6 +38,7 @@ const GuestVisitPage = ({ directCamera = false }) => {
   const [step, setStep] = useState(directCamera ? 'scanning' : 'idle'); // idle | scanning | form-new | form-existing | success
   const [visitor, setVisitor] = useState(null);
   const [faceDescriptor, setFaceDescriptor] = useState(null);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -86,6 +87,7 @@ const GuestVisitPage = ({ directCamera = false }) => {
     setStep(directCamera ? 'scanning' : 'idle');
     setVisitor(null);
     setFaceDescriptor(null);
+    setCapturedPhoto(null);
     setSubmitting(false);
     setProcessingScan(false);
     setIsScannerStandby(false);
@@ -105,13 +107,15 @@ const GuestVisitPage = ({ directCamera = false }) => {
   const handleMatchFound = async (matchedVisitor, photo, descriptor) => {
     setProcessingScan(true);
     setVisitor(matchedVisitor);
-    setFaceDescriptor(null);
+    setCapturedPhoto(photo || null);
+    setFaceDescriptor(descriptor || null);
 
     try {
       // Prioritas 1: Pencarian dan validasi reservasi aktif untuk identitas wajah yang cocok
       const res = await reservationService.scanIdentify({
         face_vector: descriptor || null,
         visitor_id: matchedVisitor?.id || null,
+        photo: photo || null,
       });
 
       if (res && res.success) {
@@ -197,6 +201,8 @@ const GuestVisitPage = ({ directCamera = false }) => {
       const res = await reservationService.scanIdentify({
         reservation_id: reservationId,
         visitor_id: visitor?.id,
+        photo: capturedPhoto || null,
+        face_vector: faceDescriptor || null,
       });
 
       if (res && res.success && res.type === 'reservation_auto_checked_in') {
@@ -214,9 +220,10 @@ const GuestVisitPage = ({ directCamera = false }) => {
     }
   };
 
-  const handleNoMatch = (descriptor) => {
+  const handleNoMatch = (descriptor, photo) => {
     setVisitor(null);
-    setFaceDescriptor(descriptor);
+    setFaceDescriptor(descriptor || null);
+    setCapturedPhoto(photo || null);
     setStep('form-new');
   };
 
@@ -240,6 +247,7 @@ const GuestVisitPage = ({ directCamera = false }) => {
         purpose: formData.purpose.trim(),
         meet_to: formData.meet_person?.trim() || null,
         face_descriptor: faceDescriptor,
+        photo: capturedPhoto || null,
       });
 
       setStep('success');
@@ -264,6 +272,8 @@ const GuestVisitPage = ({ directCamera = false }) => {
         visitor_id: visitor.id || visitor.visitor_id,
         purpose: formData.purpose.trim(),
         meet_to: formData.meet_person?.trim() || null,
+        photo: capturedPhoto || null,
+        face_descriptor: faceDescriptor || null,
       });
       setStep('success');
     } catch (error) {
@@ -504,6 +514,24 @@ const GuestVisitPage = ({ directCamera = false }) => {
             </p>
           </div>
 
+          {capturedPhoto && (
+            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-950/80 border border-cyan-500/30">
+              <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-cyan-400/40 flex-shrink-0 shadow-inner">
+                <img src={capturedPhoto} alt="Snapshot Wajah" className="w-full h-full object-cover" />
+                <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-xs animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-cyan-400">
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Foto Otomatis Terambil & Tersimpan</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                  Snapshot wajah dan profil biometrik Anda otomatis disesuaikan di database.
+                </p>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmitNew} className="space-y-4">
             {/* Nama */}
             <div>
@@ -669,6 +697,24 @@ const GuestVisitPage = ({ directCamera = false }) => {
               {visitor?.name}
             </p>
           </div>
+
+          {capturedPhoto && (
+            <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-950/80 border border-emerald-500/30">
+              <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-emerald-400/40 flex-shrink-0 shadow-inner">
+                <img src={capturedPhoto} alt="Snapshot Wajah" className="w-full h-full object-cover" />
+                <div className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-xs animate-pulse" />
+              </div>
+              <div>
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Snapshot Check-In Baru</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5 leading-tight">
+                  Foto kunjungan hari ini tersimpan & biometrik wajah diselaraskan.
+                </p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmitExisting} className="space-y-4">
             {/* Keperluan */}

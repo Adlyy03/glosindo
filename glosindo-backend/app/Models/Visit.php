@@ -32,6 +32,7 @@ class Visit extends Model
         'event_id',
         'purpose',
         'meet_to',
+        'photo',
         'check_in',
         'check_out',
         'status',

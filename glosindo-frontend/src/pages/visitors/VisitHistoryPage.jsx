@@ -13,6 +13,7 @@ import Card, { CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
+import { getStorageUrl } from '../../services/api';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -260,15 +261,30 @@ const VisitHistoryPage = () => {
                     return (
                       <tr key={visit.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="px-6 py-4">
-                          <p className="font-bold text-slate-900">{visit.visitor?.name}</p>
-                          <p className="text-xs text-slate-400 font-medium">
-                            {visit.visitor?.company || 'Pribadi'}
-                            {visit.visitor?.deleted && (
-                              <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200">
-                                DELETED
-                              </span>
+                          <div className="flex items-center gap-3">
+                            {(visit.photo || visit.visitor?.photo) ? (
+                              <img
+                                src={getStorageUrl(visit.photo || visit.visitor?.photo)}
+                                alt=""
+                                className="w-9 h-9 rounded-xl object-cover border border-slate-200/80 shadow-xs flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200/80 flex items-center justify-center text-slate-400 font-bold text-xs flex-shrink-0">
+                                {visit.visitor?.name?.charAt(0) || 'T'}
+                              </div>
                             )}
-                          </p>
+                            <div>
+                              <p className="font-bold text-slate-900 leading-tight">{visit.visitor?.name}</p>
+                              <p className="text-xs text-slate-400 font-medium">
+                                {visit.visitor?.company || 'Pribadi'}
+                                {visit.visitor?.deleted && (
+                                  <span className="ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-50 text-red-600 border border-red-200">
+                                    DELETED
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
                         </td>
 
                         {/* Bertemu Dengan Field */}
@@ -341,11 +357,24 @@ const VisitHistoryPage = () => {
                 return (
                   <div key={visit.id} className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-bold text-slate-900 truncate">{visit.visitor?.name}</p>
-                        <p className="text-xs text-slate-400 font-medium">
-                          {visit.visitor?.company || 'Pribadi'}
-                        </p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        {(visit.photo || visit.visitor?.photo) ? (
+                          <img
+                            src={getStorageUrl(visit.photo || visit.visitor?.photo)}
+                            alt=""
+                            className="w-10 h-10 rounded-xl object-cover border border-slate-200 shadow-xs flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 font-bold text-xs flex-shrink-0">
+                            {visit.visitor?.name?.charAt(0) || 'T'}
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-900 truncate">{visit.visitor?.name}</p>
+                          <p className="text-xs text-slate-400 font-medium truncate">
+                            {visit.visitor?.company || 'Pribadi'}
+                          </p>
+                        </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {visit.status === 'IN' ? (

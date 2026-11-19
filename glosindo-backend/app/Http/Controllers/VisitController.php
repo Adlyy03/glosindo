@@ -6,12 +6,14 @@ use App\Models\Event;
 use App\Models\EventParticipant;
 use App\Models\Visit;
 use App\Models\Visitor;
+use App\Traits\HandlesPhotoStorage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class VisitController extends Controller
 {
+    use HandlesPhotoStorage;
     /**
      * Display a listing of visits.
      *
@@ -109,10 +111,12 @@ class VisitController extends Controller
         Visit::autoCheckoutExpired();
 
         $this->validate($request, [
-            'visitor_id' => 'required|exists:visitors,id',
-            'purpose'    => 'required|string|max:255',
-            'meet_to'    => 'required_without:event_id|nullable|string|max:255',
-            'event_id'   => 'nullable|exists:events,id',
+            'visitor_id'      => 'required|exists:visitors,id',
+            'purpose'         => 'required|string|max:255',
+            'meet_to'         => 'required_without:event_id|nullable|string|max:255',
+            'event_id'        => 'nullable|exists:events,id',
+            'photo'           => 'nullable',
+            'face_descriptor' => 'nullable|array',
         ]);
 
         $meetTo = $request->meet_to ?? '-';
@@ -148,15 +152,32 @@ class VisitController extends Controller
             ], 422);
         }
 
+        // Store visual snapshot if provided
+        $storedPhoto = $this->storePhoto($request->input('photo'), $request, 'visits');
+
         $visit = Visit::create([
             'visitor_id'       => $request->visitor_id,
             'receptionist_id'  => auth()->id(),
             'event_id'         => $request->event_id ?? null,
             'purpose'          => $request->purpose,
             'meet_to'          => $meetTo,
+            'photo'            => $storedPhoto,
             'check_in'         => Carbon::now(),
             'status'           => 'IN',
         ]);
+
+        // If visitor has no profile photo, update with snapshot
+        if ($storedPhoto) {
+            $v = Visitor::find($request->visitor_id);
+            if ($v && empty($v->photo)) {
+                $v->update(['photo' => $storedPhoto]);
+            }
+        }
+
+        // Adapt face biometrics if face_descriptor is provided
+        if ($request->face_descriptor && is_array($request->face_descriptor) && count($request->face_descriptor) === 128) {
+            app(\App\Services\BiometricReservationService::class)->adaptOrRegisterFaceEmbedding((int) $request->visitor_id, $request->face_descriptor);
+        }
 
         // Sync with EventParticipant if event_id is present
         if ($request->event_id) {
@@ -456,10 +477,13 @@ class VisitController extends Controller
             'purpose'         => 'required|string|max:255',
             'meet_to'         => 'nullable|string|max:255',
             'face_descriptor' => 'nullable|array',
+            'photo'           => 'nullable',
         ]);
 
         DB::beginTransaction();
         try {
+            $storedPhoto = $this->storePhoto($request->input('photo'), $request, 'visits');
+
             if ($request->visitor_id) {
                 $visitor = Visitor::find($request->visitor_id);
                 if (!$visitor) {
@@ -467,6 +491,16 @@ class VisitController extends Controller
                     return response()->json(['success' => false, 'message' => 'Visitor tidak ditemukan.'], 404);
                 }
                 
+                // Update visitor's photo if empty
+                if ($storedPhoto && empty($visitor->photo)) {
+                    $visitor->update(['photo' => $storedPhoto]);
+                }
+
+                // Adapt face biometrics if face_descriptor provided
+                if ($request->face_descriptor && is_array($request->face_descriptor) && count($request->face_descriptor) === 128) {
+                    app(\App\Services\BiometricReservationService::class)->adaptOrRegisterFaceEmbedding((int) $visitor->id, $request->face_descriptor);
+                }
+
                 // Public kiosk: auto-checkout previous active visit if exists
                 $activeVisit = Visit::where('visitor_id', $visitor->id)->where('status', 'IN')->first();
                 if ($activeVisit) {
@@ -479,22 +513,23 @@ class VisitController extends Controller
             } else {
                 $visitor = !empty($request->phone) ? Visitor::where('phone', $request->phone)->first() : null;
                 if (!$visitor) {
-                    $visitor = Visitor::create(['name' => $request->name, 'phone' => $request->phone, 'company' => $request->company ?? null]);
+                    $visitor = Visitor::create([
+                        'name'    => $request->name,
+                        'phone'   => $request->phone,
+                        'company' => $request->company ?? null,
+                        'photo'   => $storedPhoto,
+                    ]);
                 } else {
-                    $visitor->update(['name' => $request->name, 'company' => $request->company ?? $visitor->company]);
+                    $visitor->update([
+                        'name'    => $request->name,
+                        'company' => $request->company ?? $visitor->company,
+                        'photo'   => $visitor->photo ?: $storedPhoto,
+                    ]);
                 }
                 
-                // Save face embedding if provided
+                // Save or adapt face embedding if provided
                 if ($request->face_descriptor && is_array($request->face_descriptor) && count($request->face_descriptor) === 128) {
-                    $compactVector = array_map(function ($val) {
-                        return round((float) $val, 4);
-                    }, $request->face_descriptor);
-
-                    \App\Models\FaceEmbedding::updateOrCreate(
-                        ['visitor_id' => $visitor->id],
-                        ['face_vector' => $compactVector]
-                    );
-                    \Illuminate\Support\Facades\Cache::forget('face_embeddings_all');
+                    app(\App\Services\BiometricReservationService::class)->adaptOrRegisterFaceEmbedding((int) $visitor->id, $request->face_descriptor);
                 }
             }
 
@@ -504,6 +539,7 @@ class VisitController extends Controller
                 'event_id'        => null,
                 'purpose'         => $request->purpose,
                 'meet_to'         => $request->meet_to ?? '-',
+                'photo'           => $storedPhoto,
                 'check_in'        => Carbon::now(),
                 'status'          => 'IN',
             ]);

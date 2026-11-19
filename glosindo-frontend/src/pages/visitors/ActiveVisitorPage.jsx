@@ -11,6 +11,7 @@ import useAuthStore from '../../store/authStore';
 import Card, { CardHeader } from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
+import { getStorageUrl } from '../../services/api';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -250,9 +251,17 @@ const ActiveVisitorPage = () => {
                     <tr key={visit.id} className="hover:bg-slate-50/80 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-xs flex-shrink-0">
-                            {visit.visitor?.name?.charAt(0)?.toUpperCase()}
-                          </div>
+                          {(visit.photo || visit.visitor?.photo) ? (
+                            <img
+                              src={getStorageUrl(visit.photo || visit.visitor?.photo)}
+                              alt=""
+                              className="w-10 h-10 rounded-xl object-cover border border-emerald-500/40 shadow-xs flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center text-sm shadow-xs flex-shrink-0">
+                              {visit.visitor?.name?.charAt(0)?.toUpperCase()}
+                            </div>
+                          )}
                           <div>
                             <p className="font-bold text-slate-900">{visit.visitor?.name}</p>
                             <p className="text-xs text-slate-400">{visit.visitor?.company || 'Pribadi'}</p>
@@ -309,9 +318,17 @@ const ActiveVisitorPage = () => {
                 <div key={visit.id} className="p-4 space-y-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center text-sm flex-shrink-0">
-                        {visit.visitor?.name?.charAt(0)?.toUpperCase()}
-                      </div>
+                      {(visit.photo || visit.visitor?.photo) ? (
+                        <img
+                          src={getStorageUrl(visit.photo || visit.visitor?.photo)}
+                          alt=""
+                          className="w-10 h-10 rounded-xl object-cover border border-emerald-500/40 shadow-xs flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white font-bold flex items-center justify-center text-sm flex-shrink-0">
+                          {visit.visitor?.name?.charAt(0)?.toUpperCase()}
+                        </div>
+                      )}
                       <div className="min-w-0">
                         <p className="font-bold text-slate-900 truncate">{visit.visitor?.name}</p>
                         <p className="text-xs text-slate-400 truncate">{visit.visitor?.company || 'Pribadi'}</p>

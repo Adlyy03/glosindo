@@ -67,6 +67,7 @@ receptionist_id BIGINT UNSIGNED NULL FK -> users.id ON DELETE SET NULL
 event_id        BIGINT UNSIGNED NULL FK -> events.id ON DELETE CASCADE
 purpose         VARCHAR(255)
 meet_to         VARCHAR(255)
+photo           VARCHAR(255) NULL -- Snapshot visual foto saat check-in
 check_in        TIMESTAMP
 check_out       TIMESTAMP NULL
 status          ENUM('IN','OUT')

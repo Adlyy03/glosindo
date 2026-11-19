@@ -182,7 +182,7 @@ const EventDetailPage = () => {
   };
 
   // ─── Quick Scan handlers ────────────────────────────────────────────────
-  const handleMatchFound = useCallback(async (visitor) => {
+  const handleMatchFound = useCallback(async (visitor, photo, descriptor) => {
     if (processing) return;
     setProcessing(true);
     try {
@@ -209,6 +209,8 @@ const EventDetailPage = () => {
           purpose: `Event: ${data?.event?.name || id}`,
           meet_to: `Event: ${data?.event?.name || id}`,
           event_id: Number(data?.event?.id || id),
+          photo: photo || null,
+          face_descriptor: descriptor || null,
         });
         setVisitorName(visitor.name);
         setSplashType('checkin');

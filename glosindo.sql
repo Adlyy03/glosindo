@@ -477,6 +477,7 @@ CREATE TABLE `visits` (
   `receptionist_id` bigint UNSIGNED DEFAULT NULL,
   `purpose` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `meet_to` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `photo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `check_in` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `check_out` timestamp NULL DEFAULT NULL,
   `status` enum('IN','OUT') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'IN',
