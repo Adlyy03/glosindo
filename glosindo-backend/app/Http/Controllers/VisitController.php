@@ -78,7 +78,14 @@ class VisitController extends Controller
             });
         }
 
-        $visits = $query->orderBy('check_in', 'desc')->paginate(15);
+        // Filter by has_photo
+        if ($request->has('has_photo') && in_array($request->has_photo, ['true', '1', 1], true)) {
+            $query->whereNotNull('photo');
+        }
+
+        $perPage = (int) $request->get('per_page', 15);
+        if ($perPage > 100) $perPage = 100;
+        $visits = $query->orderBy('check_in', 'desc')->paginate($perPage);
         
         // Transform data: use snapshot if visitor deleted
         $visits->getCollection()->transform(function ($visit) {
@@ -308,7 +315,14 @@ class VisitController extends Controller
             });
         }
 
-        $visits = $query->orderBy('check_in', 'desc')->paginate(15);
+        // Filter by has_photo
+        if ($request->has('has_photo') && in_array($request->has_photo, ['true', '1', 1], true)) {
+            $query->whereNotNull('photo');
+        }
+
+        $perPage = (int) $request->get('per_page', 15);
+        if ($perPage > 100) $perPage = 100;
+        $visits = $query->orderBy('check_in', 'desc')->paginate($perPage);
         
         // Transform data: use snapshot if visitor deleted
         $visits->getCollection()->transform(function ($visit) {
