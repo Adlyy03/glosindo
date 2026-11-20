@@ -4,8 +4,8 @@ import dayjs from 'dayjs';
 import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import {
-  History, Search, Calendar, RefreshCw, FileText,
-  ChevronLeft, ChevronRight, Trash2, AlertTriangle, CalendarRange, Users, UserCheck
+  History, Search, RefreshCw,
+  ChevronLeft, ChevronRight, Trash2, AlertTriangle, CalendarRange, Users, UserCheck, Eye
 } from 'lucide-react';
 import visitService from '../../services/visitService';
 import useAuthStore from '../../store/authStore';
@@ -14,6 +14,7 @@ import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Modal from '../../components/ui/Modal';
 import { getStorageUrl } from '../../services/api';
+import VisitDetailModal from '../../components/VisitDetailModal';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -33,6 +34,10 @@ const VisitHistoryPage = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [page, setPage] = useState(1);
+
+  // Detail modal
+  const [detailModal, setDetailModal] = useState(false);
+  const [visitToView, setVisitToView] = useState(null);
 
   // Delete modal
   const [deleteModal, setDeleteModal] = useState(false);
@@ -63,6 +68,11 @@ const VisitHistoryPage = () => {
   useEffect(() => {
     loadHistory();
   }, [loadHistory]);
+
+  const openDetailModal = (visit) => {
+    setVisitToView(visit);
+    setDetailModal(true);
+  };
 
   const handleResetFilters = () => {
     setSearch('');
@@ -248,7 +258,8 @@ const VisitHistoryPage = () => {
                     <th className="px-6 py-4">Check-In</th>
                     <th className="px-6 py-4 hidden lg:table-cell">Check-Out</th>
                     <th className="px-6 py-4 text-center">Status</th>
-                    <th className="px-6 py-4 text-center">Aksi</th>
+                    <th className="px-6 py-4 text-center">Detail</th>
+                    <th className="px-6 py-4 text-center">Hapus</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -328,6 +339,18 @@ const VisitHistoryPage = () => {
                           )}
                         </td>
 
+                        {/* Tombol Detail */}
+                        <td className="px-6 py-4 text-center">
+                          <button
+                            onClick={() => openDetailModal(visit)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-brand-navy hover:bg-brand-navy/10 transition-colors"
+                            title="Lihat detail kunjungan"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                        </td>
+
+                        {/* Tombol Hapus */}
                         <td className="px-6 py-4 text-center">
                           {!isSupervisor && (
                             <button
@@ -382,6 +405,14 @@ const VisitHistoryPage = () => {
                         ) : (
                           <Badge variant="neutral">OUT</Badge>
                         )}
+                        <button
+                          onClick={() => openDetailModal(visit)}
+                          className="inline-flex items-center justify-center w-10 h-10 min-w-[40px] min-h-[40px] rounded-xl text-brand-navy hover:bg-brand-navy/10 transition-colors cursor-pointer"
+                          aria-label="Lihat detail kunjungan"
+                          title="Lihat detail"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         {!isSupervisor && (
                           <button
                             onClick={() => openDeleteModal(visit)}
@@ -460,6 +491,16 @@ const VisitHistoryPage = () => {
           </>
         )}
       </Card>
+
+      {/* Visit Detail Modal */}
+      <VisitDetailModal
+        isOpen={detailModal}
+        visit={visitToView}
+        onClose={() => {
+          setDetailModal(false);
+          setVisitToView(null);
+        }}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal
