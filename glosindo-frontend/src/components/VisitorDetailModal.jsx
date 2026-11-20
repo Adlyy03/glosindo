@@ -84,8 +84,20 @@ const VisitorDetailModal = ({ isOpen, visitorId, initialVisitor, onClose, onEdit
     visits.some((v) => v.event_id || v.event);
 
   const openVisitDetail = (v) => {
-    // Inject visitor photo into visit object for VisitDetailModal
-    setVisitDetail({ ...v, visitor: { ...(v.visitor || {}), photo: currentVisitor.photo, name: v.visitor?.name || currentVisitor.name, company: v.visitor?.company || currentVisitor.company } });
+    // Kirim data visit apa adanya — VisitDetailModal akan membaca
+    // visit.photo (snapshot check-in) sebagai prioritas utama,
+    // lalu visitor.photo sebagai fallback.
+    // Jangan timpa v.photo dengan currentVisitor.photo.
+    setVisitDetail({
+      ...v,
+      visitor: {
+        ...(v.visitor || {}),
+        name: v.visitor?.name || currentVisitor.name,
+        company: v.visitor?.company || currentVisitor.company,
+        // Hanya set visitor.photo jika visit tidak punya snapshot sendiri
+        photo: v.photo ? (v.visitor?.photo ?? currentVisitor.photo) : currentVisitor.photo,
+      },
+    });
     setVisitDetailOpen(true);
   };
 

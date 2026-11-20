@@ -42,13 +42,16 @@ const VisitDetailModal = ({ isOpen, visit, onClose }) => {
     visit.visitor_company ||
     null;
 
-  // Foto: ambil dari visitor.photo (foto profil tamu)
-  // Visits tidak menyimpan foto check-in secara terpisah;
-  // yang diarsipkan adalah foto profil tamu yang terdaftar.
-  const visitorPhoto =
-    visit.visitor?.photo || null;
-
-  const photoUrl = visitorPhoto ? getStorageUrl(visitorPhoto) : null;
+  // ── Prioritas foto: ──────────────────────────────────────────────────────
+  // 1. visit.photo  → foto snapshot check-in (tersimpan di visits/ folder)
+  // 2. visitor.photo → foto profil tamu (fallback jika visit.photo kosong)
+  // Keduanya pakai path relatif, disajikan via getStorageUrl().
+  const snapshotPhoto = visit.photo || null;
+  const profilePhoto  = visit.visitor?.photo || null;
+  const activePhoto   = snapshotPhoto || profilePhoto;
+  const photoUrl      = activePhoto ? getStorageUrl(activePhoto) : null;
+  const isSnapshot    = Boolean(snapshotPhoto);        // true = foto check-in asli
+  const isProfileFallback = !snapshotPhoto && Boolean(profilePhoto);
 
   const isOut = visit.status === 'OUT' || Boolean(visit.check_out);
   const isEventVisit = Boolean(visit.event_id || visit.event?.name);
@@ -171,8 +174,18 @@ const VisitDetailModal = ({ isOpen, visit, onClose }) => {
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-slate-200 bg-white">
                 <Camera className="w-4 h-4 text-brand-navy" />
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Foto Tamu
+                  Foto Snapshot Check-In
                 </span>
+                {isSnapshot && (
+                  <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    Foto Asli Kunjungan
+                  </span>
+                )}
+                {isProfileFallback && (
+                  <span className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    Foto Profil Tamu
+                  </span>
+                )}
               </div>
               <div className="p-4 flex items-center justify-center">
                 {photoUrl ? (
@@ -200,11 +213,11 @@ const VisitDetailModal = ({ isOpen, visit, onClose }) => {
                 ) : (
                   <div className="flex flex-col items-center gap-2 py-8 text-slate-400">
                     <div className="w-16 h-16 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center">
-                      <User className="w-8 h-8 text-slate-300" />
+                      <Camera className="w-8 h-8 text-slate-300" />
                     </div>
-                    <p className="text-xs font-semibold text-slate-500">Foto profil tamu tidak tersedia</p>
-                    <p className="text-[11px] text-slate-400 text-center max-w-[200px] leading-relaxed">
-                      Foto belum diunggah saat tamu mendaftar.
+                    <p className="text-xs font-semibold text-slate-500">Foto snapshot tidak tersedia</p>
+                    <p className="text-[11px] text-slate-400 text-center max-w-[220px] leading-relaxed">
+                      Kunjungan ini tidak menyertakan foto saat check-in, atau foto dibuat sebelum fitur snapshot aktif.
                     </p>
                   </div>
                 )}
