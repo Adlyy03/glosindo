@@ -14,7 +14,6 @@ export { default as CheckInPage } from './visitors/CheckInPage';
 export { default as QuickCheckInPage } from './visitors/QuickCheckInPage';
 export { default as VisitHistoryPage } from './visitors/VisitHistoryPage';
 export { default as VisitorListPage } from './visitors/VisitorListPage';
-export { default as SnapshotGalleryPage } from './visitors/SnapshotGalleryPage';
 
 // Kiosk & Public Guest Registration
 export { default as GuestVisitPage } from './kiosk/GuestVisitPage';

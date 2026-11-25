@@ -17,7 +17,6 @@ import {
   ActiveVisitorPage,
   VisitHistoryPage,
   VisitorListPage,
-  SnapshotGalleryPage,
   GuestVisitPage,
   PublicGuestRegisterPage,
   PublicEventRegisterPage,
@@ -213,7 +212,6 @@ function App() {
                       <Route path="/quick-check-in" element={<FeatureGate featureId="checkin"><QuickCheckInPage /></FeatureGate>} />
                       <Route path="/active-visitors" element={<FeatureGate featureId="active_visitors"><ActiveVisitorPage /></FeatureGate>} />
                       <Route path="/visit-history" element={<FeatureGate featureId="visit_history"><VisitHistoryPage /></FeatureGate>} />
-                      <Route path="/snapshots" element={<SnapshotGalleryPage />} />
                       <Route path="/visitors" element={<FeatureGate featureId="visitors"><VisitorListPage /></FeatureGate>} />
                       <Route path="/reservations/invitations" element={<AdminReservationPage />} />
                       <Route path="/reservations" element={<AdminReservationPage />} />
